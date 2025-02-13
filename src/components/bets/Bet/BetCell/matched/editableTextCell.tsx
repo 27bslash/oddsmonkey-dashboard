@@ -5,7 +5,7 @@ import { useBet } from '../../../betContext';
 
 type EditableCellProps = {
   matchVal: { [key: number]: number };
-  profit: number;
+  val: number;
   lay: boolean;
   type: 'matched' | 'odds';
   show: boolean;
@@ -15,7 +15,7 @@ type EditableCellProps = {
 };
 function EditableCell({
   matchVal,
-  profit,
+  val,
   lay,
   type,
   show,
@@ -27,7 +27,7 @@ function EditableCell({
   const [color, setColor] = useState('');
 
   const { betData, setBetData, updateSort } = useBet();
-  profit = profit || 0;
+  val = val || 0;
   const handleClick = () => {
     setIsEditing(!isEditing);
   };
@@ -36,9 +36,9 @@ function EditableCell({
   };
   useEffect(() => {
     if (!isEditing) {
-      setValue(profit.toFixed(2));
+      setValue(type === 'odds' ? val.toFixed(3) : val.toFixed(2));
     }
-  }, [isEditing, profit]);
+  }, [isEditing, val]);
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       console.log('enter', value, index);
@@ -94,7 +94,7 @@ function EditableCell({
         collectionName: 'pending_bets',
         query: { 'bet_info.bet_unix_time': betData.bet_info.bet_unix_time },
         update: { $set: { [updateQuery]: updateVal } },
-      }); 
+      });
       console.log({
         collectionName: 'pending_bets',
         query: { 'bet_info.bet_unix_time': betData.bet_info.bet_unix_time },
@@ -112,7 +112,7 @@ function EditableCell({
       ? betData.bet_profit[!lay ? 'back_stake' : 'lay_stake']
       : stake;
     // console.log(stk, sum);
-    return sum.toFixed(2) == stk.toFixed(2) ? 'white' : 'red';
+    return sum.toFixed(2) === stk.toFixed(2) ? 'white' : 'red';
   };
   useEffect(() => {
     setColor(calcColor());

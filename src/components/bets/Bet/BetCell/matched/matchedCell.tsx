@@ -6,7 +6,6 @@ import { Matched } from '../../../../../../types';
 import { useBet } from '../../../betContext';
 import BetTableCell from '../betCell';
 
-
 type MatchedCellProps = {
   lay: boolean;
   index: number;
@@ -126,7 +125,7 @@ function MatchedCell({ lay, index, stake, show }: MatchedCellProps) {
                   type={'odds'}
                   index={index}
                   show={show}
-                  profit={+x}
+                  val={+x}
                 />
               );
             })
@@ -135,7 +134,7 @@ function MatchedCell({ lay, index, stake, show }: MatchedCellProps) {
                 <EditableCell
                   matchVal={backLay['lay']}
                   lay={true}
-                  profit={+x}
+                  val={+x}
                   type={'odds'}
                   index={index}
                   show={show}
@@ -155,7 +154,7 @@ function MatchedCell({ lay, index, stake, show }: MatchedCellProps) {
                   stake={stake}
                   index={index}
                   show={show}
-                  profit={x}
+                  val={x}
                 />
               );
             })}
@@ -167,7 +166,7 @@ function MatchedCell({ lay, index, stake, show }: MatchedCellProps) {
                 <EditableCell
                   matchVal={backLay['lay']}
                   lay={true}
-                  profit={x}
+                  val={x}
                   show={show}
                   index={index}
                   stake={stake}
@@ -179,28 +178,15 @@ function MatchedCell({ lay, index, stake, show }: MatchedCellProps) {
         )}
       </BetTableCell>
       <BetTableCell>
-        {!lay
-          ? Object.values(backLay['back']).map((x, i) => {
-              return (
-                <Typography
-                  color={backWinProfit >= 0 ? green['400'] : red['400']}
-                  key={i}
-                >
-                  £{backWinProfit.toFixed(2)}
-                  {/* {backWinProfit.toFixed(2)} */}
-                </Typography>
-              );
-            })
-          : Object.values(backLay['lay']).map((x, i) => {
-              return (
-                <Typography
-                  color={layWinProfit >= 0 ? green['400'] : red['400']}
-                  key={i}
-                >
-                  £{layWinProfit.toFixed(2)}
-                </Typography>
-              );
-            })}
+        {!lay ? (
+          <Typography color={backWinProfit >= 0 ? green['400'] : red['400']}>
+            £{backWinProfit.toFixed(2)}
+          </Typography>
+        ) : (
+          <Typography color={layWinProfit >= 0 ? green['400'] : red['400']}>
+            £{layWinProfit.toFixed(2)}
+          </Typography>
+        )}
       </BetTableCell>
       <BetTableCell>
         £
