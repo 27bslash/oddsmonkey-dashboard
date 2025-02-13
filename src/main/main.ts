@@ -244,6 +244,19 @@ const createWindow = async () => {
 /**
  * Add event listeners...
  */
+ipcMain.handle('shutdown', () => {
+  exec('shutdown /s /t 0', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Stderr: ${stderr}`);
+      return;
+    }
+    console.log(`Stdout: ${stdout}`);
+  });
+});
 
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even

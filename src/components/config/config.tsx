@@ -1,5 +1,6 @@
 import { Box, Button, TextField, Typography } from '@mui/material';
 import { ChangeEvent, SetStateAction, useEffect, useState } from 'react';
+import ShutDown from './shutdown';
 
 type configObj = {
   SINGLE_BET_MAX: number;
@@ -114,6 +115,7 @@ export function Config() {
               {running ? 'Stop' : 'Start'}
             </Button>
           </div>
+          <ShutDown />
         </Box>
       )}
     </>

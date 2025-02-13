@@ -60,6 +60,9 @@ const electronHandler = {
       await ipcRenderer.invoke('get-images', directoryPath),
     deleteEntry: (_id: ObjectId, replaceAmount: { [key: string]: number }) =>
       ipcRenderer.invoke('delete', _id, replaceAmount),
+    ShutDown: () => {
+      ipcRenderer.invoke('shutdown');
+    },
   },
 };
 contextBridge.exposeInMainWorld('electron', electronHandler);
