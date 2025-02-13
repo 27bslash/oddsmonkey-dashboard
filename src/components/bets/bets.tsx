@@ -1,14 +1,19 @@
-import { Box, TableFooter, TablePagination, TableRow } from '@mui/material';
-import { useEffect, useState } from 'react';
+import {
+  Box,
+  TableFooter,
+  TablePagination,
+  TableRow,
+} from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import { BData, BetInfo, BetOdds, BetProfit } from '../../../types';
 import { useAppContext } from '../../renderer/useAppContext';
 import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
 import StatTable from '../StatTable/statTable';
-import { Config } from './../config/config';
 import Bet from './Bet/betTable/Bet';
 import { ObjectId } from 'mongodb';
 import TableSearch from '../search/tableSearch';
 import fuzzysort from 'fuzzysort';
+import FilterButtons, { FilterButton } from '../StatTable/FilterButtons';
 
 export type SortKeys = keyof BetInfo | keyof BetOdds | keyof BetProfit;
 
@@ -42,7 +47,11 @@ export function filterTimestampsByDay() {
     ).getTime() / 1000;
   return { startHour, endHour };
 }
-function Bets() {
+type BetProps = {
+  flags: { [key: string]: string };
+  setFlags: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
+};
+function Bets({ flags, setFlags }: BetProps) {
   const [filteredBets, setFilteredBets] = useState<BData[]>();
   const [sortedData, setSortedData] = useState<BData[]>();
   const [timeFilter, setTimeFilter] = useState<
@@ -165,6 +174,19 @@ function Bets() {
   const deleteBet = (_id: ObjectId) => {
     setAllBets(allBets!.filter((x) => x._id !== _id));
   };
+  const setFlag = async (flag: string) => {
+    const newStr = flags[flag] === 'updating' ? 'updated' : 'updating';
+    console.log(newStr);
+    const updateObj = {
+      collectionName: 'flags',
+      query: {},
+      update: { $set: { [flag]: newStr } },
+    };
+    setFlags({ ...flags, [flag]: 'updating' });
+    const modifiedCount =
+      await window.electron.ipcRenderer.updateItem(updateObj);
+  };
+
   return (
     <Box
       // padding={5}
@@ -182,13 +204,29 @@ function Bets() {
             }}
           >
             <StatTable
+              flags={flags}
+              setFlag={setFlag}
               filter={timeFilter}
               setFilter={setTimeFilter}
               filteredBets={filteredBets}
               totalBets={allBets!}
             />
           </Box>
-          <TableSearch setSearchFilter={setSearchFilter}></TableSearch>
+          <div
+            style={{
+              display: 'flex',
+              position: 'sticky',
+              background: 'inherit',
+              top: '200px',
+              zIndex: '99',
+            }}
+          >
+            <FilterButtons
+              filter={timeFilter}
+              setFilter={setTimeFilter}
+            ></FilterButtons>
+            <TableSearch setSearchFilter={setSearchFilter}></TableSearch>
+          </div>
           {filteredBets.slice(page * 10, page * 10 + 10).map((bet, i) => {
             return (
               <Bet

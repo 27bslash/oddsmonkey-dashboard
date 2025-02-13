@@ -8,6 +8,7 @@ import { useAppContext } from '../../renderer/useAppContext';
 import { Config } from '../config/config';
 import { weightedAverage } from '../bets/Bet/BetCell/matched/matchedCell';
 import { filterTimestampsByDay, filterTimestampsByWeek } from '../bets/bets';
+import UpdateFlags from '../updateFlags';
 
 type StatTableProps = {
   filter: 'active' | 'day' | 'week' | 'all time';
