@@ -164,9 +164,11 @@ const createWindow = async () => {
       //   console.log(updatedProfit);
       const objectId = new ObjectId(Buffer.from(_id['buffer']));
       console.log(objectId);
-      const testBet = pendingbets.findOne({ _id: objectId }).then((doc) => {
-        console.log(doc.bet_info.event_name);
-      });
+      const testBet = pendingbets
+        .findOneAndDelete({ _id: objectId })
+        .then((doc) => {
+          console.log(doc.bet_info.event_name);
+        });
     },
   );
   ipcMain.handle('add-item', async (event, item, collection_name: string) => {
