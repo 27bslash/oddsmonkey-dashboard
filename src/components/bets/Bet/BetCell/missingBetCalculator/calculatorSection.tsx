@@ -7,28 +7,47 @@ import CalculatorTextField from './calculatorTextField';
 import { MouseEvent } from 'react';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
+import { BData } from '../../../../../../types';
+import smarkets from '../../../../../icons/smarkets.png';
+import betfair from '../../../../../icons/betfair.png';
+
 type CalculatorSectionProps = {
-  matchArray: MatchObj['back'];
+  data: BData;
   total: number;
   liability: number;
-  value: number;
   type: 'back' | 'lay';
   link: string;
-  updateValues: (stake: number, odds: number, type: 'back' | 'lay') => void;
-  updateValue: React.Dispatch<React.SetStateAction<number>>;
-  setUpdate?: React.Dispatch<React.SetStateAction<boolean>>;
+  valueObj: {
+    avgBackOdds: number;
+    avgLayOdds: number;
+    currentBackOdds: number;
+    currentLayOdds: number;
+    backStake: number;
+    layStake: number;
+    commission: number;
+  };
+  updateValue: React.Dispatch<
+    React.SetStateAction<{
+      avgBackOdds: number;
+      avgLayOdds: number;
+      currentBackOdds: number;
+      currentLayOdds: number;
+      backStake: number;
+      layStake: number;
+      commission: number;
+    }>
+  >;
+  setUpdate: React.Dispatch<React.SetStateAction<boolean>>;
   update?: boolean;
   missingBet?: number;
 };
 const CalculatorSection = ({
-  matchArray,
   total,
   liability,
   type,
   link,
-  value,
   missingBet,
-  updateValues,
+  valueObj,
   updateValue,
   update,
   setUpdate,
@@ -38,11 +57,12 @@ const CalculatorSection = ({
     if (!update) window.open(link, '_blank');
     const target = e.target as HTMLElement;
     console.log(e, target.textContent);
-    if (!target.textContent) {
-      return;
-    }
-    const betValue = target.textContent.replace('£', '');
-    navigator.clipboard.writeText(betValue);
+    copyText();
+    setUpdate((prev) => !prev);
+  };
+  const copyText = () => {
+    navigator.clipboard.writeText(missingBet!.toFixed(2));
+    setUpdate((prev) => !prev);
   };
   return (
     <>
@@ -57,63 +77,119 @@ const CalculatorSection = ({
         padding={2}
         color={'black'}
       >
-
         <CalculatorGroup
-          //   key={i}
-          odds={matchArray.odds}
-          stake={matchArray.stake}
-          bg={baseColor}
-          updateValues={(stake, odds) => updateValues(stake, odds, type)}
-        />
-        <CalculatorTextField
-          bg={baseColor['100']}
-          value={value}
+          type={type}
+          valueObj={valueObj}
           setValue={updateValue}
-          label="current odds"
-        ></CalculatorTextField>
-
+          bg={baseColor}
+          //   updateValues={(stake, odds) => updateValues(stake, odds, type)}
+        />
+        <Box display={'flex'} justifyContent={'space-between'}>
+          <CalculatorTextField
+            bg={baseColor['100']}
+            valueObj={valueObj}
+            k={`current${capitalize(type)}Odds`}
+            setValue={updateValue}
+            label="current odds"
+          ></CalculatorTextField>
+          {type === 'lay' && (
+            <CalculatorTextField
+              bg={baseColor['100']}
+              k={'commission'}
+              valueObj={valueObj}
+              setValue={updateValue}
+              label="current commission"
+            ></CalculatorTextField>
+          )}
+        </Box>
       </Box>
-      {missingBet && missingBet > 0.01 && (
-        <>
+      <>
+        {!!missingBet && (
+          <Box
+            backgroundColor={baseColor['900']}
+            padding={0.5}
+            display={'flex'}
+            borderLeft={'solid 3px black'}
+            borderRight={'solid 3px black'}
+            alignItems={'center'}
+          >
+            <NestedText
+              bgColor={baseColor['900']}
+              color={red['700']}
+              firstStr={`missing ${type} bet:`}
+              secondStr={
+                <>
+                  <span>
+                    {/* £{+missingBet.toFixed(2) <= 0 ? 0 : missingBet.toFixed(2)} */}
+                    £{+missingBet.toFixed(2)}
+                  </span>
+                </>
+              }
+              clickHandle={(
+                e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+              ) => {
+                copyText();
+              }}
+            />
+            <Box className="icon-group" display={'flex'}>
+              <FileCopyIcon
+                height={'30px'}
+                className="icon"
+                sx={{
+                  height: '30px',
+                  marginLeft: '5px',
+                  color: 'white',
+                  fontSize: '1.5rem',
+                  marginRight: '5px',
+                }}
+                onClick={() => copyText()}
+              />
+              <img
+                className="icon"
+                height={'30px'}
+                src={
+                  link.toLowerCase().includes('smarkets') ? smarkets : betfair
+                }
+                onClick={openLink}
+              />
+            </Box>
+          </Box>
+        )}
+        {!!missingBet && (
+          <OpenBet
+            update={update}
+            baseColor={baseColor}
+            liability={liability}
+            total={total}
+          />
+        )}
+      </>
+    </>
+  );
+};
+const OpenBet = ({ update, baseColor, liability, total }: any) => {
+  return (
+    <>
+      {update && (
+        <Box
+          backgroundColor={baseColor['900']}
+          borderLeft={'solid 3px black'}
+          borderRight={'solid 3px black'}
+          paddingLeft={"4px"}
+        >
           <NestedText
             bgColor={baseColor['900']}
             color={red['700']}
-            firstStr={`missing ${type} bet:`}
-            secondStr={
-              <>
-                <span>
-                  £{+missingBet.toFixed(2) <= 0 ? 0 : missingBet.toFixed(2)}
-                </span>
-                <FileCopyIcon
-                  className="icon"
-                  sx={{ marginLeft: '5px', color: 'white', fontSize: '0.8rem' }}
-                />
-              </>
-            }
-            clickHandle={(
-              e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-            ) => {
-              openLink(e);
-              return setUpdate!((prev) => !prev);
-            }}
+            firstStr="Liability:"
+            secondStr={`-£${liability.toFixed(2)}`}
           />
-          {update && (
-            <>
-              <NestedText
-                bgColor={baseColor['900']}
-                color={red['700']}
-                firstStr="Liability:"
-                secondStr={`-£${liability.toFixed(2)}`}
-              />
-              <NestedText
-                bgColor={baseColor['900']}
-                color={green['300']}
-                firstStr="Total:"
-                secondStr={`+£${total.toFixed(2)}`}
-              />
-            </>
-          )}
-        </>
+          <NestedText
+            bgColor={baseColor['900']}
+            color={green['300']}
+            firstStr="Total:"
+            secondStr={`+£${total.toFixed(2)}`}
+          />
+        </Box>
       )}
     </>
   );
@@ -133,29 +209,41 @@ const NestedText = ({
   clickHandle,
 }: NestedTextProps) => {
   return (
-    <Typography
-      className="missing-bet-text"
-      fontWeight={'bold'}
-      textTransform={'capitalize'}
-      padding={0.5}
-      paddingLeft={2}
-      sx={{
-        backgroundColor: bgColor,
+    <div
+      style={{
+        display: 'flex',
+        width: '100%',
+        // justifyContent: 'space-between',
       }}
     >
-      {firstStr}
-      <span
-        onClick={clickHandle}
-        style={{
-          marginLeft: '4px',
-          color: color,
-          cursor: 'pointer',
-          userSelect: 'none',
+      <Typography
+        className="missing-bet-text"
+        fontWeight={'bold'}
+        textTransform={'capitalize'}
+        // padding={0.5}
+        paddingLeft={2}
+        sx={{
+          flex: 1,
+          backgroundColor: bgColor,
         }}
       >
-        {secondStr}
-      </span>
-    </Typography>
+        {firstStr}
+        <span
+          onClick={clickHandle}
+          style={{
+            marginLeft: '4px',
+            color: color,
+            cursor: 'pointer',
+            userSelect: 'none',
+          }}
+        >
+          {secondStr}
+        </span>
+      </Typography>
+    </div>
   );
+};
+export const capitalize = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 };
 export default CalculatorSection;

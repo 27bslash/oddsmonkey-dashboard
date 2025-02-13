@@ -1,35 +1,41 @@
 import { Box } from '@mui/material';
 import { useState, useEffect } from 'react';
 import CalculatorTextField from './calculatorTextField';
+import { capitalize } from './calculatorSection';
 
 const CalculatorGroup = ({
-  stake,
-  odds,
+  type,
+  valueObj,
   bg,
-  updateValues,
+  setValue,
 }: {
+  type: string;
   bg: { [key: string | number]: string };
-  odds: number;
-  stake: number;
-  updateValues: (stake: number, odds: number) => void;
+  valueObj: {
+    avgBackOdds: number;
+    avgLayOdds: number;
+    currentBackOdds: number;
+    currentLayOdds: number;
+    backStake: number;
+    layStake: number;
+    commission: number;
+  };
+  setValue: any;
 }) => {
-  const [oddsValue, setOddsValue] = useState(odds);
-  const [stakeValue, setStakeValue] = useState(stake);
-  useEffect(() => {
-    updateValues(stakeValue, oddsValue);
-  }, [stakeValue, oddsValue]);
   return (
     <Box display={'flex'} justifyContent={'space-between'}>
       <CalculatorTextField
         bg={bg['100']}
-        value={stakeValue}
-        setValue={setStakeValue}
+        k={`${type}Stake`}
+        valueObj={valueObj}
+        setValue={setValue}
         label="total matched"
       ></CalculatorTextField>
       <CalculatorTextField
         bg={bg['100']}
-        value={oddsValue}
-        setValue={setOddsValue}
+        k={`avg${capitalize(type)}Odds`}
+        valueObj={valueObj}
+        setValue={setValue}
         label="average odds"
       ></CalculatorTextField>
     </Box>

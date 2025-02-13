@@ -1,13 +1,33 @@
 import { TextField } from '@mui/material';
 type CalculatorTextFieldProps = {
   bg: string;
-  value: number;
-  setValue: React.Dispatch<React.SetStateAction<number>>;
+  valueObj: {
+    avgBackOdds: number;
+    avgLayOdds: number;
+    currentBackOdds: number;
+    currentLayOdds: number;
+    backStake: number;
+    layStake: number;
+    commission: number;
+  };
+  setValue: React.Dispatch<
+    React.SetStateAction<{
+      avgBackOdds: number;
+      avgLayOdds: number;
+      currentBackOdds: number;
+      currentLayOdds: number;
+      backStake: number;
+      layStake: number;
+      commission: number;
+    }>
+  >;
   label: string;
+  k: string;
 };
 const CalculatorTextField = ({
   bg,
-  value,
+  valueObj,
+  k,
   setValue,
   label,
 }: CalculatorTextFieldProps) => {
@@ -16,11 +36,14 @@ const CalculatorTextField = ({
       onChange={(e) => {
         const inputValue = +e.target.value.replace(/^0(?!\.)/, '');
         const rounded = inputValue.toFixed(2);
-        console.log(inputValue, rounded, +rounded);
-        setValue(+rounded);
+        // console.log(inputValue, rounded, +rounded, k);
+        setValue((prevValues) => ({
+          ...prevValues!,
+          [k]: +e.target.value,
+        }));
       }}
       variant="filled"
-      value={value}
+      value={valueObj[k]}
       inputMode="numeric"
       type="number"
       sx={{
