@@ -56,9 +56,18 @@ function BetTableRow({ data, lay, index, show }: BetTableBodyProps) {
   const timeAgo = new TimeAgo('en-GB');
   const currentTime = Date.now();
   const eventTimeDelta = currentTime - data.bet_info.unix_time * 1000;
-  const matchTime = data.bet_profit.back_matched[index].bet_matched_time
-    ? data.bet_profit.back_matched[index].bet_matched_time
-    : data.bet_info.bet_unix_time;
+  let matchTime = data.bet_info.bet_unix_time;
+
+  if (data.bet_profit.back_matched[index].bet_matched_time) {
+    if (!show) {
+      const bet_matched_times = data.bet_profit.back_matched.map(
+        (m) => m.bet_matched_time!,
+      );
+      matchTime = Math.max(...bet_matched_times);
+    } else {
+      matchTime = data.bet_profit.back_matched[index].bet_matched_time;
+    }
+  }
   const betTimeDelta = currentTime - matchTime * 1000;
   const betTimeTooltipText = formatDateFromTimestamp(
     data.bet_profit.back_matched[index].bet_matched_time ||
@@ -105,8 +114,8 @@ function BetTableRow({ data, lay, index, show }: BetTableBodyProps) {
           </Typography>
         )}
       </BetTableCell>
-      {data.bet_profit['back_matched'] &&
-      data.bet_profit['exchange_matched'] &&
+      {data.bet_profit['back_matched'][0] &&
+      data.bet_profit['exchange_matched'][0] &&
       data.bet_profit['exchange_matched'][0]['odds'] &&
       data.bet_profit['back_matched'][0]['odds'] ? (
         <MatchedCell lay={lay} index={index} stake={stake} show={show} />
