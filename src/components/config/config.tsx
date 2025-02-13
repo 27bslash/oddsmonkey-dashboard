@@ -46,7 +46,7 @@ export function Config() {
     };
     const handleHeartbeat = (fetchedData: any) => {
       const last_active =
-        new Date().getTime() / 1000 - fetchedData[0].last_active < 30;
+        new Date().getTime() / 1000 - fetchedData[0].last_active < 300;
       if (running !== last_active) {
         window.electron.ipcRenderer.resetIconEvent('app-down');
       }
@@ -55,7 +55,7 @@ export function Config() {
         console.log('running', last_active, flashed);
         window.electron.ipcRenderer.flashIcon('app-down');
         setFlashed(true);
-      } 
+      }
     };
     window.electron.ipcRenderer.onConfigFetched(handleConfigFetched);
     window.electron.ipcRenderer.onHeartbeatFetched(handleHeartbeat);
@@ -75,29 +75,24 @@ export function Config() {
           bgcolor={'inherit'}
         >
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <NumberInput
-              value={config.SINGLE_BET_MAX}
-              label={'Single Bet Max'}
-              setUpdate={setUpdate}
-            />
-            <NumberInput
-              value={config.MAX_LIABILITY}
-              label={'max liability'}
-              setUpdate={setUpdate}
-            />
-            <NumberInput
-              value={config.MIN_BALANCE}
-              label={'min balance'}
-              setUpdate={setUpdate}
-            />
+            {Object.entries(config).map(([key, value]) => {
+              let currency = true;
+              if (typeof value === 'number') {
+                if (key === 'TIMES_PLACED_THRESHOLD') {
+                  currency = false;
+                }
+                return (
+                  <NumberInput
+                    value={value}
+                    label={key.replace(/_/g, ' ').toLocaleLowerCase()}
+                    setUpdate={setUpdate}
+                    currency={currency}
+                  />
+                );
+              }
+            })}
           </div>
-          {/* <Button
-            variant="contained"
-            style={{ marginRight: '10px', marginBottom: '10px' }}
-          >
-            {!config.USE_MONEY ? 'Use Cash' : "Don't use Cash"}
-          </Button> */}
-          {/* <br></br> */}
+
           <div style={{ display: 'flex' }}>
             <Button
               onClick={() => handleUpdate('updateConfig')}
@@ -129,10 +124,12 @@ function NumberInput({
   value,
   label,
   setUpdate,
+  currency,
 }: {
   value: number;
   label: string;
   setUpdate: React.Dispatch<React.SetStateAction<any>>;
+  currency: boolean;
 }) {
   const placeholder = value;
   const [inputValue, setinputValue] = useState(String(placeholder));
@@ -155,7 +152,7 @@ function NumberInput({
         // fontSize: '20px',
       }}
     >
-      <span className="config-currency-sign">£</span>
+      {currency && <span className="config-currency-sign">£</span>}
       <input
         className="config-number-input"
         type="number"
@@ -165,7 +162,7 @@ function NumberInput({
         min="1"
         max="1000"
         style={{ fontSize: '20px', padding: '5px' }}
-        step={5}
+        step={1}
       ></input>
       <label>
         <Typography padding={0.3} textTransform={'capitalize'}>
