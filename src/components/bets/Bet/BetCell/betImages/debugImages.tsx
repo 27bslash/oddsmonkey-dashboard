@@ -1,15 +1,20 @@
 import Button from '@mui/material/Button';
 import { useEffect, useState } from 'react';
 import { BData } from '../../../../../../types';
-
-import Zoom from 'react-medium-image-zoom';
+import smarkets from '../../../../../icons/smarkets.png';
+import betfair from '../../../../../icons/betfair.png';
 import 'react-medium-image-zoom/dist/styles.css';
-import DebugImage from './debugImage';
+import ImageGroup from './debugImage';
+import { Box, Typography } from '@mui/material';
 type DebugImagesProps = {
   data: BData;
+  setOverlay: React.Dispatch<React.SetStateAction<boolean>>;
+  overlay: boolean;
 };
-const DebugImages = ({ data }: DebugImagesProps) => {
-  const [open, setOpen] = useState(false);
+const DebugImages = ({ data, overlay, setOverlay }: DebugImagesProps) => {
+  const [bookmakerOpen, setBookmakerOpen] = useState(true);
+  const [exchangeOpen, setExchangeOpen] = useState(true);
+
   const [showButton, setShowButton] = useState(false);
   const [dates, setDates] = useState<{ [key: string]: number[] }>({
     back: [],
@@ -63,7 +68,7 @@ const DebugImages = ({ data }: DebugImagesProps) => {
       setShowButton(!!images);
     };
     getFileNames();
-  }, []);
+  }, [data]);
   useEffect(() => {
     const backDates: number[] = [];
     const layDates: number[] = [];
@@ -84,33 +89,67 @@ const DebugImages = ({ data }: DebugImagesProps) => {
   }, []);
   return (
     <>
-      {showButton && (
-        <Button onClick={() => setOpen((prev) => !prev)} variant="contained">
+      {/* {showButton && (
+        <Button onClick={() => setOverlay((prev) => !prev)} variant="contained">
           Show Images
         </Button>
-      )}
-      {open && (
-        <>
-          {dates.back.map((date, i) => (
-            <DebugImage
-              key={`back-${date}-${i}`}
-              targetDate={date}
+      )} */}
+      {overlay && (
+        <Box
+          display={'flex'}
+          flexDirection={'column'}
+          padding={2}
+          alignItems={'start'}
+          position={'sticky'}
+          marginTop={'100px'}
+          //   height={'300px'}
+          //   width={'500px'}
+          //   justifyContent={'space-around'}
+          alignContent={'start'}
+        >
+          <Box
+            display={'flex'}
+            flexDirection={'column'}
+            className="image-group"
+          >
+            {/* <img
+              className="icon"
+              onClick={() => {
+                setExchangeOpen(false);
+                return setBookmakerOpen((prev) => !prev);
+              }}
+              height={'40px'}
+              src={data.bet_info.bookmaker === 'smarkets' ? smarkets : betfair}
+              style={{ marginBottom: '20px' }}
+            />
+            <img
+              className="icon"
+              onClick={() => {
+                setBookmakerOpen(false);
+                return setExchangeOpen((prev) => !prev);
+              }}
+              height={'40px'}
+              src={data.bet_info.bookmaker !== 'smarkets' ? smarkets : betfair}
+            /> */}
+          </Box>
+          {bookmakerOpen && (
+            <ImageGroup
+              dates={dates.back}
               betName={data.bet_info.bet}
               site={data.bet_info.bookmaker}
             />
-          ))}
-          {dates.lay.map((date, i) => (
-            <DebugImage
-              key={`lay-${date}-${i}`} 
-              targetDate={date}
+          )}
+          {exchangeOpen && (
+            <ImageGroup
+              dates={dates.lay}
               betName={data.bet_info.bet}
               site={data.bet_info.exchange}
             />
-          ))}
-        </>
+          )}
+        </Box>
       )}
     </>
   );
 };
-
+// const ImageGroup = () => {};
 export default DebugImages;
