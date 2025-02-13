@@ -4,6 +4,8 @@ import {
   TableCell,
   Typography,
   Tooltip,
+  Box,
+  Grid2,
 } from '@mui/material';
 import { blue, green, red } from '@mui/material/colors';
 import { TotalProps } from '../statTable';
@@ -28,8 +30,51 @@ function StatTableBody({ totals, balance }: StatTableBodyProps) {
             <span style={{ color: red['600'] }}>-£{totals.betfairLoss}</span>
           </Typography>
         </TableCell>
-        <TableCell>
-          <Typography color={green['400']}>£{totals.totalProfit.toFixed(2)}</Typography>
+        <TableCell width={'100px'}>
+          <Grid2 container spacing={1} columns={{ sm: 8, md: 8, lg: 8 }}>
+            <Grid2 size={4}>
+              <Typography
+                textTransform="capitalize"
+                color="white"
+                marginRight="10px"
+              >
+                min:
+              </Typography>
+            </Grid2>
+            <Grid2 size={4} textAlign={'end'}>
+              <Typography color={green['400']}>
+                £{totals.minProfit.toFixed(2)}
+              </Typography>
+            </Grid2>
+            <Grid2 size={4} style={{ display: 'flex' }}>
+              <Typography
+                textTransform="capitalize"
+                color="white"
+                marginRight="10px"
+              >
+                avg:
+              </Typography>
+            </Grid2>
+            <Grid2 size={4} textAlign={'end'}>
+              <Typography color={green['400']}>
+                £{totals.totalProfit.toFixed(2)}
+              </Typography>
+            </Grid2>
+            <Grid2 size={4} style={{ display: 'flex' }}>
+              <Typography
+                textTransform="capitalize"
+                color="white"
+                marginRight="10px"
+              >
+                max:
+              </Typography>
+            </Grid2>
+            <Grid2 size={4} textAlign={'end'}>
+              <Typography color={green['400']}>
+                £{totals.maxProfit.toFixed(2)}
+              </Typography>
+            </Grid2>
+          </Grid2>
         </TableCell>
         <TableCell>
           <Tooltip

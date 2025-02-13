@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { BData, BProfit, Matched } from '../../../types';
 import StatTableBody from './balanceTable/balanceTable';
 import TableHeader from './balanceTable/BalanceTableHeader';
-import FilterButtons from './FilterButtons';
 import { useAppContext } from '../../renderer/useAppContext';
 import { Config } from '../config/config';
 import { weightedAverage } from '../bets/Bet/BetCell/matched/matchedCell';
@@ -15,9 +14,13 @@ type StatTableProps = {
   setFilter: React.SetStateAction<any>;
   filteredBets: BData[];
   totalBets: BData[];
+  flags: { [key: string]: string };
+  setFlag: (flag: string) => void;
 };
 export type TotalProps = {
   totalProfit: number;
+  minProfit: number;
+  maxProfit: number;
   smarketsLoss: number;
   betfairLoss: number;
   totalLiability: number;
@@ -28,6 +31,8 @@ function StatTable({
   setFilter,
   filteredBets,
   totalBets,
+  flags,
+  setFlag,
 }: StatTableProps) {
   const [totals, setTotals] = useState<TotalProps>();
   const [profitOverride, setProfitOverride] = useState(0);
@@ -104,13 +109,35 @@ function StatTable({
         }
       }
     }
-    let totalProfit = +filteredBets
+    let avgProfit = +filteredBets
       .reduce(
         (sum, current) =>
           sum +
           (current.bet_profit.back_win_profit +
             current.bet_profit.lay_win_profit) /
             2,
+        0,
+      )
+      .toFixed(2);
+    let minProfit = +filteredBets
+      .reduce(
+        (sum, current) =>
+          sum +
+          Math.min(
+            current.bet_profit.back_win_profit,
+            current.bet_profit.lay_win_profit,
+          ),
+        0,
+      )
+      .toFixed(2);
+    let maxProfit = +filteredBets
+      .reduce(
+        (sum, current) =>
+          sum +
+          Math.max(
+            current.bet_profit.back_win_profit,
+            current.bet_profit.lay_win_profit,
+          ),
         0,
       )
       .toFixed(2);
@@ -130,9 +157,13 @@ function StatTable({
     //       : curr.bet_profit.back_liability;
     //   return sum + loss;
 
-    totalProfit += profitOverride;
+    minProfit += profitOverride;
+    avgProfit += profitOverride;
+    maxProfit += profitOverride;
     setTotals({
-      totalProfit: totalProfit,
+      totalProfit: avgProfit,
+      minProfit: minProfit,
+      maxProfit: maxProfit,
       smarketsLoss: +smarketsLoss.toFixed(2),
       betfairLoss: +betfairLoss.toFixed(2),
       totalLiability: +totalLiability.toFixed(2),
@@ -143,12 +174,12 @@ function StatTable({
       display={'flex'}
       justifyContent={'space-between'}
       width={'100%'}
-      height={'150px'}
       marginBottom={'50px'}
     >
-      <FilterButtons filter={filter} setFilter={setFilter} />
+      <UpdateFlags flags={flags} setFlag={setFlag} />
+
       {totals && (
-        <Table style={{ width: '600px' }}>
+        <Table style={{ width: '600px', height: '150px' }}>
           <TableHeader filter={filter} />
           <StatTableBody totals={totals} balance={balance} />
         </Table>

@@ -1,6 +1,8 @@
+import { Update } from '@mui/icons-material';
 import { Box, Button, ButtonGroup, Typography } from '@mui/material';
 import { blue, green } from '@mui/material/colors';
 import { SetStateAction, Dispatch } from 'react';
+import UpdateFlags from '../updateFlags';
 type FilterButtonProps = {
   filter: 'active' | 'day' | 'week' | 'all time';
   setFilter: Dispatch<SetStateAction<FilterButtonProps['filter']>>;
@@ -11,16 +13,16 @@ function FilterButtons({ filter, setFilter }: FilterButtonProps) {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'flex-end',
+        justifyContent: 'start',
         alignItems: 'center',
       }}
     >
       <Typography
         variant="h5"
         textTransform={'capitalize'}
-        marginBottom={'60px'}
+        // marginBottom={'60px'}
       >
-        filter by Bet Time
+        filter by Bet Placed Time
       </Typography>
       <ButtonGroup
         variant="contained"
@@ -46,7 +48,7 @@ function FilterButtons({ filter, setFilter }: FilterButtonProps) {
     </Box>
   );
 }
-function FilterButton({ currentFilter, setFilter, children }: any) {
+export function FilterButton({ currentFilter, setFilter, children }: any) {
   return (
     <Button
       sx={{
