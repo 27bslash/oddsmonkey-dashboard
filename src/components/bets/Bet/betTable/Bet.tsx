@@ -21,6 +21,7 @@ import BetTableHead from './BetHeader/betTableHead';
 import BetTableRow from './betRow';
 import { ObjectId } from 'mongodb';
 import BetControls from './betControls';
+import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -95,12 +96,16 @@ function Bet({
                   right: '0',
                   opacity: '1',
                   backgroundColor: '#212121',
+                  '&:hover': {
+                    background: '#96cbfe',
+                  },
                 }}
                 onClick={() => setShow((prev) => !prev)}
               >
                 <Typography>
-                  {bet.bet_profit['back_matched'].length - 1} V
+                  {bet.bet_profit['back_matched'].length - 1}
                 </Typography>
+                {!show ? <KeyboardArrowDown /> : <KeyboardArrowUp />}
               </Button>
             )}
           </Table>
