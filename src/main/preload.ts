@@ -25,7 +25,8 @@ const electronHandler = {
     flashIcon: (eventId: string) => ipcRenderer.invoke('flash-icon', eventId),
     resetIconEvent: (eventId: string) =>
       ipcRenderer.invoke('reset-icon-event', eventId),
-    readLog: () => ipcRenderer.invoke('read-file'),
+    readLog: (bet: BData) => ipcRenderer.invoke('get-logs', bet),
+    tailLog: (bet: BData) => ipcRenderer.invoke('get-todays-logs', bet),
     fetchItems: (collection_name: string) =>
       ipcRenderer.invoke('fetch-items', collection_name),
     addItem: (item: any, collection_name: string) =>

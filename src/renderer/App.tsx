@@ -1,10 +1,11 @@
 import './App.css';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AppContextProvider from './useAppContext';
-import { BData, BetType } from '../../types';
+import { BData, BetType, Matched } from '../../types';
 import Bets from '../components/bets/bets';
 import TableSearch from '../components/search/tableSearch';
+import isEqual from 'lodash.isequal';
 
 type Balance = {
   smarkets: number;
@@ -18,7 +19,7 @@ export default function App() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [balance, setBalance] = useState({ smarkets: 0, betfair: 0 });
   const [flags, setFlags] = useState<{ [key: string]: string }>({});
-
+  const [devMachine, setDevMachine] = useState(false);
   useEffect(() => {
     const handleDataFetched = (fetchedData: BData[]) => {
       if (allBets) {
@@ -66,22 +67,38 @@ export default function App() {
           if (flags[0][key] === '_id') {
             delete flags[0][key];
           }
+        }
+        if (!isEqual(flags[0], flags)) {
           setFlags(flags[0]);
         }
       });
+      //   window.electron.ipcRenderer.tailLog()
     }, 10000);
   }, []);
-  const value = {
-    allBets,
-    k,
-    orderBy,
-    setK,
-    setOrderBy,
-    balance,
-    sortDirection,
-    setSortDirection,
-    setAllBets,
-  };
+  useEffect(() => {
+    const getFileNames = async () => {
+      const images = await window.electron.ipcRenderer.getAllImages(
+        'D:\\projects\\python\\odds_monkey_bot\\dist\\logs\\screenshots',
+      );
+      setDevMachine(!!images);
+    };
+    getFileNames();
+  }, []);
+  const value = useMemo(
+    () => ({
+      devMachine,
+      allBets,
+      k,
+      orderBy,
+      setK,
+      setOrderBy,
+      balance,
+      sortDirection,
+      setSortDirection,
+      setAllBets,
+    }),
+    [allBets, k, orderBy, balance, sortDirection, devMachine],
+  );
   return (
     <Router>
       <Routes>

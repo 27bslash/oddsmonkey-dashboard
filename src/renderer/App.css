@@ -179,3 +179,46 @@ input[type='number']::-webkit-outer-spin-button {
     -1px 1px 0 #000,
     1px 1px 0 #000;
 }
+.custom-number {
+  color: rgb(230, 16, 16);
+}
+.info-log {
+  color: greenyellow;
+}
+.code-grey > span {
+  color: rgb(110, 107, 107) !important;
+}
+.code-grey {
+  color: gray;
+}
+.code-error {
+  color: #f92672;
+  font-weight: 800;
+  cursor: pointer;
+}
+.code-error:hover {
+  color: #fe035f;
+}
+.code-function {
+  color: #96cbfe;
+}
+.code-function:hover {
+  cursor: pointer;
+  color: #5cacf7;
+}
+
+.code-file:hover {
+  cursor: pointer;
+  color: rgb(171, 83, 222);
+}
+.hljs-keyword {
+  color: inherit !important;
+}
+.thumbnail {
+  border: solid 1px transparent;
+}
+.thumbnail:hover {
+  /* box-sizing: border-box; */
+  cursor: pointer;
+  border: solid #f92672 1px;
+}

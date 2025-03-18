@@ -10,6 +10,7 @@ import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
 import Logs from '../BetCell/logs_reader/logs';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import PanoramaIcon from '@mui/icons-material/Panorama';
+import { useAppContext } from '../../../../renderer/useAppContext';
 type BetControlsProps = {
   bet: BData;
   deleteBet: (_id: ObjectId) => void;
@@ -22,7 +23,7 @@ const BetControls = ({ bet, deleteBet }: BetControlsProps) => {
   const [imageOverlay, setImageOverlay] = useState(false);
 
   const isRecentBet = Date.now() / 1000 - bet.bet_info.bet_unix_time < 300;
-
+  const { devMachine } = useAppContext();
   return (
     <>
       {isRecentBet && (
@@ -70,39 +71,43 @@ const BetControls = ({ bet, deleteBet }: BetControlsProps) => {
         }
         justify="center"
       />
-      <IconWrapper
-        icon={
-          <TextSnippetIcon
-            sx={{ padding: '5px', color: 'orange' }}
-            className="icon"
+      {devMachine && (
+        <>
+          <IconWrapper
+            icon={
+              <TextSnippetIcon
+                sx={{ padding: '5px', color: 'orange' }}
+                className="icon"
+              />
+            }
+            overlayBool={logOverlay}
+            setOverlayBool={setLogOverlay}
+            overlayComponent={
+              <Logs bet={bet} setOverlay={setLogOverlay} overlay={logOverlay} />
+            }
+            justify="center"
           />
-        }
-        overlayBool={logOverlay}
-        setOverlayBool={setLogOverlay}
-        overlayComponent={
-          <Logs bet={bet} setOverlay={setLogOverlay} overlay={logOverlay} />
-        }
-        justify="center"
-      />
 
-      <IconWrapper
-        icon={
-          <PanoramaIcon
-            sx={{ padding: '5px', color: '#96cbfe' }}
-            className="icon"
+          <IconWrapper
+            icon={
+              <PanoramaIcon
+                sx={{ padding: '5px', color: '#96cbfe' }}
+                className="icon"
+              />
+            }
+            overlayBool={imageOverlay}
+            setOverlayBool={setImageOverlay}
+            overlayComponent={
+              <DebugImages
+                data={bet}
+                setOverlay={setImageOverlay}
+                overlay={imageOverlay}
+              />
+            }
+            justify="center"
           />
-        }
-        overlayBool={imageOverlay}
-        setOverlayBool={setImageOverlay}
-        overlayComponent={
-          <DebugImages
-            data={bet}
-            setOverlay={setImageOverlay}
-            overlay={imageOverlay}
-          />
-        }
-        justify="center"
-      />
+        </>
+      )}
     </>
   );
 };
