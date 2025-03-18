@@ -10,6 +10,9 @@ function TableHeader({ filter }: { filter: string }) {
   return (
     <TableRow>
       <TableCell>
+        <Typography color="white">Total Balance</Typography>
+      </TableCell>
+      <TableCell>
         <Typography color="white">Smarkets Balance</Typography>
       </TableCell>
       <TableCell>

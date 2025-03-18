@@ -8,6 +8,7 @@ import { Config } from '../config/config';
 import { weightedAverage } from '../bets/Bet/BetCell/matched/matchedCell';
 import { filterTimestampsByDay, filterTimestampsByWeek } from '../bets/bets';
 import UpdateFlags from '../updateFlags';
+import { time } from 'console';
 
 type StatTableProps = {
   filter: 'active' | 'day' | 'week' | 'all time';
@@ -24,6 +25,7 @@ export type TotalProps = {
   smarketsLoss: number;
   betfairLoss: number;
   totalLiability: number;
+  accurateBalance: { [key: string]: any };
 };
 
 function StatTable({
@@ -54,7 +56,8 @@ function StatTable({
           x.time >= startHour && x.time <= endHour,
       );
     } else if (filter === 'week') {
-      const startOfWeek = filterTimestampsByWeek();
+      const startOfWeek = filterTimestampsByWeek() + 6000;
+      console.log(startOfWeek);
       filtered = data[0]['profit_tracker'].filter(
         (x: { [key: string]: number }) => x.time >= startOfWeek,
       );
@@ -82,33 +85,6 @@ function StatTable({
   useEffect(() => {
     if (!filteredBets) return;
 
-    for (const bet of filteredBets) {
-      let backWins = 0;
-      let layLiability = 0;
-      let backLiability = 0;
-      let layWins = 0;
-      if (bet.bet_profit.back_matched) {
-        try {
-          const backObj = updateProfit(bet.bet_profit.back_matched, 'back');
-          const layObj = updateProfit(bet.bet_profit.exchange_matched, 'lay');
-          const backLay: {
-            [key: string]: { [key: number]: number };
-          } = { lay: layObj['lay'], back: backObj['back'] };
-          Object.entries(backLay['back']).map((x) => {
-            backWins += (+x[0] - 1) * x[1];
-            backLiability += x[1];
-          });
-          Object.entries(backLay['lay']).map((x) => {
-            layWins += +x[1] * (1 - bet.bet_odds.commission);
-            layLiability += (+x[0] - 1) * x[1];
-          });
-          bet.bet_profit.back_win_profit = backWins - layLiability;
-          bet.bet_profit.lay_win_profit = layWins - backLiability;
-        } catch (err) {
-          //   console.log('err', bet.bet_profit, err);
-        }
-      }
-    }
     let avgProfit = +filteredBets
       .reduce(
         (sum, current) =>
@@ -145,12 +121,39 @@ function StatTable({
     const timeFilteredBets = filteredBets.filter(
       (x) => x.bet_info.unix_time > new Date().getTime() / 1000 - 5400,
     );
+    // [...filteredBets].sort((a, b) => b.bet_profit.back_matched.reduce((curr,sum) => sum matched - a))
+    const smarketsLoss = currentLoss(filteredBets, 'smarkets');
+    const betfairLoss = currentLoss(filteredBets, 'betfair');
 
-    const smarketsLoss = currentLoss(timeFilteredBets, 'smarkets');
-    const betfairLoss = currentLoss(timeFilteredBets, 'betfair');
     const totalLiability =
       currentLoss(filteredBets, 'smarkets') +
-      currentLoss(filteredBets, 'smarkets');
+      currentLoss(filteredBets, 'betfair');
+
+    const fetchAccurateBalance = async () => {
+      const trueBalance =
+        await window.electron.ipcRenderer.fetchItems('true_balance');
+      //   console.log(trueBalance[0].balance);
+      const convertedTodayTime = new Date().toISOString().split('T')[0];
+      const arr = ['smarkets_balance', 'betfair_balance'];
+      let TrueBalanceTotal = 0;
+
+      const o: { [key: string]: any } = {};
+      [
+        trueBalance[0].balance[trueBalance[0].balance.length - 1],
+        trueBalance[0].balance[trueBalance[0].balance.length - 2],
+      ].forEach((x) => {
+        if (x['smarkets_balance']) {
+          o['smarkets'] = x;
+        } else if (x['betfair_balance']) {
+          o['betfair'] = x;
+        }
+      });
+
+      console.log(TrueBalanceTotal);
+      setTotals((prev) => ({ ...prev!, accurateBalance: o }));
+      return TrueBalanceTotal;
+    };
+    const accurateBalance = fetchAccurateBalance();
     //   const loss =
     //     curr.bet_info.exchange === 'betfair'
     //       ? curr.bet_profit.lay_liability
@@ -160,14 +163,16 @@ function StatTable({
     minProfit += profitOverride;
     avgProfit += profitOverride;
     maxProfit += profitOverride;
-    setTotals({
+    setTotals((prev) => ({
+      ...prev!,
       totalProfit: avgProfit,
       minProfit: minProfit,
       maxProfit: maxProfit,
       smarketsLoss: +smarketsLoss.toFixed(2),
       betfairLoss: +betfairLoss.toFixed(2),
       totalLiability: +totalLiability.toFixed(2),
-    });
+      //   accurateBalance: accurateBalance,
+    }));
   }, [allBets, filteredBets, profitOverride]);
   return (
     <Box
@@ -178,7 +183,7 @@ function StatTable({
     >
       <UpdateFlags flags={flags} setFlag={setFlag} />
 
-      {totals && (
+      {totals && totals.accurateBalance && (
         <Table style={{ width: '600px', height: '150px' }}>
           <TableHeader filter={filter} />
           <StatTableBody totals={totals} balance={balance} />
@@ -192,15 +197,21 @@ function StatTable({
     timeFilteredBets: BData[],
     type: 'smarkets' | 'betfair',
   ) {
+    const seenEvents: { [key: string]: string }[] = [];
+
     return timeFilteredBets.reduce((totalLoss, bet) => {
       const isExchange = bet.bet_info.exchange === type;
       const matchedBets = isExchange
         ? bet.bet_profit.exchange_matched
         : bet.bet_profit.back_matched;
+      //   console.log(bet.bet_info.event_name, type, isExchange);
+      const matchArr = matchedBets.map((matchObj) => matchObj.matched).flat();
+      const oddsArr = matchedBets.map((matchObj) => matchObj.odds).flat();
+
+      const avgOdds = weightedAverage(matchArr, oddsArr);
 
       const totalLiability = matchedBets.reduce((liabilitySum, matchedBet) => {
         if (matchedBet.matched) {
-          // Sum up all matched values
           const matchedSum = matchedBet.matched.reduce(
             (sum, value) => sum + value,
             0,
@@ -214,17 +225,35 @@ function StatTable({
             : bet.bet_profit.back_liability)
         );
       }, 0);
-      const matchArr = bet.bet_profit.back_matched
-        .map((matchObj) => matchObj.matched)
-        .flat();
-      const oddsArr = bet.bet_profit.back_matched
-        .map((matchObj) => matchObj.odds)
-        .flat();
 
-      const avgOdds = weightedAverage(matchArr, oddsArr);
       let loss = totalLiability;
       if (avgOdds)
         loss = isExchange ? totalLiability * (avgOdds - 1) : totalLiability;
+      const oldEvent = seenEvents.find(
+        (doc) =>
+          doc.name === bet.bet_info.event_name &&
+          doc.exchange !== bet.bet_info.exchange,
+      );
+      const foundBet = timeFilteredBets.find(
+        (match) =>
+          match.bet_info.bet === bet.bet_info.bet &&
+          match.bet_info.event_name === bet.bet_info.event_name &&
+          match.bet_info.exchange !== bet.bet_info.exchange,
+      );
+      if (oldEvent) {
+        // console.log(
+        //   foundBet.bet_info.exchange,
+        //   bet.bet_info.event_name,
+        //   totalLoss,
+        //   bet.bet_info.exchange,
+        //   loss,
+        // );
+        return totalLoss - loss;
+      }
+      seenEvents.push({
+        name: bet.bet_info.event_name,
+        exchange: bet.bet_info.exchange,
+      });
       return totalLoss + loss;
     }, 0);
   }

@@ -4,20 +4,99 @@ import {
   TableCell,
   Typography,
   Tooltip,
-  Box,
   Grid2,
+  Button,
+  Dialog,
+  Box,
 } from '@mui/material';
 import { blue, green, red } from '@mui/material/colors';
 import { TotalProps } from '../statTable';
-
+import Graph from '../../graph/graph';
+import React, { SetStateAction, useState } from 'react';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 type StatTableBodyProps = {
   totals: TotalProps;
   balance: { smarkets: number; betfair: number };
 };
 function StatTableBody({ totals, balance }: StatTableBodyProps) {
+  const betfairExposure = (
+    totals.accurateBalance.betfair.betfair_balance - balance.betfair
+  ).toFixed(2);
+  const smarketsExposure = (
+    totals.accurateBalance.smarkets.smarkets_balance - balance.smarkets
+  ).toFixed(2);
+  const [open, setOpen] = useState(false);
   return (
     <TableBody>
       <TableRow>
+        <TableCell>
+          <Typography color={blue['400']} style={{ display: 'grid' }}>
+            £
+            {(
+              balance.smarkets +
+              balance.betfair +
+              totals.smarketsLoss +
+              totals.betfairLoss
+            ).toFixed(2)}
+          </Typography>
+          {totals.accurateBalance && (
+            <Box display={'flex'}>
+              <Tooltip
+                title={
+                  <>
+                    <Typography>
+                      Last updated Time: {totals.accurateBalance.smarkets.time}
+                    </Typography>
+                    <Typography>
+                      Smarkets Balance:
+                      <span style={{ marginLeft: '5px', color: green['400'] }}>
+                        £
+                        {totals.accurateBalance.smarkets.smarkets_balance.toFixed(
+                          2,
+                        )}
+                      </span>
+                      <span style={{ marginLeft: '5px', color: red['600'] }}>
+                        -£
+                        {smarketsExposure}
+                      </span>
+                    </Typography>
+                    <Typography>
+                      Betfair Balance:
+                      <span style={{ marginLeft: '5px', color: green['400'] }}>
+                        £
+                        {totals.accurateBalance.betfair.betfair_balance.toFixed(
+                          2,
+                        )}
+                      </span>
+                      <span style={{ marginLeft: '5px', color: red['600'] }}>
+                        -£
+                        {betfairExposure}
+                      </span>
+                    </Typography>
+                  </>
+                }
+              >
+                <Typography
+                  className="help-hover"
+                  color={green['400']}
+                  style={{ display: 'grid' }}
+                >
+                  £
+                  {(
+                    totals.accurateBalance.smarkets.smarkets_balance +
+                    totals.accurateBalance.betfair.betfair_balance
+                  ).toFixed(2)}
+                </Typography>
+              </Tooltip>
+              <TrendingUpIcon
+                onClick={() => setOpen((prev) => !prev)}
+                color={'success'}
+                className="icon"
+              />
+              <GraphDialog open={open} setOpen={setOpen} />
+            </Box>
+          )}
+        </TableCell>
         <TableCell>
           <Typography color={'gold'} style={{ display: 'grid' }}>
             £{balance.smarkets.toFixed(2)}
@@ -26,7 +105,7 @@ function StatTableBody({ totals, balance }: StatTableBodyProps) {
         </TableCell>
         <TableCell>
           <Typography color={'gold'} style={{ display: 'grid' }}>
-            £{balance.betfair}
+            £{balance.betfair.toFixed(2)}
             <span style={{ color: red['600'] }}>-£{totals.betfairLoss}</span>
           </Typography>
         </TableCell>
@@ -38,7 +117,7 @@ function StatTableBody({ totals, balance }: StatTableBodyProps) {
                 color="white"
                 marginRight="10px"
               >
-                min:
+                min
               </Typography>
             </Grid2>
             <Grid2 size={4} textAlign={'end'}>
@@ -52,7 +131,7 @@ function StatTableBody({ totals, balance }: StatTableBodyProps) {
                 color="white"
                 marginRight="10px"
               >
-                avg:
+                avg
               </Typography>
             </Grid2>
             <Grid2 size={4} textAlign={'end'}>
@@ -66,7 +145,7 @@ function StatTableBody({ totals, balance }: StatTableBodyProps) {
                 color="white"
                 marginRight="10px"
               >
-                max:
+                max
               </Typography>
             </Grid2>
             <Grid2 size={4} textAlign={'end'}>
@@ -92,6 +171,24 @@ function StatTableBody({ totals, balance }: StatTableBodyProps) {
         </TableCell>
       </TableRow>
     </TableBody>
+  );
+}
+export interface GraphDialogProps {
+  open: boolean;
+  setOpen: React.Dispatch<SetStateAction<boolean>>;
+}
+
+function GraphDialog(props: GraphDialogProps) {
+  const { setOpen, open } = props;
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open} fullWidth={true}>
+      <Graph />
+    </Dialog>
   );
 }
 export default StatTableBody;
