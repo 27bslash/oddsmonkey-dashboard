@@ -8,7 +8,7 @@ const TableSearch = ({ setSearchFilter }: TableSearchProps) => {
   const [error, setError] = useState(false);
 
   return (
-    <Box width={'300px'} marginLeft={'auto'} marginRight={0}>
+    <Box width={'300px'} marginRight={'20px'} >
       <TextField
         onChange={(e) => {
           const inputValue = e.target.value;
