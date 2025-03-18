@@ -52,6 +52,7 @@ const CalculatorTextField = ({
         marginBottom: '10px',
         borderRadius: '5px',
         borderBottom: 'none',
+        marginLeft: 'auto',
       }}
       label={label}
       inputProps={{ step: 0.01, min: 0 }}
