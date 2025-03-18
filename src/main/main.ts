@@ -1,3 +1,4 @@
+import { BData, BetProfit } from './../../types';
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 
 /**
@@ -14,10 +15,10 @@ import { app, BrowserWindow, shell, ipcMain, net } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
+import { findBetInLogs, resolveHtmlPath } from './util';
 import { MongoClient, ObjectId } from 'mongodb';
 import { protocol, session } from 'electron';
-import { BetInfo } from './../../types';
+import { exec } from 'child_process';
 
 require('dotenv').config();
 
@@ -123,7 +124,7 @@ const createWindow = async () => {
     directoryPath: string,
   ): string[] | undefined {
     let results: string[] = [];
-    // console.log(directoryPath); 
+    // console.log(directoryPath);
     try {
       const items = fs.readdirSync(directoryPath);
       return items;
@@ -135,14 +136,18 @@ const createWindow = async () => {
 
   async function addItem(item: any, collection_name: string) {
     const collection = client.db('oddsmonkey').collection(collection_name);
-    const result = await collection.insertOne(item); 
-    return result; 
-  }
+    const result = await collection.insertOne(item);
+    return result;
+  } 
   async function updateItem({ collectionName, query, update }) {
+    if (query._id?.buffer) {
+      query._id = new ObjectId(Buffer.from(query._id.buffer));
+    }
     console.log(collectionName, query, update);
     const collection = client.db('oddsmonkey').collection(collectionName);
-    const result = await collection.updateOne(query, update);
+    const result = await collection.updateOne(query, update, { upsert: true });
     console.log(result.modifiedCount);
+    await fetchItems('pending_bets', 'update items');
     return result.modifiedCount;
   }
   ipcMain.handle('fetch-items', async (event, collection_name: string) => {
@@ -179,18 +184,47 @@ const createWindow = async () => {
       const fpath =
         'D:\\projects\\python\\odds_monkey_bot\\dist\\logs\\custom_logs.log';
       const data = fs.readFileSync(fpath, 'utf8');
-      return data; // Send the file content back to the renderer process
+      return data;
     } catch (err) {
       console.error('Error reading file:', err);
       return null;
     }
   });
+  ipcMain.handle('get-todays-logs', (event, bet: BData) => {
+    const matchedTimes = bet.bet_profit.exchange_matched
+      .map((matchObj) => matchObj.bet_matched_time!)
+      .concat(
+        bet.bet_profit.exchange_matched.map(
+          (matchObj) => matchObj.bet_matched_time!,
+        ),
+      );
+    if (matchedTimes.some((x) => !x)) return;
+    const startTime = Math.min(...matchedTimes);
+    const endTime = Math.max(...matchedTimes);
+    return findBetInLogs(
+      startTime,
+      endTime,
+      'D:/projects/python/odds_monkey_bot/dist/logs/custom_logs.log',
+    );
+  });
+  ipcMain.handle('get-logs', (event, bet: BData) => {
+    const matchedTimes = bet.bet_profit.exchange_matched
+      .map((matchObj) => matchObj.bet_matched_time!)
+      .concat(
+        bet.bet_profit.exchange_matched.map(
+          (matchObj) => matchObj.bet_matched_time!,
+        ),
+      );
+    if (matchedTimes.some((x) => !x)) return;
+    const startTime = Math.min(...matchedTimes);
+    const endTime = Math.max(...matchedTimes);
+    return findBetInLogs(startTime, endTime, undefined);
+  });
   ipcMain.handle('flash-icon', (event, eventId: string) => {
     if (!eventStatus.get(eventId)) {
       console.log(eventId);
-      // If event is not yet acknowledged
       mainWindow!.flashFrame(true); // Flash the taskbar icon
-      eventStatus.set(eventId, true); // Mark event as acknowledged
+      eventStatus.set(eventId, true);
     }
   });
   ipcMain.handle('reset-icon-event', (event, eventId: string) => {
@@ -267,17 +301,23 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
-async function fetchItems(collection_name: string) {
+async function fetchItems(collection_name: string, func?: string) {
   const collection = client.db('oddsmonkey').collection(collection_name);
-  const data = await collection.find({}).toArray();
-  //   if (collection_name === 'balance') {
-  //     console.log(data);
-  //   }
+  const data = await collection
+    .find({})
+    // .sort({
+    //   'bet_profit.lay_win_profit': -1,
+    // })
+    .toArray();
+
+  if (collection_name === 'pending_bets') {
+    console.log('fetched', func);
+  }
   mainWindow!.webContents.send(`${collection_name}-fetched`, data);
   return data;
 }
 fetchItems('config');
-fetchItems('pending_bets');
+fetchItems('pending_bets', 'init');
 fetchItems('heartbeat');
 fetchItems('balance');
 setInterval(() => {

@@ -8,6 +8,7 @@ import {
 import { BData, BetType } from '../../types';
 
 type AppContextType = {
+  devMachine: boolean;
   allBets: BData[] | undefined;
   k: keyof BData;
   orderBy: keyof BetType;
@@ -15,7 +16,7 @@ type AppContextType = {
   setSortDirection: any;
   sortDirection: 'desc' | 'asc';
   setOrderBy: any;
-  setAllBets: any;
+  setAllBets: Dispatch<SetStateAction<BData[]>>;
   balance: { smarkets: number; betfair: number };
 };
 const AppContext = createContext<AppContextType | null>(null);

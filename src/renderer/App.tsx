@@ -6,6 +6,7 @@ import { BData, BetType, Matched } from '../../types';
 import Bets from '../components/bets/bets';
 import TableSearch from '../components/search/tableSearch';
 import isEqual from 'lodash.isequal';
+import Graph from '../components/graph/graph';
 
 type Balance = {
   smarkets: number;
@@ -20,23 +21,73 @@ export default function App() {
   const [balance, setBalance] = useState({ smarkets: 0, betfair: 0 });
   const [flags, setFlags] = useState<{ [key: string]: string }>({});
   const [devMachine, setDevMachine] = useState(false);
+  const updateProfit = (matchData: Matched[], key: string) => {
+    const backLay: any = { back: {}, lay: {} };
+    for (let doc of matchData) {
+      doc.odds.forEach((odd, i) => {
+        backLay[key][odd] = (backLay[key][odd] || 0) + doc.matched[i];
+      });
+    }
+    if (!Object.keys(backLay[key]).length) {
+      backLay[key] = { 0: 0 };
+    }
+    return backLay;
+  };
+  const fixProfits = (newData: BData[]) => {
+    console.log('update profits');
+    for (const bet of newData) {
+      let backWins = 0;
+      let layLiability = 0;
+      let backLiability = 0;
+      let layWins = 0;
+      if (bet.bet_profit.back_matched) {
+        try {
+          const backObj = updateProfit(bet.bet_profit.back_matched, 'back');
+          const layObj = updateProfit(bet.bet_profit.exchange_matched, 'lay');
+          const backLay: {
+            [key: string]: { [key: number]: number };
+          } = { lay: layObj['lay'], back: backObj['back'] };
+          Object.entries(backLay['back']).map((x) => {
+            backWins += (+x[0] - 1) * x[1];
+            backLiability += x[1];
+          });
+          Object.entries(backLay['lay']).map((x) => {
+            layWins += +x[1] * (1 - bet.bet_odds.commission);
+            layLiability += (+x[0] - 1) * x[1];
+          });
+          bet.bet_profit.back_win_profit = backWins - layLiability;
+          bet.bet_profit.lay_win_profit = layWins - backLiability;
+        } catch (err) {
+          //   console.log('err', bet.bet_profit, err);
+        }
+      }
+    }
+    return newData;
+  };
   useEffect(() => {
     const handleDataFetched = (fetchedData: BData[]) => {
+      //   console.log(
+      //     'data fetched',
+      //     fetchedData.map((doc) => {
+      //       const o = {
+      //         [doc.bet_info.event_name]: doc.bet_profit.lay_win_profit,
+      //       };
+      //       return o;
+      //     }),
+      //   );
+      fetchedData = fixProfits(fetchedData);
       if (allBets) {
         // console.log(fetchedData, allBets);
-        const fetchSrt = fetchedData.sort(
+        const fetchSrt = [...fetchedData].sort(
           (a, b) =>
             b['bet_info']['bet_unix_time'] - a['bet_info']['bet_unix_time'],
         );
-        const allbetsSrt = allBets.sort(
+        const allbetsSrt = [...allBets].sort(
           (a, b) =>
             b['bet_info']['bet_unix_time'] - a['bet_info']['bet_unix_time'],
         );
-        if (
-          allbetsSrt[0]['bet_info']['bet_unix_time'] ===
-          fetchSrt[0]['bet_info']['bet_unix_time']
-        ) {
-          console.log('same data');
+        if (isEqual(allbetsSrt, fetchSrt)) {
+          console.log('equal');
           return;
         }
       }

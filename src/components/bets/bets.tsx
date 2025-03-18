@@ -1,11 +1,6 @@
-import {
-  Box,
-  TableFooter,
-  TablePagination,
-  TableRow,
-} from '@mui/material';
+import { Box, TableFooter, TablePagination, TableRow } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { BData, BetInfo, BetOdds, BetProfit } from '../../../types';
+import { BData, BetInfo, BetOdds, BetProfit, Matched } from '../../../types';
 import { useAppContext } from '../../renderer/useAppContext';
 import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
 import StatTable from '../StatTable/statTable';
@@ -13,7 +8,8 @@ import Bet from './Bet/betTable/Bet';
 import { ObjectId } from 'mongodb';
 import TableSearch from '../search/tableSearch';
 import fuzzysort from 'fuzzysort';
-import FilterButtons, { FilterButton } from '../StatTable/FilterButtons';
+import FilterButtons from '../StatTable/FilterButtons';
+import Sleep from '../config/sleep';
 
 export type SortKeys = keyof BetInfo | keyof BetOdds | keyof BetProfit;
 
@@ -92,28 +88,39 @@ function Bets({ flags, setFlags }: BetProps) {
       return;
     }
 
-    const sorted = sortBets(allBets, k);
-    if (!sorted) {
-      setLoading(false); // Stop loading if sorting failed
-      return;
-    }
+    // const sorted = sortBets(allBets, k);
+    // if (!sorted) {
+    //   setLoading(false); // Stop loading if sorting failed
+    //   return;
+    // }
 
     // if (allBets[0].bet_info.event_name !== sorted[0].bet_info.event_name) {
-    setSortedData([...sorted]);
+    // setSortedData([...sorted]);
 
     setLoading(false); // Stop loading after sorting and any updates
   }, [orderBy, sortDirection, allBets, page]);
 
-  const sortBets = (arr: BData[], key?: keyof BData) => {
-    if (!key) key = k;
+  const sortBets = (arr: BData[], keyOverride?: keyof BData) => {
+    const key = keyOverride || k;
+    if (!key) return;
+    const sorted = [...arr].sort((a, b) => {
+      let aVal: number;
+      let bVal: number;
+      const bInfo = a.bet_info.event_name;
+      if (orderBy === 'back_win_profit') {
+        aVal = a.bet_profit.back_win_profit;
+        bVal = b.bet_profit.back_win_profit;
+      } else {
+        aVal = +a[key][orderBy as keyof (typeof a)[typeof key]];
+        bVal = +b[key][orderBy as keyof (typeof b)[typeof key]];
+      }
 
-    const sorted = [...arr]!.sort((a: any, b: any) => {
-      return sortDirection === 'asc'
-        ? +a[key][orderBy] - +b[key][orderBy]
-        : +b[key][orderBy] - +a[key][orderBy];
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
     });
+    console.log(sorted);
     return sorted;
   };
+
   const handleRequestSort = (
     property: SortKeys,
     sortDirection: string,
@@ -121,41 +128,49 @@ function Bets({ flags, setFlags }: BetProps) {
   ) => {
     const isAsc = sortDirection === 'asc';
     const ern = isAsc ? 'desc' : 'asc';
-    console.log('hadnle sort', ern, property);
+    console.log('hadnle sort', ern, property, betKey);
     setSortDirection(ern);
     setOrderBy(property);
     setK(betKey);
   };
 
   useEffect(() => {
-    if (!sortedData) return;
-    filterBetsByTime();
+    if (!allBets) return;
+    const timeFiltered = filterBetsByTime();
+    // fixProfits()
     if (searchFilter) {
       setTimeFilter('all time');
       const sorted = fuzzysort
-        .go(searchFilter, sortedData, {
+        .go(searchFilter, allBets, {
           key: 'bet_info.event_name',
         })
         .filter((result) => result.score >= 0.6);
       const newBets = sorted.map((result) => result.obj);
       const sortedBets = sortBets(newBets, 'bet_info');
-      setFilteredBets(sortedBets);
+      setSortedData(sortedBets);
       setCount(sorted.length);
+    } else {
+      setSortedData(sortBets(timeFiltered, k));
     }
-  }, [timeFilter, sortedData, searchFilter]);
+  }, [timeFilter, searchFilter, allBets, sortDirection, orderBy]);
 
   const filterBetsByTime = () => {
     // console.log('filter bets', showAll, allBets);
-    const now = new Date();
 
     const { startHour, endHour } = filterTimestampsByDay();
-    console.log(startHour, endHour);
     // console.log('day', currentTime, targetDay);
     const startOfWeekUnix = filterTimestampsByWeek();
-    const f = sortedData!.filter((x) => {
+    const f = allBets!.filter((x) => {
+      if (!x.bet_info) {
+        console.log(x);
+      }
       const betDate = new Date(x.bet_info.bet_unix_time);
       if (timeFilter === 'active') {
-        return x.bet_info.unix_time > new Date().getTime() / 1000 - 5400;
+        let threshold = 5700;
+        if (x.bet_info.market_type === 'Half Time') {
+          threshold = 3000;
+        }
+        return x.bet_info.unix_time > new Date().getTime() / 1000 - threshold;
       } else if (timeFilter === 'day') {
         return (
           x.bet_info.bet_unix_time >= startHour &&
@@ -167,8 +182,8 @@ function Bets({ flags, setFlags }: BetProps) {
       }
       return x;
     });
-    setFilteredBets(f);
     setCount(f.length);
+    return f;
   };
 
   const deleteBet = (_id: ObjectId) => {
@@ -192,7 +207,7 @@ function Bets({ flags, setFlags }: BetProps) {
       // padding={5}
       sx={{ backgroundColor: '#212121', height: 'fit-content', width: '93vw' }}
     >
-      {filteredBets && (
+      {sortedData && (
         <>
           <Box
             sx={{
@@ -208,7 +223,7 @@ function Bets({ flags, setFlags }: BetProps) {
               setFlag={setFlag}
               filter={timeFilter}
               setFilter={setTimeFilter}
-              filteredBets={filteredBets}
+              filteredBets={sortedData}
               totalBets={allBets!}
             />
           </Box>
@@ -217,17 +232,23 @@ function Bets({ flags, setFlags }: BetProps) {
               display: 'flex',
               position: 'sticky',
               background: 'inherit',
-              top: '200px',
+              top: '250px',
               zIndex: '99',
             }}
           >
-            <FilterButtons
-              filter={timeFilter}
-              setFilter={setTimeFilter}
-            ></FilterButtons>
-            <TableSearch setSearchFilter={setSearchFilter}></TableSearch>
+            <Box
+              display={'flex'}
+              width={'100%'}
+              justifyContent={'space-between'}
+            >
+              <FilterButtons
+                filter={timeFilter}
+                setFilter={setTimeFilter}
+              ></FilterButtons>
+              <TableSearch setSearchFilter={setSearchFilter}></TableSearch>
+            </Box>
           </div>
-          {filteredBets.slice(page * 10, page * 10 + 10).map((bet, i) => {
+          {sortedData.slice(page * 10, page * 10 + 10).map((bet, i) => {
             return (
               <Bet
                 key={i}
