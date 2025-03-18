@@ -7,6 +7,7 @@ import betfair from '../../../../icons/betfair.png';
 import BetTableCell from '../BetCell/betCell';
 import MatchedCell from '../BetCell/matched/matchedCell';
 import { green, blue, grey } from '@mui/material/colors';
+import React, { SetStateAction } from 'react';
 
 function formatDateFromTimestamp(unixTimestamp: number) {
   const date = new Date(unixTimestamp * 1000); // Convert to milliseconds
@@ -22,16 +23,14 @@ function formatDateFromTimestamp(unixTimestamp: number) {
   return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 }
 
-const unixTimestamp = 1705997101; // Example timestamp
-console.log(formatDateFromTimestamp(unixTimestamp));
-
 type BetTableBodyProps = {
   data: BData;
   lay: boolean;
   index: number;
   show: boolean;
+  setBet: React.Dispatch<SetStateAction<BData>>;
 };
-function BetTableRow({ data, lay, index, show }: BetTableBodyProps) {
+function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
   const stake_img =
     data.bet_info['exchange'] !== 'betfair' ? betfair : smarkets;
   const lay_img = stake_img !== smarkets ? smarkets : betfair;
@@ -43,9 +42,9 @@ function BetTableRow({ data, lay, index, show }: BetTableBodyProps) {
       return matchArr.reduce((acc, curr, i) => {
         return (acc += curr.staked.reduce((a, c, j) => {
           if (liability) {
-            return (a += c * (matchArr[i].odds[j] - 1));
+            return a + c * (matchArr[i].odds[j] - 1);
           }
-          return (a += c);
+          return a + c;
         }, 0));
       }, 0);
     } catch (error) {
@@ -118,7 +117,14 @@ function BetTableRow({ data, lay, index, show }: BetTableBodyProps) {
       data.bet_profit['exchange_matched'][0] &&
       data.bet_profit['exchange_matched'][0]['odds'] &&
       data.bet_profit['back_matched'][0]['odds'] ? (
-        <MatchedCell lay={lay} index={index} stake={stake} show={show} />
+        <MatchedCell
+          lay={lay}
+          index={index}
+          stake={stake}
+          show={show}
+          bet={data}
+          setBet={setBet}
+        />
       ) : (
         <>
           <BetTableCell>{data.bet_odds.back_odds}</BetTableCell>

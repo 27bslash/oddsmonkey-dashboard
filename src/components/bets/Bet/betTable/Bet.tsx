@@ -70,12 +70,14 @@ function Bet({
                     <>
                       <BetTableRow
                         data={bet}
+                        setBet={setBetData}
                         index={i}
                         lay={false}
                         show={show}
                       />
                       <BetTableRow
                         data={bet}
+                        setBet={setBetData}
                         index={i}
                         lay={true}
                         show={show}
