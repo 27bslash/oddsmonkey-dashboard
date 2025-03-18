@@ -9,19 +9,12 @@ import {
 } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
 import { red } from '@mui/material/colors';
+import { useAppContext } from '../../renderer/useAppContext';
 const ShutDown = () => {
   const [stopping, setStopping] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const [shutdownConfirmWindow, setShutdownConfirmWindow] = useState(false);
-  useEffect(() => {
-    const getFileNames = async () => {
-      const images = await window.electron.ipcRenderer.getAllImages(
-        'D:\\projects\\python\\odds_monkey_bot\\dist\\logs\\screenshots',
-      );
-      setShowButton(!!images);
-    };
-    getFileNames();
-  }, []);
+  const { devMachine } = useAppContext();
   const handleClick = async () => {
     // setStopping(true);
     const updateObj = {
@@ -45,52 +38,58 @@ const ShutDown = () => {
   };
 
   return (
-    <Box>
-      <Button
-        variant="contained"
-        color="error"
-        onClick={() => setShutdownConfirmWindow(true)}
-      >
-        <Typography textAlign={'center'} sx={{ textShadow: 'none' }}>
-          Shutdown
-        </Typography>
-      </Button>
-      <Dialog
-        open={shutdownConfirmWindow}
-        onClose={() => setShutdownConfirmWindow(false)}
-        PaperProps={{ style: { padding: '10px' } }}
-      >
-        <DialogTitle>
-          <Typography
-            variant="h5"
-            textAlign={'center'}
-            sx={{ textShadow: 'none' }}
-          >
-            Shutdown?
+    devMachine && (
+      <Box marginRight={'8px'}>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={() => setShutdownConfirmWindow(true)}
+        >
+          <Typography textAlign={'center'} sx={{ textShadow: 'none' }}>
+            Shutdown
           </Typography>
-        </DialogTitle>
-        <DialogActions>
-          <Box display={'flex'} justifyContent={'space-around'} width={'100%'}>
-            <Button
-              variant="contained"
-              startIcon={<Check />}
-              color="success"
-              onClick={handleClick}
+        </Button>
+        <Dialog
+          open={shutdownConfirmWindow}
+          onClose={() => setShutdownConfirmWindow(false)}
+          PaperProps={{ style: { padding: '10px' } }}
+        >
+          <DialogTitle>
+            <Typography
+              variant="h5"
+              textAlign={'center'}
+              sx={{ textShadow: 'none' }}
             >
-              Confirm
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<Close />}
-              color="error"
-              onClick={() => setShutdownConfirmWindow(false)}
+              Shutdown?
+            </Typography>
+          </DialogTitle>
+          <DialogActions>
+            <Box
+              display={'flex'}
+              justifyContent={'space-around'}
+              width={'100%'}
             >
-              Cancel
-            </Button>
-          </Box>
-        </DialogActions>
-      </Dialog>
-    </Box>
+              <Button
+                variant="contained"
+                startIcon={<Check />}
+                color="success"
+                onClick={handleClick}
+              >
+                Confirm
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<Close />}
+                color="error"
+                onClick={() => setShutdownConfirmWindow(false)}
+              >
+                Cancel
+              </Button>
+            </Box>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    )
   );
 };
 export default ShutDown;

@@ -1,6 +1,7 @@
-import { Box, Button, TextField, Typography } from '@mui/material';
-import { ChangeEvent, SetStateAction, useEffect, useState } from 'react';
+import { Box, Button, Typography } from '@mui/material';
+import { ChangeEvent, useEffect, useState } from 'react';
 import ShutDown from './shutdown';
+import Sleep from './sleep';
 
 type configObj = {
   SINGLE_BET_MAX: number;
@@ -115,14 +116,17 @@ export function Config() {
               {running ? 'Stop' : 'Start'}
             </Button>
           </div>
-          <ShutDown />
+          <Box display={'flex'}>
+            <ShutDown />
+            <Sleep />
+          </Box>
         </Box>
       )}
     </>
   );
 }
 
-function NumberInput({
+export function NumberInput({
   value,
   label,
   setUpdate,
