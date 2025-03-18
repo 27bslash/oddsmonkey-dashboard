@@ -1,7 +1,8 @@
 import { Box, Typography } from '@mui/material';
 import { useState, useEffect, KeyboardEvent, SetStateAction } from 'react';
-import { Matched } from '../../../../../../types';
+import { BData, Matched } from '../../../../../../types';
 import { useBet } from '../../../betContext';
+import { useAppContext } from '../../../../../renderer/useAppContext';
 
 type EditableCellProps = {
   matchVal: { [key: number]: number };
@@ -10,7 +11,8 @@ type EditableCellProps = {
   type: 'matched' | 'odds';
   show: boolean;
   index: number;
-
+  bet: BData;
+  setBet: React.Dispatch<SetStateAction<BData>>;
   stake?: number;
 };
 function EditableCell({
@@ -21,12 +23,13 @@ function EditableCell({
   show,
   index,
   stake,
+  bet,
+  setBet,
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState('');
   const [color, setColor] = useState('');
 
-  const { betData, setBetData, updateSort } = useBet();
   val = val || 0;
   const handleClick = () => {
     setIsEditing(!isEditing);
@@ -39,20 +42,15 @@ function EditableCell({
       setValue(type === 'odds' ? val.toFixed(3) : val.toFixed(2));
     }
   }, [isEditing, val]);
+  const { allBets, setAllBets } = useAppContext();
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       console.log('enter', value, index);
       let updateQuery = `bet_profit.${lay ? 'exchange_matched' : 'back_matched'}`;
       let updateVal: number[] | Matched[] = [];
       if (!show) {
-        const arr =
-          betData!.bet_profit[lay ? 'exchange_matched' : 'back_matched'];
-        console.log(arr, betData);
-        const summedMatch = arr.reduce(
-          (acc, curr) => (acc += curr[type].reduce((a, c) => (a += c), 0)),
-          0,
-        );
-        console.log(summedMatch, matchVal, value);
+        const arr = bet!.bet_profit[lay ? 'exchange_matched' : 'back_matched'];
+
         const updateBetValue = +value / arr.length;
         for (let x of arr) {
           if (type !== 'odds') {
@@ -67,21 +65,31 @@ function EditableCell({
         updateQuery = `bet_profit.${lay ? 'exchange_matched' : 'back_matched'}`;
         console.log(updateQuery, arr, updateVal);
         updateVal = arr;
-        setBetData((prev) => ({
-          ...prev, // Spread the previous state
-          bet_profit: {
-            ...prev.bet_profit, // Spread the previous bet_profit object to avoid mutation
-            [lay ? 'exchange_matched' : 'back_matched']: arr, // Dynamically set the property
-          },
-        }));
+        const matchingBet = allBets!.find((match) => match._id === bet._id);
+        bet.bet_profit[lay ? 'exchange_matched' : 'back_matched'] = arr;
+        setAllBets(
+          [...allBets!].map((doc) => ({
+            ...doc,
+            doc: doc._id === bet._id ? bet : doc,
+          })),
+        );
+        console.log(matchingBet?.bet_info.event_name);
+        console.log(bet.bet_info.event_name);
+        // setBet((prev) => ({
+        //   ...prev,
+        //   bet_profit: {
+        //     ...prev.bet_profit,
+        //     [lay ? 'exchange_matched' : 'back_matched']: arr,
+        //   },
+        // }));
       } else {
         updateQuery = `${updateQuery}[${index}].${type}`;
         console.log(updateQuery);
         updateVal = [+value];
-        setBetData((prev) => ({
-          ...prev, // Spread the previous state
+        setBet((prev) => ({
+          ...prev,
           bet_profit: {
-            ...prev.bet_profit, // Spread the previous bet_profit object
+            ...prev.bet_profit,
             [lay ? 'exchange_matched' : 'back_matched']: prev.bet_profit[
               lay ? 'exchange_matched' : 'back_matched'
             ].map((item, idx) =>
@@ -92,31 +100,33 @@ function EditableCell({
       }
       window.electron.ipcRenderer.updateItem({
         collectionName: 'pending_bets',
-        query: { 'bet_info.bet_unix_time': betData.bet_info.bet_unix_time },
+        query: { 'bet_info.bet_unix_time': bet.bet_info.bet_unix_time },
         update: { $set: { [updateQuery]: updateVal } },
       });
+      window.electron.ipcRenderer.fetchItems('pending_bets');
       console.log({
         collectionName: 'pending_bets',
-        query: { 'bet_info.bet_unix_time': betData.bet_info.bet_unix_time },
+        query: { 'bet_info.bet_unix_time': bet.bet_info.bet_unix_time },
         update: { $set: { [updateQuery]: updateVal } },
       });
     } else if (e.key === 'Escape') {
       setIsEditing(false);
     }
   };
+
   const calcColor = () => {
     const sum = Object.values(matchVal).reduce((prev, curr) => {
       return prev + curr;
     }, 0);
     const stk = !stake
-      ? betData.bet_profit[!lay ? 'back_stake' : 'lay_stake']
+      ? bet.bet_profit[!lay ? 'back_stake' : 'lay_stake']
       : stake;
     // console.log(stk, sum);
     return sum.toFixed(2) === stk.toFixed(2) ? 'white' : 'red';
   };
   useEffect(() => {
     setColor(calcColor());
-  }, [betData, value]);
+  }, [bet, value]);
   //   console.log(data.bet_info.event_name, matchVal, color);
   return (
     <>

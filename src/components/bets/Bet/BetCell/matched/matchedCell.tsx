@@ -2,7 +2,7 @@ import { Typography } from '@mui/material';
 import { green, red } from '@mui/material/colors';
 import EditableCell from './editableTextCell';
 import { useState, useEffect, SetStateAction } from 'react';
-import { Matched } from '../../../../../../types';
+import { BData, Matched } from '../../../../../../types';
 import { useBet } from '../../../betContext';
 import BetTableCell from '../betCell';
 
@@ -11,6 +11,8 @@ type MatchedCellProps = {
   index: number;
   stake: number;
   show: boolean;
+  bet: BData;
+  setBet: React.Dispatch<SetStateAction<BData>>;
 };
 export const weightedAverage = (matchedArr: number[], oddsArr: number[]) => {
   const weightedAvg =
@@ -18,7 +20,14 @@ export const weightedAverage = (matchedArr: number[], oddsArr: number[]) => {
     matchedArr.reduce((acc, stake) => acc + stake, 0);
   return weightedAvg;
 };
-function MatchedCell({ lay, index, stake, show }: MatchedCellProps) {
+function MatchedCell({
+  lay,
+  index,
+  stake,
+  show,
+  bet,
+  setBet,
+}: MatchedCellProps) {
   const [backWinProfit, setBackWinProfit] = useState(0);
   const [layWinProfit, setLayWinProfit] = useState(0);
   const [backLay, setBackLay] = useState<{
@@ -27,14 +36,13 @@ function MatchedCell({ lay, index, stake, show }: MatchedCellProps) {
     back: {},
     lay: {},
   });
-  const { betData } = useBet();
 
   // for (const x of matchedArr) {
   // odds.reduce((acc, odd, i) => acc + odd * stakes[i], 0) /
   //   sumStakes(stakes);
   // }
 
-  const update_obj = (matchData: Matched[], key: string) => {
+  const updateObj = (matchData: Matched[], key: string) => {
     if (!matchData.length) return;
     const backLay: any = { back: {}, lay: {} };
     let matched: number[] = [];
@@ -81,14 +89,15 @@ function MatchedCell({ lay, index, stake, show }: MatchedCellProps) {
     return backLay;
   };
   useEffect(() => {
-    const layObj = update_obj(betData.bet_profit.exchange_matched, 'lay');
-    const backObj = update_obj(betData.bet_profit.back_matched, 'back');
+    if (!Object.keys(bet).length) return;
+    const layObj = updateObj(bet.bet_profit.exchange_matched, 'lay');
+    const backObj = updateObj(bet.bet_profit.back_matched, 'back');
     if (layObj && backObj) {
       setBackLay(() => {
         return { lay: layObj['lay'], back: backObj['back'] };
       });
     }
-  }, [betData, show]);
+  }, [bet, show]);
   //   console.log(bet.bet_info.event_name, bet.bet_profit.exchange_matched, d);
 
   //   back_wins = round(back_stake * (back_odds - 1), 2);
@@ -106,98 +115,108 @@ function MatchedCell({ lay, index, stake, show }: MatchedCellProps) {
       backLiability += x[1];
     });
     Object.entries(backLay['lay']).map((x) => {
-      layWins += +x[1] * (1 - betData.bet_odds.commission);
+      layWins += +x[1] * (1 - bet.bet_odds.commission);
       layLiability += (+x[0] - 1) * x[1];
     });
 
     setBackWinProfit(backWins - layLiability);
     setLayWinProfit(layWins - backLiability);
-  }, [backLay, betData]);
+  }, [backLay, bet]);
   return (
-    <>
-      <BetTableCell>
-        {!lay
-          ? Object.keys(backLay['back']).map((x, i) => {
-              return (
-                <EditableCell
-                  matchVal={backLay['back']}
-                  lay={false}
-                  type={'odds'}
-                  index={index}
-                  show={show}
-                  val={+x}
-                />
-              );
-            })
-          : Object.keys(backLay['lay']).map((x, i) => {
-              return (
-                <EditableCell
-                  matchVal={backLay['lay']}
-                  lay={true}
-                  val={+x}
-                  type={'odds'}
-                  index={index}
-                  show={show}
-                />
-              );
-            })}
-      </BetTableCell>
-      <BetTableCell>
-        {!lay ? (
-          <>
-            {Object.values(backLay['back']).map((x, i) => {
-              return (
-                <EditableCell
-                  matchVal={backLay['back']}
-                  lay={false}
-                  type={'matched'}
-                  stake={stake}
-                  index={index}
-                  show={show}
-                  val={x}
-                />
-              );
-            })}
-          </>
-        ) : (
-          <>
-            {Object.values(backLay['lay']).map((x, i) => {
-              return (
-                <EditableCell
-                  matchVal={backLay['lay']}
-                  lay={true}
-                  val={x}
-                  show={show}
-                  index={index}
-                  stake={stake}
-                  type={'matched'}
-                />
-              );
-            })}
-          </>
-        )}
-      </BetTableCell>
-      <BetTableCell>
-        {!lay ? (
-          <Typography color={backWinProfit >= 0 ? green['400'] : red['400']}>
-            £{backWinProfit.toFixed(2)}
-          </Typography>
-        ) : (
-          <Typography color={layWinProfit >= 0 ? green['400'] : red['400']}>
-            £{layWinProfit.toFixed(2)}
-          </Typography>
-        )}
-      </BetTableCell>
-      <BetTableCell>
-        £
-        {(
-          Math.min(
-            betData.bet_odds.total_back_liquidity,
-            betData.bet_odds.total_lay_liquidity,
-          ) * 0.8
-        ).toFixed(2)}
-      </BetTableCell>
-    </>
+    bet && (
+      <>
+        <BetTableCell>
+          {!lay
+            ? Object.keys(backLay['back']).map((x, i) => {
+                return (
+                  <EditableCell
+                    matchVal={backLay['back']}
+                    bet={bet}
+                    setBet={setBet}
+                    lay={false}
+                    type={'odds'}
+                    index={index}
+                    show={show}
+                    val={+x}
+                  />
+                );
+              })
+            : Object.keys(backLay['lay']).map((x, i) => {
+                return (
+                  <EditableCell
+                    matchVal={backLay['lay']}
+                    bet={bet}
+                    setBet={setBet}
+                    lay={true}
+                    val={+x}
+                    type={'odds'}
+                    index={index}
+                    show={show}
+                  />
+                );
+              })}
+        </BetTableCell>
+        <BetTableCell>
+          {!lay ? (
+            <>
+              {Object.values(backLay['back']).map((x, i) => {
+                return (
+                  <EditableCell
+                    matchVal={backLay['back']}
+                    bet={bet}
+                    setBet={setBet}
+                    lay={false}
+                    type={'matched'}
+                    stake={stake}
+                    index={index}
+                    show={show}
+                    val={x}
+                  />
+                );
+              })}
+            </>
+          ) : (
+            <>
+              {Object.values(backLay['lay']).map((x, i) => {
+                return (
+                  <EditableCell
+                    matchVal={backLay['lay']}
+                    bet={bet}
+                    setBet={setBet}
+                    lay={true}
+                    val={x}
+                    show={show}
+                    index={index}
+                    stake={stake}
+                    type={'matched'}
+                  />
+                );
+              })}
+            </>
+          )}
+        </BetTableCell>
+        <BetTableCell>
+          {!lay ? (
+            <Typography color={backWinProfit >= 0 ? green['400'] : red['400']}>
+              £{backWinProfit.toFixed(2)}
+            </Typography>
+          ) : (
+            <Typography color={layWinProfit >= 0 ? green['400'] : red['400']}>
+              £{layWinProfit.toFixed(2)}
+            </Typography>
+          )}
+        </BetTableCell>
+        <BetTableCell>
+          £
+          {(
+            Math.min(
+              bet.bet_odds.total_back_liquidity,
+              bet.bet_odds.total_lay_liquidity,
+            ) * 0.8
+          ).toFixed(2)}
+        </BetTableCell>
+      </>
+    )
   );
 }
 export default MatchedCell;
