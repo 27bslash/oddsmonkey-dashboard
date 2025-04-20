@@ -9,18 +9,14 @@ import MatchedCell from '../BetCell/matched/matchedCell';
 import { green, blue, grey } from '@mui/material/colors';
 import React, { SetStateAction } from 'react';
 
-function formatDateFromTimestamp(unixTimestamp: number) {
-  const date = new Date(unixTimestamp * 1000); // Convert to milliseconds
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
-  const year = String(date.getFullYear()).slice(-2); // Get last 2 digits of the year
-
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-
-  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+function formatDateFromTimestamp(time: number) {
+  return new Date(time * 1000).toLocaleString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 type BetTableBodyProps = {
@@ -82,7 +78,7 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
         </Tooltip>
       </BetTableCell>
       <BetTableCell>
-        <Tooltip title={betTimeTooltipText}>
+        <Tooltip title={formatDateFromTimestamp(matchTime)}>
           <Typography className="help-hover">
             {timeAgo.format(Date.now() - betTimeDelta)}
           </Typography>
