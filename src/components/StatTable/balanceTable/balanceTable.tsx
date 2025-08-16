@@ -17,8 +17,9 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 type StatTableBodyProps = {
   totals: TotalProps;
   balance: { smarkets: number; betfair: number };
+  filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
 };
-function StatTableBody({ totals, balance }: StatTableBodyProps) {
+function StatTableBody({ totals, balance, filter }: StatTableBodyProps) {
   const betfairExposure = (
     totals.accurateBalance.betfair.betfair_balance - balance.betfair
   ).toFixed(2);
@@ -93,7 +94,7 @@ function StatTableBody({ totals, balance }: StatTableBodyProps) {
                 color={'success'}
                 className="icon"
               />
-              <GraphDialog open={open} setOpen={setOpen} />
+              <GraphDialog open={open} filter={filter} setOpen={setOpen} />
             </Box>
           )}
         </TableCell>
@@ -176,18 +177,26 @@ function StatTableBody({ totals, balance }: StatTableBodyProps) {
 export interface GraphDialogProps {
   open: boolean;
   setOpen: React.Dispatch<SetStateAction<boolean>>;
+  filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
 }
 
 function GraphDialog(props: GraphDialogProps) {
-  const { setOpen, open } = props;
+  const { setOpen, open, filter } = props;
 
   const handleClose = () => {
     setOpen(false);
   };
 
   return (
-    <Dialog onClose={handleClose} open={open} fullWidth={true}>
-      <Graph />
+    <Dialog
+      onClose={handleClose}
+      open={open}
+      fullWidth={true}
+      PaperProps={{
+        style: { width: 1300, maxWidth: '90vw' },
+      }}
+    >
+      <Graph filter={filter} />
     </Dialog>
   );
 }

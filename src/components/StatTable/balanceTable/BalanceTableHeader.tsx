@@ -1,11 +1,15 @@
 import { TableRow, TableCell, Typography } from '@mui/material';
 
 function TableHeader({ filter }: { filter: string }) {
-  let s = filter === 'all time' ? 'Total' : 'Current';
+  let dateFilterStr = filter === 'all time' ? 'Total' : 'Current';
   if (filter === 'week') {
-    s = 'weekly';
+    dateFilterStr = 'weekly';
   } else if (filter === 'day') {
-    s = 'daily';
+    dateFilterStr = 'daily';
+  } else if (filter === 'month') {
+    dateFilterStr = 'monthly';
+  } else if (filter === 'year') {
+    dateFilterStr = 'yearly';
   }
   return (
     <TableRow>
@@ -22,13 +26,13 @@ function TableHeader({ filter }: { filter: string }) {
         <Typography
           textTransform={'capitalize'}
           color="white"
-        >{`${s} profit`}</Typography>
+        >{`${dateFilterStr} profit`}</Typography>
       </TableCell>
       <TableCell>
         <Typography
           textTransform={'capitalize'}
           color="white"
-        >{`${s} liability`}</Typography>
+        >{`${dateFilterStr} liability`}</Typography>
       </TableCell>
     </TableRow>
   );

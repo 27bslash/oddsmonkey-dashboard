@@ -1,6 +1,6 @@
 import { Box, Table } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { BData, BProfit, Matched } from '../../../types';
+import { BData, Matched } from '../../../types';
 import StatTableBody from './balanceTable/balanceTable';
 import TableHeader from './balanceTable/BalanceTableHeader';
 import { useAppContext } from '../../renderer/useAppContext';
@@ -8,10 +8,9 @@ import { Config } from '../config/config';
 import { weightedAverage } from '../bets/Bet/BetCell/matched/matchedCell';
 import { filterTimestampsByDay, filterTimestampsByWeek } from '../bets/bets';
 import UpdateFlags from '../updateFlags';
-import { time } from 'console';
 
 type StatTableProps = {
-  filter: 'active' | 'day' | 'week' | 'all time';
+  filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
   setFilter: React.SetStateAction<any>;
   filteredBets: BData[];
   totalBets: BData[];
@@ -182,11 +181,10 @@ function StatTable({
       marginBottom={'50px'}
     >
       <UpdateFlags flags={flags} setFlag={setFlag} />
-
       {totals && totals.accurateBalance && (
         <Table style={{ width: '600px', height: '150px' }}>
           <TableHeader filter={filter} />
-          <StatTableBody totals={totals} balance={balance} />
+          <StatTableBody totals={totals} filter={filter} balance={balance} />
         </Table>
       )}
       <Config></Config>
@@ -197,8 +195,8 @@ function StatTable({
     timeFilteredBets: BData[],
     type: 'smarkets' | 'betfair',
   ) {
-    const seenEvents: { [key: string]: string }[] = [];
-
+    const seenEvents: BData[] = [];
+    console.log(timeFilteredBets);
     return timeFilteredBets.reduce((totalLoss, bet) => {
       const isExchange = bet.bet_info.exchange === type;
       const matchedBets = isExchange
@@ -231,8 +229,10 @@ function StatTable({
         loss = isExchange ? totalLiability * (avgOdds - 1) : totalLiability;
       const oldEvent = seenEvents.find(
         (doc) =>
-          doc.name === bet.bet_info.event_name &&
-          doc.exchange !== bet.bet_info.exchange,
+          doc.bet_info.event_name === bet.bet_info.event_name &&
+          doc.bet_info.event_time === bet.bet_info.event_time &&
+          doc.bet_info.bet === bet.bet_info.bet &&
+          doc.bet_info.exchange !== bet.bet_info.exchange
       );
       const foundBet = timeFilteredBets.find(
         (match) =>
@@ -250,10 +250,7 @@ function StatTable({
         // );
         return totalLoss - loss;
       }
-      seenEvents.push({
-        name: bet.bet_info.event_name,
-        exchange: bet.bet_info.exchange,
-      });
+      seenEvents.push(bet);
       return totalLoss + loss;
     }, 0);
   }

@@ -4,7 +4,7 @@ import { blue, green } from '@mui/material/colors';
 import { SetStateAction, Dispatch } from 'react';
 import UpdateFlags from '../updateFlags';
 type FilterButtonProps = {
-  filter: 'active' | 'day' | 'week' | 'all time';
+  filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
   setFilter: Dispatch<SetStateAction<FilterButtonProps['filter']>>;
 };
 function FilterButtons({ filter, setFilter }: FilterButtonProps) {
@@ -13,8 +13,9 @@ function FilterButtons({ filter, setFilter }: FilterButtonProps) {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'start',
-        alignItems: 'center',
+        justifyContent: 'end',
+        alignItems: 'end',
+        marginBottom: '1.1em',
       }}
     >
       <Typography
@@ -22,11 +23,12 @@ function FilterButtons({ filter, setFilter }: FilterButtonProps) {
         textTransform={'capitalize'}
         // marginBottom={'60px'}
       >
-        filter by Bet Placed Time
+        {/* filter by Bet Placed Time */}
       </Typography>
       <ButtonGroup
         variant="contained"
         // disableElevation
+        color="primary"
         sx={{
           height: '45px',
           textWrap: 'nowrap',
@@ -42,6 +44,12 @@ function FilterButtons({ filter, setFilter }: FilterButtonProps) {
           week
         </FilterButton>
         <FilterButton currentFilter={filter} setFilter={setFilter}>
+          month
+        </FilterButton>
+        <FilterButton currentFilter={filter} setFilter={setFilter}>
+          year
+        </FilterButton>
+        <FilterButton currentFilter={filter} setFilter={setFilter}>
           all time
         </FilterButton>
       </ButtonGroup>
@@ -52,7 +60,8 @@ export function FilterButton({ currentFilter, setFilter, children }: any) {
   return (
     <Button
       sx={{
-        backgroundColor: currentFilter === children ? blue['800'] : blue['600'],
+        backgroundColor:
+          currentFilter === children ? 'primary.dark' : 'primary',
       }}
       onClick={() => setFilter(children)}
     >
