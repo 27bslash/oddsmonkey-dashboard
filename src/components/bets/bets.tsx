@@ -1,4 +1,9 @@
-import { Box, TableFooter, TablePagination, TableRow } from '@mui/material';
+import {
+  Box,
+  TableFooter,
+  TablePagination,
+  TableRow,
+} from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { BData, BetInfo, BetOdds, BetProfit, Matched } from '../../../types';
 import { useAppContext } from '../../renderer/useAppContext';
@@ -9,7 +14,6 @@ import { ObjectId } from 'mongodb';
 import TableSearch from '../search/tableSearch';
 import fuzzysort from 'fuzzysort';
 import FilterButtons from '../StatTable/FilterButtons';
-import Sleep from '../config/sleep';
 
 export type SortKeys = keyof BetInfo | keyof BetOdds | keyof BetProfit;
 
@@ -43,6 +47,16 @@ export function filterTimestampsByDay() {
     ).getTime() / 1000;
   return { startHour, endHour };
 }
+export function filterTimestampsByMonth() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  return startOfMonth.getTime() / 1000;
+}
+export function filterTimestampsByYear() {
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  return startOfYear.getTime() / 1000;
+}
 type BetProps = {
   flags: { [key: string]: string };
   setFlags: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
@@ -51,7 +65,7 @@ function Bets({ flags, setFlags }: BetProps) {
   const [filteredBets, setFilteredBets] = useState<BData[]>();
   const [sortedData, setSortedData] = useState<BData[]>();
   const [timeFilter, setTimeFilter] = useState<
-    'active' | 'day' | 'week' | 'all time'
+    'active' | 'day' | 'week' | 'month' | 'year' | 'all time'
   >('active');
   const [searchFilter, setSearchFilter] = useState<string>();
   const [page, setPage] = useState(0);
@@ -79,6 +93,7 @@ function Bets({ flags, setFlags }: BetProps) {
     setSortDirection,
     k,
     setK,
+    theme,
   } = useAppContext();
   useEffect(() => {
     setLoading(true); // Trigger loading state immediately
@@ -100,31 +115,89 @@ function Bets({ flags, setFlags }: BetProps) {
     setLoading(false); // Stop loading after sorting and any updates
   }, [orderBy, sortDirection, allBets, page]);
 
-  const sortBets = (arr: BData[], keyOverride?: keyof BData) => {
+  const sortBets = (
+    arr: BData[],
+    keyOverride?: Exclude<keyof BData, 'anomaly'>,
+  ) => {
     const key = keyOverride || k;
     if (!key) return;
     const sorted = [...arr].sort((a, b) => {
       let aVal: number;
       let bVal: number;
-      const bInfo = a.bet_info.event_name;
+      if (orderBy === 'lay_liability') {
+        try {
+          const aSum = reducer(a);
+          const bSum = reducer(b);
+          aVal = aSum.BookieSum + aSum.ExchangeSum;
+          bVal = bSum.BookieSum + bSum.ExchangeSum;
+        } catch (error) {
+          console.error(error);
+          aVal = +a[key][orderBy as keyof (typeof a)[typeof key]];
+          bVal = +b[key][orderBy as keyof (typeof b)[typeof key]];
+        }
+      }
       if (orderBy === 'back_win_profit') {
-        aVal = a.bet_profit.back_win_profit;
-        bVal = b.bet_profit.back_win_profit;
+        aVal = a.bet_profit.back_win_profit + a.bet_profit.lay_win_profit;
+        bVal = b.bet_profit.back_win_profit + b.bet_profit.lay_win_profit;
       } else {
         aVal = +a[key][orderBy as keyof (typeof a)[typeof key]];
         bVal = +b[key][orderBy as keyof (typeof b)[typeof key]];
       }
 
       return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+
+      function reducer(bet: BData) {
+        const ExchangeSum = bet.bet_profit.exchange_matched.reduce(
+          (acc, curr) => {
+            return (acc += curr.matched[0] * (curr.odds[0] - 1));
+          },
+          0,
+        );
+        const BookieSum = bet.bet_profit.back_matched.reduce((acc, curr) => {
+          return (acc += curr.matched[0]);
+        }, 0);
+        return { ExchangeSum, BookieSum };
+      }
     });
+
     console.log(sorted);
-    return sorted;
+    return anomalyCheck(sorted);
+  };
+  const anomalyCheck = (bets: BData[]) => {
+    const indexs: number[] = [];
+    const lowProfit = [];
+    const Profitable = [...bets].filter((bet, idx) => {
+      const profitZero =
+        (bet.bet_profit.back_win_profit < 0 ||
+          bet.bet_profit.lay_win_profit < 0) &&
+        !(
+          bet.bet_profit.back_win_profit <= 0 &&
+          bet.bet_profit.lay_win_profit <= 0
+        );
+      if (
+        profitZero &&
+        bet.bet_info.unix_time > new Date().getTime() / 1000 - 60 * 90
+      ) {
+        indexs.push(idx);
+        return false;
+      }
+      return true;
+    });
+    for (const idx of indexs) {
+      const bet = bets[idx];
+      bet.anomaly = true;
+      lowProfit.unshift(bet);
+    }
+    console.log('new bets', Profitable);
+    return lowProfit
+      .sort((a, b) => b.bet_info.unix_time - a.bet_info.unix_time)
+      .concat(Profitable);
   };
 
   const handleRequestSort = (
     property: SortKeys,
     sortDirection: string,
-    betKey: keyof BData,
+    betKey: Exclude<keyof BData, 'anomaly'>,
   ) => {
     const isAsc = sortDirection === 'asc';
     const ern = isAsc ? 'desc' : 'asc';
@@ -166,7 +239,7 @@ function Bets({ flags, setFlags }: BetProps) {
       }
       const betDate = new Date(x.bet_info.bet_unix_time);
       if (timeFilter === 'active') {
-        let threshold = 5700;
+        let threshold = 6700;
         if (x.bet_info.market_type === 'Half Time') {
           threshold = 3000;
         }
@@ -179,6 +252,10 @@ function Bets({ flags, setFlags }: BetProps) {
         // return x.bet_info.bet_unix_time > new Date().getTime() / 1000 - 86400;
       } else if (timeFilter === 'week') {
         return x.bet_info.bet_unix_time >= startOfWeekUnix;
+      } else if (timeFilter === 'month') {
+        return x.bet_info.bet_unix_time >= filterTimestampsByMonth();
+      } else if (timeFilter === 'year') {
+        return x.bet_info.bet_unix_time >= filterTimestampsByYear();
       }
       return x;
     });
@@ -201,11 +278,16 @@ function Bets({ flags, setFlags }: BetProps) {
     const modifiedCount =
       await window.electron.ipcRenderer.updateItem(updateObj);
   };
+  //   console.log(sortedData);
 
   return (
     <Box
       // padding={5}
-      sx={{ backgroundColor: '#212121', height: 'fit-content', width: '93vw' }}
+      sx={{
+        // backgroundColor: theme.palette.background.default,
+        height: 'fit-content',
+        width: '93vw',
+      }}
     >
       {sortedData && (
         <>
@@ -214,8 +296,8 @@ function Bets({ flags, setFlags }: BetProps) {
               position: 'sticky',
               display: 'flex',
               top: '0px',
-              zIndex: 99,
-              background: '#212121',
+              zIndex: 1,
+              background: theme.palette.background.default,
             }}
           >
             <StatTable
@@ -231,9 +313,9 @@ function Bets({ flags, setFlags }: BetProps) {
             style={{
               display: 'flex',
               position: 'sticky',
-              background: 'inherit',
+              background: theme.palette.background.default,
               top: '250px',
-              zIndex: '99',
+              zIndex: 9,
             }}
           >
             <Box
