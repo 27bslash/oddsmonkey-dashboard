@@ -2,7 +2,8 @@ import { Box, Button, Typography } from '@mui/material';
 import { ChangeEvent, useEffect, useState } from 'react';
 import ShutDown from './shutdown';
 import Sleep from './sleep';
-
+import { useAppContext } from '../../renderer/useAppContext';
+import discord from '../../icons/discord.png';
 type configObj = {
   SINGLE_BET_MAX: number;
   USE_MONEY: boolean;
@@ -16,6 +17,8 @@ export function Config() {
   const [update, setUpdate] = useState({});
   const [status, setStatus] = useState('');
   const [flashed, setFlashed] = useState(false);
+  const [exeRunning, setExeRunning] = useState(false);
+  const { devMachine } = useAppContext();
   const handleUpdate = async (
     updateType: 'updateRunningState' | 'updateConfig',
   ) => {
@@ -61,10 +64,22 @@ export function Config() {
     };
     window.electron.ipcRenderer.onConfigFetched(handleConfigFetched);
     window.electron.ipcRenderer.onHeartbeatFetched(handleHeartbeat);
-
+    const interval = setInterval(() => {
+      const t = async () => {
+        if (!devMachine) return;
+        await window.electron.ipcRenderer
+          .isExeRunning('discord_bot.exe')
+          .then((isRunning) => {
+            console.log('isExeRunning', isRunning);
+            setExeRunning(isRunning);
+          });
+      };
+      t();
+    }, 1000);
     return () => {
       window.electron.ipcRenderer.onConfigFetched(() => {});
       window.electron.ipcRenderer.onHeartbeatFetched(() => {});
+      clearInterval(interval);
     };
   }, []);
   return (
@@ -110,13 +125,30 @@ export function Config() {
             <Button
               onClick={() => handleUpdate('updateRunningState')}
               variant="contained"
-              style={{ marginRight: '10px', marginBottom: '10px' }}
+              style={{
+                marginRight: '10px',
+                marginBottom: '10px',
+                color: 'white',
+              }}
               color={!running ? 'success' : 'error'}
             >
               {running ? 'Stop' : 'Start'}
             </Button>
           </div>
           <Box display={'flex'}>
+            {!exeRunning && devMachine && (
+              <Button
+                variant="contained"
+                onClick={() => {
+                  return window.electron.ipcRenderer.startDiscordBot();
+                }}
+                sx={{
+                  marginRight: '10px',
+                }}
+              >
+                <img src={discord} height={'25px'}></img>
+              </Button>
+            )}
             <ShutDown />
             <Sleep />
           </Box>

@@ -40,6 +40,7 @@ const Sleep = () => {
     const interval = setInterval(() => {
       window.electron.ipcRenderer.fetchItems('sleep-time').then((promise) => {
         const currentSleep: number = +promise[0].sleep;
+        console.log('Current Sleep Time:', currentSleep);
         const currentTime = Date.now() / 1000;
 
         if (currentTime >= currentSleep) {
@@ -65,7 +66,7 @@ const Sleep = () => {
     <Box display="flex" alignItems={'center'}>
       <Button
         sx={{
-        //   height: '60px',
+          height: '37.7px',
           bgcolor: sleeping ? 'error.main' : 'primary.main',
           opacity: isButtonDisabled ? 0.5 : 1,
           '&:disabled': {
@@ -83,17 +84,19 @@ const Sleep = () => {
           : sleeping
             ? `Sleeping For ${timeRemaining}`
             : 'Sleep'}
+        {!isButtonDisabled && (
+          <input
+            className="config-number-input"
+            type="number"
+            value={sleepTime}
+            onChange={handleChange}
+            min="1"
+            max="1000"
+            style={{ fontSize: '16px', padding: '5px', width: '30px' }}
+            step={1}
+          ></input>
+        )}
       </Button>
-      <input
-        className="config-number-input"
-        type="number"
-        value={sleepTime}
-        onChange={handleChange}
-        min="1"
-        max="1000"
-        style={{ fontSize: '20px', padding: '5px' }}
-        step={1}
-      ></input>
     </Box>
   );
 };

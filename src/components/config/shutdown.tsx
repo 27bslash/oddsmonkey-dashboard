@@ -1,18 +1,11 @@
 import { Box, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
-import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-} from '@mui/material';
+import { useState } from 'react';
+import { Dialog, DialogActions, DialogTitle } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
-import { red } from '@mui/material/colors';
 import { useAppContext } from '../../renderer/useAppContext';
+
 const ShutDown = () => {
-  const [stopping, setStopping] = useState(false);
-  const [showButton, setShowButton] = useState(false);
   const [shutdownConfirmWindow, setShutdownConfirmWindow] = useState(false);
   const { devMachine } = useAppContext();
   const handleClick = async () => {
@@ -29,8 +22,16 @@ const ShutDown = () => {
         .fetchItems('heartbeat')
         .then((data) => {
           const stopped = data[0].stopped;
-          if (stopped) {
+          console.log('heartbeat', data[0]);
+          const last_active = data[0].last_active;
+          if (stopped || last_active < Date.now() - 10000) {
             console.log('shutdown');
+            const updateObj = {
+              collectionName: 'config',
+              query: {},
+              update: { $set: { FORCE_STOP: false } },
+            };
+            window.electron.ipcRenderer.updateItem(updateObj);
             window.electron.ipcRenderer.ShutDown();
           }
         });
@@ -74,6 +75,7 @@ const ShutDown = () => {
                 startIcon={<Check />}
                 color="success"
                 onClick={handleClick}
+                sx={{ color: 'white' }}
               >
                 Confirm
               </Button>
