@@ -15,7 +15,18 @@ import { BData, Matched } from '../../../../../../types';
 import smarkets from '../../../../../icons/smarkets.png';
 import betfair from '../../../../../icons/betfair.png';
 import { ArrowDownward } from '@mui/icons-material';
-import { OpenBet } from './OpenBet';
+import { OpenBet } from './openBet';
+import { weightedAverage } from '../matched/matchedCell';
+
+export type BetCalcParams = {
+  avgBackOdds: number;
+  avgLayOdds: number;
+  currentBackOdds: number;
+  currentLayOdds: number;
+  backStake: number;
+  layStake: number;
+  commission: number;
+};
 
 type CalculatorSectionProps = {
   data: BData;
@@ -23,26 +34,8 @@ type CalculatorSectionProps = {
   liability: number;
   type: 'back' | 'lay';
   link: string;
-  valueObj: {
-    avgBackOdds: number;
-    avgLayOdds: number;
-    currentBackOdds: number;
-    currentLayOdds: number;
-    backStake: number;
-    layStake: number;
-    commission: number;
-  };
-  updateValue: React.Dispatch<
-    React.SetStateAction<{
-      avgBackOdds: number;
-      avgLayOdds: number;
-      currentBackOdds: number;
-      currentLayOdds: number;
-      backStake: number;
-      layStake: number;
-      commission: number;
-    }>
-  >;
+  valueObj: BetCalcParams;
+  updateValue: React.Dispatch<React.SetStateAction<BetCalcParams>>;
   setUpdate: React.Dispatch<React.SetStateAction<boolean>>;
   update?: boolean;
   missingBet?: { missingBackBet: number; missingLayBet: number } | undefined;
@@ -52,6 +45,7 @@ type CalculatorSectionProps = {
     >
   >;
 };
+
 const CalculatorSection = ({
   data,
   total,
@@ -93,22 +87,45 @@ const CalculatorSection = ({
       data.bet_profit[
         `${type === 'lay' ? 'exchange_matched' : 'back_matched'}`
       ];
-    console.log(valueObj, missingBetByType);
-    const currentStake = (
-      valueObj[`${type}Stake`] +
-      missingBetByType! / arr.length
-    ).toFixed(2);
-    arr.push({
-      matched: [+currentStake],
-      odds: [+valueObj[currentOdds]],
-      staked: [+currentStake],
-    });
-    arr = combineBets(arr);
-    console.log(valueObj, updateQuery, arr);
+    const currentStake = (valueObj[`${type}Stake`] + missingBetByType!).toFixed(
+      2,
+    );
+    const matchMap = [valueObj[`${type}Stake`], missingBetByType!];
+    const oddsMap = [
+      valueObj[
+        currentOdds.replace(
+          'current',
+          'avg',
+        ) as keyof CalculatorSectionProps['valueObj']
+      ],
+      valueObj[currentOdds],
+    ];
+
+    const avg = weightedAverage(matchMap, oddsMap);
+
+    const ret = [];
+    for (let i = 0; i < arr.length; i++) {
+      const d = {
+        matched: [+currentStake / arr.length],
+        odds: [+avg],
+        staked: [+currentStake / arr.length],
+        bet_matched_time:
+          data.bet_profit[
+            `${type === 'lay' ? 'exchange_matched' : 'back_matched'}`
+          ][i].bet_matched_time,
+      };
+      ret.push(d);
+    }
+    console.log(
+      valueObj,
+      updateQuery,
+      ret,
+      "{$set: { [updateQuery]: ret, 'bet_info.tradeout': true }",
+    );
     window.electron.ipcRenderer.updateItem({
       collectionName: 'pending_bets',
-      query: { _id: data._id },
-      update: { $set: { [updateQuery]: arr } },
+      query: { 'bet_info.bet_unix_time': data.bet_info.bet_unix_time },
+      update: { $set: { [updateQuery]: ret, 'bet_info.tradeout': true } },
     });
   };
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -143,8 +160,8 @@ const CalculatorSection = ({
               updateValue((prev) => {
                 return {
                   ...prev,
-                  [`current${capitalize(type)}Odds`]:
-                    prev[`avg${capitalize(type)}Odds`],
+                  [`current${capitalize(type)}Odds` as keyof BetCalcParams]:
+                    prev[`avg${capitalize(type)}Odds` as keyof BetCalcParams],
                 };
               });
             }}
@@ -168,7 +185,7 @@ const CalculatorSection = ({
           <CalculatorTextField
             bg={baseColor['100']}
             valueObj={valueObj}
-            k={`current${capitalize(type)}Odds`}
+            k={`current${capitalize(type)}Odds` as keyof BetCalcParams}
             setValue={updateValue}
             label="current odds"
           ></CalculatorTextField>
@@ -226,18 +243,25 @@ const CalculatorSection = ({
               marginLeft={'auto'}
               paddingRight={'16px'}
             >
-              <FileCopyIcon
-                height={'30px'}
-                className="icon"
-                sx={{
-                  height: '30px',
-                  marginLeft: '5px',
-                  color: 'white',
-                  fontSize: '1.5rem',
-                  marginRight: '5px',
-                }}
-                onClick={() => copyText()}
-              />
+              {valueObj.avgBackOdds == 1 || valueObj.avgLayOdds == 1 ? (
+                <span style={{ color: 'red' }}>
+                  Enter an odds value above 1
+                </span>
+              ) : (
+                <FileCopyIcon
+                  height={'30px'}
+                  className="icon"
+                  sx={{
+                    height: '30px',
+                    marginLeft: '5px',
+                    color: 'white',
+                    fontSize: '1.5rem',
+                    marginRight: '5px',
+                  }}
+                  onClick={() => copyText()}
+                />
+              )}
+
               <img
                 className="icon"
                 height={'30px'}

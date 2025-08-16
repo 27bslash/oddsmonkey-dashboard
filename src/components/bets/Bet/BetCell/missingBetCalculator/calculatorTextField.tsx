@@ -1,28 +1,11 @@
 import { TextField } from '@mui/material';
+import { BetCalcParams } from './calculatorSection';
 type CalculatorTextFieldProps = {
   bg: string;
-  valueObj: {
-    avgBackOdds: number;
-    avgLayOdds: number;
-    currentBackOdds: number;
-    currentLayOdds: number;
-    backStake: number;
-    layStake: number;
-    commission: number;
-  };
-  setValue: React.Dispatch<
-    React.SetStateAction<{
-      avgBackOdds: number;
-      avgLayOdds: number;
-      currentBackOdds: number;
-      currentLayOdds: number;
-      backStake: number;
-      layStake: number;
-      commission: number;
-    }>
-  >;
+  valueObj: BetCalcParams;
+  setValue: React.Dispatch<React.SetStateAction<BetCalcParams>>;
   label: string;
-  k: string;
+  k: keyof CalculatorTextFieldProps['valueObj'];
 };
 const CalculatorTextField = ({
   bg,
@@ -31,6 +14,7 @@ const CalculatorTextField = ({
   setValue,
   label,
 }: CalculatorTextFieldProps) => {
+  console.log(k);
   return (
     <TextField
       onChange={(e) => {
@@ -52,10 +36,17 @@ const CalculatorTextField = ({
         marginBottom: '10px',
         borderRadius: '5px',
         borderBottom: 'none',
+        color: 'black',
         marginLeft: 'auto',
+        '& .MuiInputBase-input': {
+          color: 'black',
+        },
       }}
       label={label}
-      inputProps={{ step: 0.01, min: 0 }}
+      inputProps={{
+        step: 0.01,
+        min: k.includes('Odds') ? 1 : 0,
+      }}
       InputLabelProps={{
         style: {
           color: 'black',

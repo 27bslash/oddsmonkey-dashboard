@@ -48,9 +48,10 @@ export const OpenBet = ({
           height: '40px',
           marginLeft: 'auto',
           marginRight: '5px',
+          color: 'white',
         }}
       >
-        update db
+        update DB
       </Button>
     </Box>
   );

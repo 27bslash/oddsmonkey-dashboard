@@ -136,7 +136,7 @@ const BetCalculator = ({
       layStake: +layVals.stake.toFixed(2),
       currentBackOdds: +backVals.odds.toFixed(3),
       currentLayOdds: +layVals.odds.toFixed(3),
-      commission: +betCalculationParams.commission.toFixed(2),
+      commission: +data.bet_odds.commission.toFixed(2),
     });
     setBackOddsValue(
       back_matched[back_matched.length - 1].odds[
@@ -168,17 +168,17 @@ const BetCalculator = ({
     if (!betCalculationParams) return;
     const bTotal =
       betCalculationParams.backStake * (betCalculationParams.avgBackOdds - 1);
-    setBackTotal(bTotal);
-    setBackLiability(betCalculationParams.backStake);
+    // setBackTotal(bTotal);
+    // setBackLiability(betCalculationParams.backStake);
     const lLiability =
       betCalculationParams.layStake * (betCalculationParams.avgLayOdds - 1);
     const layWins =
       betCalculationParams.layStake * (1 - data.bet_odds.commission);
-    setLayTotal(layWins);
-    setLayLiability(lLiability);
-    // Lay Stake = Back odds x Back Stake / (Lay Odds - Commission)
-    const totalLayStake = bTotal / (layOddsValue - data.bet_odds.commission);
-    const missingLayLiability = totalLayStake * (layOddsValue - 1) - lLiability;
+    // setLayTotal(layWins);
+    // setLayLiability(lLiability);
+    // // Lay Stake = Back odds x Back Stake / (Lay Odds - Commission)
+    // const totalLayStake = bTotal / (layOddsValue - data.bet_odds.commission);
+    // const missingLayLiability = totalLayStake * (layOddsValue - 1) - lLiability;
     // const t = missingLayLiability / (layOddsValue - 1);
     // console.log(
     //   'missingLay:',
@@ -190,9 +190,7 @@ const BetCalculator = ({
     // );
     // console.log('result:', t);
     const newMissingBet = betCalculatorMaths();
-    if (JSON.stringify(newMissingBet) !== JSON.stringify(missingBet)) {
-      setMissingBet(newMissingBet);
-    }
+    setMissingBet(newMissingBet);
   }, [obj, backOddsValue, layOddsValue, betCalculationParams]);
 
   const betCalculatorMaths = () => {
@@ -236,7 +234,7 @@ const BetCalculator = ({
       const calcMissingLayBet = () => {
         let bestLayBet = betCalculationParams.layStake;
         let bestLayDiff = 9999;
-        for (let i = 0; i < 10000; i++) {
+        for (let i = 0; i < 100000; i++) {
           // 10000 penny strat op
           const testBet = betCalculationParams.layStake + i / 100;
           const newAvgOdds = weightedAverage(
@@ -249,8 +247,7 @@ const BetCalculator = ({
           const liability = testBet * (newAvgOdds - 1);
 
           const exchangeWinProfit =
-            betCalculationParams.layStake *
-              (1 - betCalculationParams.commission) +
+            betCalculationParams.layStake * (1 - data.bet_odds.commission) +
             (i / 100) * (1 - betCalculationParams.commission) -
             sumBackStake;
 
@@ -264,6 +261,9 @@ const BetCalculator = ({
             bestLayDiff = difference;
             // console.log(bookmakerWinProfit, exchangeWinProfit);
           }
+          if (bookmakerWinProfit < exchangeWinProfit) {
+            break;
+          }
         }
         return +(bestLayBet - betCalculationParams.layStake).toFixed(2);
       };
@@ -273,18 +273,11 @@ const BetCalculator = ({
         let bestDifference = 9999;
         const liability =
           betCalculationParams.layStake * (betCalculationParams.avgLayOdds - 1);
-        for (let i = 0; i < 10000; i++) {
+        for (let i = 0; i < 100000; i++) {
           // 10000 penny strat op
           const testBet = betCalculationParams.backStake + i / 100;
-          const newAvgOdds = weightedAverage(
-            [betCalculationParams.backStake, i / 100],
-            [
-              betCalculationParams.avgBackOdds,
-              betCalculationParams.currentBackOdds,
-            ],
-          );
           const bookmakerWinProfit =
-            (i / 100) * (newAvgOdds - 1) +
+            (i / 100) * (betCalculationParams.currentBackOdds - 1) +
             betCalculationParams.backStake *
               (betCalculationParams.avgBackOdds - 1) -
             liability;
@@ -299,11 +292,13 @@ const BetCalculator = ({
             bestBet = testBet;
             bestDifference = difference;
           }
+          if (bookmakerWinProfit > exchangeWinProfit) {
+            break;
+          }
         }
         return +(bestBet - betCalculationParams.backStake).toFixed(2);
       };
       const missingdBackBet = calcMissingBackBet();
-      console.log('back', missingdBackBet, 'lay', missingdLayBet);
 
       return { missingBackBet: missingdBackBet, missingLayBet: missingdLayBet };
     } catch (error) {
@@ -312,26 +307,25 @@ const BetCalculator = ({
     }
   };
   useEffect(() => {
-    console.log('updateing');
     if (!missingBet) {
       console.log(missingBet);
       return;
     }
     if (missingBet.missingBackBet > 0 && update) {
-      console.log(backTotal, backLiability, missingBet.missingBackBet);
       setBackTotal(
-        (betCalculationParams.backStake + missingBet.missingBackBet) *
-          (betCalculationParams.currentBackOdds - 1),
+        betCalculationParams.backStake *
+          (betCalculationParams.avgBackOdds - 1) +
+          missingBet.missingBackBet *
+            (betCalculationParams.currentBackOdds - 1),
       );
       setBackLiability(
         betCalculationParams.backStake + missingBet.missingBackBet,
       );
     }
     if (missingBet.missingLayBet > 0 && update) {
-      console.log('lay', layLiability, layTotal, missingBet.missingLayBet);
       setLayTotal(
-        (betCalculationParams.layStake + missingBet.missingLayBet) *
-          (1 - betCalculationParams.commission),
+        betCalculationParams.layStake * (1 - data.bet_odds.commission) +
+          missingBet.missingLayBet * (1 - betCalculationParams.commission),
       );
       setLayLiability(
         betCalculationParams.layStake * (betCalculationParams.avgLayOdds - 1) +
@@ -341,14 +335,13 @@ const BetCalculator = ({
     if (!update) {
       setBackLiability(betCalculationParams.backStake);
       setBackTotal(
-        betCalculationParams.backStake *
-          (betCalculationParams.currentBackOdds - 1),
+        betCalculationParams.backStake * (betCalculationParams.avgBackOdds - 1),
       );
       setLayLiability(
         betCalculationParams.layStake * (betCalculationParams.avgLayOdds - 1),
       );
       setLayTotal(
-        betCalculationParams.layStake * (1 - betCalculationParams.commission),
+        betCalculationParams.layStake * (1 - data.bet_odds.commission),
       );
     }
   }, [missingBet, update]);
