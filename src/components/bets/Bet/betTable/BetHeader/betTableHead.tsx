@@ -1,18 +1,23 @@
-import { TableHead, TableRow, Typography, TableCell, Tab, Table } from '@mui/material';
+import {
+  TableHead,
+  TableRow,
+  Typography,
+  TableCell,
+} from '@mui/material';
 import { grey } from '@mui/material/colors';
 import { OrderableCell } from './OrderableCell';
 
 function BetTableHead({ updateSort }: any) {
   return (
     <TableHead>
-      <TableRow>
+      <TableRow sx={{ borderBottom: '1px solid black' }}>
         <OrderableCell
           onRequestSort={updateSort}
           sort="unix_time"
           sortDirection="asc"
           k="bet_info"
         >
-          <Typography fontSize={'11.5px'} color={grey['500']}>
+          <Typography fontSize={'13px'} fontWeight={900} color={grey['500']}>
             EVENT TIME
           </Typography>
         </OrderableCell>
@@ -22,15 +27,19 @@ function BetTableHead({ updateSort }: any) {
           sortDirection="asc"
           k="bet_info"
         >
-          <Typography fontSize={'11.5px'} color={grey['500']}>
+          <Typography fontSize={'13px'} fontWeight={900} color={grey['500']}>
             BET PLACED TIME
           </Typography>
         </OrderableCell>
-        <TableCell>
-          <Typography fontSize={'11.5px'} color={grey['500']}></Typography>
+        <TableCell sx={{ borderBottom: 'none' }}>
+          <Typography
+            fontSize={'13px'}
+            fontWeight={900}
+            color={grey['500']}
+          ></Typography>
         </TableCell>
-        <TableCell>
-          <Typography fontSize={'11.5px'} color={grey['500']}>
+        <TableCell sx={{ borderBottom: 'none' }}>
+          <Typography fontSize={'13px'} fontWeight={900} color={grey['500']}>
             SIDE
           </Typography>
         </TableCell>
@@ -40,22 +49,22 @@ function BetTableHead({ updateSort }: any) {
           sortDirection="asc"
           k="bet_profit"
         >
-          <Typography fontSize={'11.5px'} color={grey['500']}>
+          <Typography fontSize={'13px'} fontWeight={900} color={grey['500']}>
             STAKE
           </Typography>
         </OrderableCell>
         <OrderableCell
           onRequestSort={updateSort}
-          sort="back_odds"
+          sort="avg_back_odds"
           sortDirection="asc"
           k="bet_odds"
         >
-          <Typography fontSize={'11.5px'} color={grey['500']}>
+          <Typography fontSize={'13px'} fontWeight={900} color={grey['500']}>
             PRICE
           </Typography>
         </OrderableCell>
-        <TableCell>
-          <Typography fontSize={'11.5px'} color={grey['500']}>
+        <TableCell sx={{ borderBottom: 'none' }}>
+          <Typography fontSize={'13px'} fontWeight={900} color={grey['500']}>
             MATCHED
           </Typography>
         </TableCell>
@@ -65,12 +74,12 @@ function BetTableHead({ updateSort }: any) {
           sortDirection="asc"
           k="bet_profit"
         >
-          <Typography fontSize={'11.5px'} color={grey['500']}>
+          <Typography fontSize={'13px'} fontWeight={900} color={grey['500']}>
             PROFIT
           </Typography>
         </OrderableCell>
-        <TableCell>
-          <Typography fontSize={'11.5px'} color={grey['500']}>
+        <TableCell sx={{ borderBottom: 'none' }}>
+          <Typography fontSize={'13px'} fontWeight={900} color={grey['500']}>
             MAX BET
           </Typography>
         </TableCell>
