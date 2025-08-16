@@ -1,19 +1,34 @@
 import { Typography } from '@mui/material';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import ReactDOM from 'react-dom/client';
-import { green } from '@mui/material/colors';
+import { green, red } from '@mui/material/colors';
 import CustomTooltip from './graphTooltip';
+import { Padding } from '@mui/icons-material';
 type LineChartProps = {
   labels: string[];
   dataPoints: { [key: string]: number[] };
+  overrides: Record<string, number>;
+  setOverrides: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 };
-const LineChart = ({ labels, dataPoints }: LineChartProps) => {
+const LineChart = ({
+  labels,
+  dataPoints,
+  overrides,
+  setOverrides,
+}: LineChartProps) => {
   const chartRef = useRef<any>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const tooltipRootRef = useRef<ReturnType<typeof ReactDOM.createRoot> | null>(
     null,
   );
+  const [clickedPoint, setClickedPoint] = useState<{
+    x: number;
+    y: number;
+    index: number;
+    datasetIndex: number;
+  } | null>(null);
+  const [showHoverTooltip, setShowHoverTooltip] = useState(true);
   useEffect(() => {
     const tooltipEl = document.createElement('div');
     tooltipEl.id = 'external-tooltip';
@@ -39,6 +54,40 @@ const LineChart = ({ labels, dataPoints }: LineChartProps) => {
   const options = {
     responsive: true,
     type: 'line',
+
+    onHover: (event: any, chartElement: any[]) => {
+      const target = event?.native?.target || event?.target;
+      if (target) {
+        if (chartElement && chartElement.length > 0) {
+          target.style.cursor = 'pointer';
+        } else {
+          target.style.cursor = 'default';
+        }
+      }
+    },
+    onClick: (event: any, elements: any[]) => {
+      if (elements && elements.length > 0) {
+        const { index, datasetIndex } = elements[0];
+        console.log('onClick', index, datasetIndex);
+        const chart = chartRef.current;
+        if (chart) {
+          const meta = chart.getDatasetMeta(datasetIndex);
+          const point = meta.data[index];
+          const rect = chart.canvas.getBoundingClientRect();
+          setClickedPoint({
+            x: rect.left + window.pageXOffset + point.x - 200,
+            y: rect.top + window.pageYOffset + point.y - 80,
+            index,
+            datasetIndex,
+          });
+          setShowHoverTooltip(false); // Hide hover tooltip on click
+          console.log(data);
+        }
+      } else {
+        setClickedPoint(null);
+        setShowHoverTooltip(true); // Show hover tooltip again if nothing is clicked
+      }
+    },
     plugins: {
       //   customCanvasBackgroundColor: {
       //     color: '#212121', // whatever color you want
@@ -52,7 +101,7 @@ const LineChart = ({ labels, dataPoints }: LineChartProps) => {
 
           if (!tooltipRef.current) return;
 
-          if (tooltipModel.opacity === 0) {
+          if (!showHoverTooltip || tooltipModel.opacity === 0) {
             tooltipRootRef.current?.render(
               <CustomTooltip visible={false} x={0} y={0} content={null} />,
             );
@@ -95,7 +144,18 @@ const LineChart = ({ labels, dataPoints }: LineChartProps) => {
       },
     },
   };
-
+  const pointColors = labels.map((label, idx) => {
+    // idx === clickedPoint?.index ? 'red' : 'rgb(83, 192, 75)',
+    if (idx === clickedPoint?.index) {
+      return red['700'];
+    } else if (
+      Object.keys(overrides).includes(label) &&
+      overrides[label] !== 0
+    ) {
+      return 'cyan';
+    }
+    return 'rgb(83, 192, 75)';
+  });
   const data = {
     labels,
     datasets: [
@@ -107,6 +167,9 @@ const LineChart = ({ labels, dataPoints }: LineChartProps) => {
         borderWidth: 2,
         fill: true,
         tension: 0.3,
+        pointRadius: 3,
+        pointBackgroundColor: pointColors,
+        pointBorderColor: pointColors,
       },
       //   {
       //     label: 'Smarkets',
@@ -128,8 +191,81 @@ const LineChart = ({ labels, dataPoints }: LineChartProps) => {
       //   },
     ],
   };
+  const [inputValue, setInputValue] = useState<string>('0');
+  useEffect(() => {
+    if (!clickedPoint) return;
+    console.log(
+      'clickedPoint',
+      clickedPoint,
+      clickedPoint.index,
+      labels[clickedPoint.index],
+      overrides,
+      overrides[labels[clickedPoint.index]],
+    );
+    setInputValue(overrides[labels[clickedPoint.index]] || '0');
+  }, [clickedPoint]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const targetDate = labels[clickedPoint!.index];
+    const value = parseFloat(inputValue);
 
-  return <Line data={data} options={options} plugins={[canvasBackground]} />;
+    const update = { $set: { [`overrides.${targetDate}`]: value } };
+    const collectionName = 'true_balance_override';
+    const query = {};
+    setOverrides((prev) => ({
+      ...prev,
+      [targetDate]: value,
+    }));
+    window.electron.ipcRenderer.updateItem({
+      collectionName,
+      query,
+      update,
+    });
+  };
+
+  return (
+    <>
+      {clickedPoint && (
+        <CustomTooltip
+          x={clickedPoint.x}
+          y={clickedPoint.y}
+          visible={true}
+          content={
+            <div>
+              <BalanceLabel
+                label={'Total Balance:'}
+                amount={
+                  data.datasets[clickedPoint.datasetIndex].data[
+                    clickedPoint.index
+                  ]
+                }
+              />
+              <Typography display={'flex'}>
+                <span>Date: </span>
+                <span style={{ marginLeft: 'auto', marginRight: 5 }}>
+                  {labels[clickedPoint.index]}
+                </span>
+              </Typography>
+              <form onSubmit={(e) => handleSubmit(e)}>
+                <input
+                  type="number"
+                  placeholder="edit"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                />
+              </form>
+            </div>
+          }
+        />
+      )}
+      <Line
+        ref={chartRef}
+        data={data}
+        options={options}
+        plugins={[canvasBackground]}
+      />
+    </>
+  );
 };
 const BalanceLabel = ({
   label,

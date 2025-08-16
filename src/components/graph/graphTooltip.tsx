@@ -1,11 +1,3 @@
-import { ReactNode } from 'react';
-
-type CustomTooltipProps = {
-  x: number;
-  y: number;
-  content: ReactNode;
-  visible: boolean;
-};
 const CustomTooltip = ({ x, y, content, visible }: CustomTooltipProps) => {
   if (!visible) return null;
 
@@ -14,18 +6,19 @@ const CustomTooltip = ({ x, y, content, visible }: CustomTooltipProps) => {
       id="custom-tooltip"
       style={{
         position: 'absolute',
-        top: y,
+        top: y+10,
         left: x,
         transform: 'translate(-50%, -100%)',
-        background: '#111',
+        background: '#23272f',
         color: '#fff',
-        padding: '8px 12px',
-        width: '200px',
-        borderRadius: '6px',
-        border: 'solid 4px white',
-        fontSize: '14px',
-        pointerEvents: 'none',
+        padding: '16px 20px',
+        minWidth: 200,
+        borderRadius: 8,
+        border: '2px solid black',
+        fontSize: '15px',
+        pointerEvents: 'auto',
         zIndex: 9999,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
       }}
     >
       {content}
