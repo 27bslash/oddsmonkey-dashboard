@@ -6,18 +6,20 @@ import {
   SetStateAction,
 } from 'react';
 import { BData, BetType } from '../../types';
+import { Theme } from '@mui/material';
 
 type AppContextType = {
   devMachine: boolean;
   allBets: BData[] | undefined;
-  k: keyof BData;
+  k: Exclude<keyof BData, 'anomaly'>;
   orderBy: keyof BetType;
-  setK: Dispatch<SetStateAction<keyof BData>>;
+  setK: Dispatch<SetStateAction<Exclude<keyof BData, 'anomaly'>>>;
   setSortDirection: any;
   sortDirection: 'desc' | 'asc';
   setOrderBy: any;
   setAllBets: Dispatch<SetStateAction<BData[]>>;
   balance: { smarkets: number; betfair: number };
+  theme: Theme;
 };
 const AppContext = createContext<AppContextType | null>(null);
 type AppContextProviderProps = {

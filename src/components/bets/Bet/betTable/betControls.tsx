@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useState } from 'react';
 import { BData } from '../../../../../types';
 import { ObjectId } from 'mongodb';
@@ -7,10 +7,14 @@ import DeleteOverlay from '../BetCell/delete/deleteOverlay';
 import BetCalculator from '../BetCell/missingBetCalculator/betCalculator';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
-import Logs from '../BetCell/logs_reader/logs';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import PanoramaIcon from '@mui/icons-material/Panorama';
 import { useAppContext } from '../../../../renderer/useAppContext';
+import { red } from '@mui/material/colors';
+import LogOverlay from '../BetCell/logs_reader/logOverlay';
+import { useLogs } from '../BetCell/logs_reader/useLogs';
+import Logs from '../BetCell/logs_reader/logs';
+import { createPortal } from 'react-dom';
 type BetControlsProps = {
   bet: BData;
   deleteBet: (_id: ObjectId) => void;
@@ -21,7 +25,9 @@ const BetControls = ({ bet, deleteBet }: BetControlsProps) => {
   const [deleteOverlay, setDeleteOverlay] = useState(false);
   const [logOverlay, setLogOverlay] = useState(false);
   const [imageOverlay, setImageOverlay] = useState(false);
-
+  const { errored } = useLogs({
+    bet,
+  });
   const isRecentBet = Date.now() / 1000 - bet.bet_info.bet_unix_time < 300;
   const { devMachine } = useAppContext();
   return (
@@ -41,73 +47,70 @@ const BetControls = ({ bet, deleteBet }: BetControlsProps) => {
           new bet
         </Button>
       )}
-      <IconWrapper
-        icon={
-          <CalculateOutlinedIcon
-            sx={{ padding: '5px' }}
-            className="icon"
-            color="success"
-          />
-        }
-        overlayBool={showBetCalc}
-        setOverlayBool={setShowBetCalc}
-        overlayComponent={
-          <BetCalculator setShowBetCalc={setShowBetCalc} data={bet} />
-        }
-        justify="center"
-      />
-      <IconWrapper
-        icon={
-          <DeleteIcon sx={{ padding: '5px' }} className="icon" color="error" />
-        }
-        overlayBool={deleteOverlay}
-        setOverlayBool={setDeleteOverlay}
-        overlayComponent={
-          <DeleteOverlay
-            bet={bet}
-            setOverlay={setDeleteOverlay}
-            deleteBet={deleteBet}
-          />
-        }
-        justify="center"
-      />
-      {devMachine && (
-        <>
-          <IconWrapper
-            icon={
-              <TextSnippetIcon
-                sx={{ padding: '5px', color: 'orange' }}
-                className="icon"
-              />
-            }
-            overlayBool={logOverlay}
-            setOverlayBool={setLogOverlay}
-            overlayComponent={
-              <Logs bet={bet} setOverlay={setLogOverlay} overlay={logOverlay} />
-            }
-            justify="center"
-          />
-
-          <IconWrapper
-            icon={
-              <PanoramaIcon
-                sx={{ padding: '5px', color: '#96cbfe' }}
-                className="icon"
-              />
-            }
-            overlayBool={imageOverlay}
-            setOverlayBool={setImageOverlay}
-            overlayComponent={
-              <DebugImages
-                data={bet}
-                setOverlay={setImageOverlay}
-                overlay={imageOverlay}
-              />
-            }
-            justify="center"
-          />
-        </>
-      )}
+      <Box
+        sx={{
+          marginLeft: 'auto',
+          display: 'flex',
+        }}
+      >
+        <IconWrapper
+          icon={
+            <CalculateOutlinedIcon
+              sx={{ padding: '5px' }}
+              className="icon"
+              color="success"
+            />
+          }
+          overlayBool={showBetCalc}
+          setOverlayBool={setShowBetCalc}
+          overlayComponent={
+            <BetCalculator setShowBetCalc={setShowBetCalc} data={bet} />
+          }
+          justify="center"
+        />
+        <IconWrapper
+          icon={
+            <DeleteIcon
+              sx={{ padding: '5px' }}
+              className="icon"
+              color="error"
+            />
+          }
+          overlayBool={deleteOverlay}
+          setOverlayBool={setDeleteOverlay}
+          overlayComponent={
+            <DeleteOverlay
+              bet={bet}
+              setOverlay={setDeleteOverlay}
+              deleteBet={deleteBet}
+            />
+          }
+          justify="center"
+        />
+        {devMachine && (
+          <>
+            <Logs bet={bet} />
+            <IconWrapper
+              icon={
+                <PanoramaIcon
+                  sx={{ padding: '5px', color: '#96cbfe' }}
+                  className="icon"
+                />
+              }
+              overlayBool={imageOverlay}
+              setOverlayBool={setImageOverlay}
+              overlayComponent={
+                <DebugImages
+                  data={bet}
+                  setOverlay={setImageOverlay}
+                  overlay={imageOverlay}
+                />
+              }
+              justify="center"
+            />
+          </>
+        )}
+      </Box>
     </>
   );
 };
@@ -120,39 +123,48 @@ type IconWrapperProps = {
   justify: string;
 };
 
-const IconWrapper = ({
+export const IconWrapper = ({
   icon,
   overlayBool,
   setOverlayBool,
   overlayComponent,
   justify,
-}: IconWrapperProps) => (
-  <>
-    <div
-      onClick={() => {
-        document.body.setAttribute('class', 'modal-open');
-        setOverlayBool((prev) => !prev);
-      }}
-    >
-      {icon}
-    </div>
-    {overlayBool && (
+}: IconWrapperProps) => {
+  return (
+    <>
       <div
-        style={{ justifyContent: justify }}
-        className="wrapper"
-        onMouseDown={(e) => {
-          document.body.removeAttribute('class');
-          e.target === e.currentTarget && setOverlayBool(false);
+        onClick={() => {
+          document.body.setAttribute('class', 'modal-open');
+          setOverlayBool((prev) => !prev);
         }}
-        onKeyDown={(e) => {
-          console.log(e.key);
-          return e.key === 'Escape' ? setOverlayBool(false) : null;
+        style={{
+          width: 'fit-content',
+          height: 'fit-content',
+          cursor: 'pointer',
         }}
       >
-        {overlayComponent}
+        {icon}
       </div>
-    )}
-  </>
-);
+      {overlayBool &&
+        createPortal(
+          <div
+            style={{ justifyContent: justify }}
+            className="wrapper"
+            onMouseDown={(e) => {
+              document.body.removeAttribute('class');
+              e.target === e.currentTarget && setOverlayBool(false);
+            }}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setOverlayBool(false);
+            }}
+          >
+            {overlayComponent}
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+};
 
 export default BetControls;

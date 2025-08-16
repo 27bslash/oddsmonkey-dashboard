@@ -8,6 +8,7 @@ import BetTableCell from '../BetCell/betCell';
 import MatchedCell from '../BetCell/matched/matchedCell';
 import { green, blue, grey } from '@mui/material/colors';
 import React, { SetStateAction } from 'react';
+import { theme } from '../../../../renderer/App';
 
 function formatDateFromTimestamp(time: number) {
   return new Date(time * 1000).toLocaleString('en-GB', {
@@ -26,6 +27,7 @@ type BetTableBodyProps = {
   show: boolean;
   setBet: React.Dispatch<SetStateAction<BData>>;
 };
+
 function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
   const stake_img =
     data.bet_info['exchange'] !== 'betfair' ? betfair : smarkets;
@@ -68,11 +70,28 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
     data.bet_profit.back_matched[index].bet_matched_time ||
       data.bet_info.bet_unix_time,
   );
+  const borderBottom =
+    index === data.bet_profit.back_matched.length - 1 && lay
+      ? 'none'
+      : '1px solid black';
   return (
-    <TableRow>
+    <TableRow
+      sx={{
+        borderBottom: borderBottom,
+      }}
+    >
       <BetTableCell>
         <Tooltip title={formatDateFromTimestamp(data.bet_info.unix_time)}>
-          <Typography className="help-hover" onClick={() => console.log(data)}>
+          <Typography
+            className="help-hover"
+            onClick={() => {
+              const devMachine = process.env.NODE_ENV === 'development';
+              if (devMachine) {
+                navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+                console.log(data);
+              }
+            }}
+          >
             {timeAgo.format(Date.now() - eventTimeDelta)}
           </Typography>
         </Tooltip>
@@ -85,15 +104,13 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
         </Tooltip>
       </BetTableCell>
 
-      <TableCell>
-        <>
-          <Link
-            to={data.bet_info[!lay ? 'bookie_link' : 'exchange_link']}
-            target="_blank"
-          >
-            <img src={!lay ? stake_img : lay_img} height={30}></img>
-          </Link>
-        </>
+      <TableCell sx={{ borderBottom: 'none !important' }} className="bet-link">
+        <Link
+          to={data.bet_info[!lay ? 'bookie_link' : 'exchange_link']}
+          target="_blank"
+        >
+          <img src={!lay ? stake_img : lay_img} height={30}></img>
+        </Link>
       </TableCell>
 
       {lay ? (

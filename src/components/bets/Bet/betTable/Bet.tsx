@@ -22,6 +22,7 @@ import BetTableRow from './betRow';
 import { ObjectId } from 'mongodb';
 import BetControls from './betControls';
 import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -34,6 +35,7 @@ function Bet({
   updateSort: any;
   deleteBet: (_id: ObjectId) => void;
 }) {
+  const theme = useTheme();
   const [show, setShow] = useState(false);
   const [betData, setBetData] = useState<BData>(bet);
   useEffect(() => {
@@ -43,10 +45,21 @@ function Bet({
   }, [bet]);
   let value;
   if (betData) value = { betData, updateSort, setBetData };
+  const borderColor = bet.anomaly ? red['900'] : grey['800'];
+
   return (
     value && (
       <BetProvider value={value}>
-        <Box>
+        <Box
+          border={2}
+          marginBottom={1}
+          borderColor={borderColor}
+          borderRadius={2}
+          p={2}
+          sx={{
+            backgroundColor: theme.palette.table.background,
+          }}
+        >
           <Box>
             <div className="flex" style={{ alignItems: 'center' }}>
               <Typography variant="h6" color="white">
@@ -94,12 +107,11 @@ function Bet({
                 sx={{
                   position: 'absolute',
                   top: '50%',
-                  zIndex: 9,
                   right: '0',
                   opacity: '1',
-                  backgroundColor: '#212121',
+                  backgroundColor: theme.palette.table,
                   '&:hover': {
-                    background: '#96cbfe',
+                    background: theme.palette.table.secondary,
                   },
                 }}
                 onClick={() => setShow((prev) => !prev)}
