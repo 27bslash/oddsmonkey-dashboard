@@ -1,38 +1,55 @@
-import { BData, BetProfit } from './../../types';
-/* eslint global-require: off, no-console: off, promise/always-return: off */
-
-/**
- * This module executes inside of electron's main process. You can start
- * electron renderer process from here and communicate with the other processes
- * through IPC.
- *
- * When running `npm run build` or `npm run build:main`, this file is compiled to
- * `./src/main.js` using webpack. This gives us some performance wins.
- */
+import { BData } from './../../types';
 import path from 'path';
 import fs from 'fs';
-import { app, BrowserWindow, shell, ipcMain, net } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  shell,
+  ipcMain,
+  net,
+  protocol,
+  dialog,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { findBetInLogs, resolveHtmlPath } from './util';
 import { MongoClient, ObjectId } from 'mongodb';
-import { protocol, session } from 'electron';
 import { exec } from 'child_process';
 
-require('dotenv').config();
-
-const botInactiveLastNotification = 0;
-const betPlacedLastNotification = 0;
 const eventStatus = new Map<string, boolean>();
-const client = new MongoClient(process.env['DB_CONNECTION']!);
+const client = new MongoClient(
+  'mongodb+srv://admin:RmQPhObcTdZeLYUX@pro-item-tracker.ifybd.mongodb.net',
+);
+
 class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
     autoUpdater.logger = log;
     autoUpdater.checkForUpdatesAndNotify();
+
+    // Example: listen for update events
+    autoUpdater.on('update-available', () => {
+      log.info('Update available');
+    });
+    autoUpdater.on('update-downloaded', () => {
+      dialog
+        .showMessageBox({
+          type: 'info',
+          title: 'Update Ready',
+          message: 'A new version is ready. Restart now to install?',
+          buttons: ['Restart', 'Later'],
+        })
+        .then((result) => {
+          if (result.response === 0) autoUpdater.quitAndInstall();
+        });
+    });
+    autoUpdater.on('error', (err) => {
+      log.error('Update error:', err);
+    });
   }
 }
+
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'media',
@@ -43,17 +60,11 @@ protocol.registerSchemesAsPrivileged([
     },
   },
 ]);
+
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-});
-
 if (process.env.NODE_ENV === 'production') {
-  const sourceMapSupport = require('source-map-support');
-  sourceMapSupport.install();
+  require('source-map-support').install();
 }
 
 const isDebug =
@@ -67,13 +78,23 @@ const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
   const extensions = ['REACT_DEVELOPER_TOOLS'];
-
   return installer
     .default(
-      extensions.map((name) => installer[name]),
+      extensions.map((name: string) => installer[name]),
       forceDownload,
     )
     .catch(console.log);
+};
+
+const getImagesFromDirectoryRecursive = (
+  directoryPath: string,
+): string[] | undefined => {
+  try {
+    return fs.readdirSync(directoryPath);
+  } catch (error) {
+    console.error('Error reading directory:', error);
+    return;
+  }
 };
 
 const createWindow = async () => {
@@ -85,15 +106,16 @@ const createWindow = async () => {
     ? path.join(process.resourcesPath, 'assets')
     : path.join(__dirname, '../../assets');
 
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
+  const getAssetPath = (...paths: string[]): string =>
+    path.join(RESOURCES_PATH, ...paths);
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1424,
-    height: 1028,
-    fullscreen: true,
+    width: 1920,
+    height: 1088,
+    fullscreen: !!getImagesFromDirectoryRecursive(
+      'D:\\projects\\python\\odds_monkey_bot\\dist\\logs\\screenshots',
+    ),
     x: -1800,
     y: 300,
     icon: getAssetPath('icon.png'),
@@ -107,158 +129,16 @@ const createWindow = async () => {
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url); // Open URL in user's browser.
-    return { action: 'deny' }; // Prevent the app from opening the URL.
+    shell.openExternal(details.url);
+    return { action: 'deny' };
   });
+
   mainWindow.on('ready-to-show', () => {
-    if (!mainWindow) {
-      throw new Error('"mainWindow" is not defined');
-    }
-    if (process.env.START_MINIMIZED) {
-      mainWindow.minimize();
-    } else {
-      mainWindow.show();
-    }
+    if (!mainWindow) throw new Error('"mainWindow" is not defined');
+    if (process.env.START_MINIMIZED) mainWindow.minimize();
+    else mainWindow.show();
   });
-  function getImagesFromDirectoryRecursive(
-    directoryPath: string,
-  ): string[] | undefined {
-    let results: string[] = [];
-    // console.log(directoryPath);
-    try {
-      const items = fs.readdirSync(directoryPath);
-      return items;
-    } catch (error) {
-      console.error('Error reading directory:', error);
-      return;
-    }
-  }
 
-  async function addItem(item: any, collection_name: string) {
-    const collection = client.db('oddsmonkey').collection(collection_name);
-    const result = await collection.insertOne(item);
-    return result;
-  } 
-  async function updateItem({ collectionName, query, update }) {
-    if (query._id?.buffer) {
-      query._id = new ObjectId(Buffer.from(query._id.buffer));
-    }
-    console.log(collectionName, query, update);
-    const collection = client.db('oddsmonkey').collection(collectionName);
-    const result = await collection.updateOne(query, update, { upsert: true });
-    console.log(result.modifiedCount);
-    await fetchItems('pending_bets', 'update items');
-    return result.modifiedCount;
-  }
-  ipcMain.handle('fetch-items', async (event, collection_name: string) => {
-    return await fetchItems(collection_name);
-  });
-  ipcMain.handle(
-    'delete',
-    (event, _id: any, replace: { [key: string]: number }) => {
-      const pendingbets = client.db('oddsmonkey').collection('pending_bets');
-      console.log(_id);
-      const manualProfitOverride = client
-        .db('oddsmonkey')
-        .collection('manual_profit_override');
-      const updatedProfit = manualProfitOverride.updateOne(
-        {},
-        { $push: { profit_tracker: replace } },
-        { upsert: true },
-      );
-      //   console.log(updatedProfit);
-      const objectId = new ObjectId(Buffer.from(_id['buffer']));
-      console.log(objectId);
-      const testBet = pendingbets
-        .findOneAndDelete({ _id: objectId })
-        .then((doc) => {
-          console.log(doc.bet_info.event_name);
-        });
-    },
-  );
-  ipcMain.handle('add-item', async (event, item, collection_name: string) => {
-    return await addItem(item, collection_name);
-  });
-  ipcMain.handle('read-file', async (event, filePath) => {
-    try {
-      const fpath =
-        'D:\\projects\\python\\odds_monkey_bot\\dist\\logs\\custom_logs.log';
-      const data = fs.readFileSync(fpath, 'utf8');
-      return data;
-    } catch (err) {
-      console.error('Error reading file:', err);
-      return null;
-    }
-  });
-  ipcMain.handle('get-todays-logs', (event, bet: BData) => {
-    const matchedTimes = bet.bet_profit.exchange_matched
-      .map((matchObj) => matchObj.bet_matched_time!)
-      .concat(
-        bet.bet_profit.exchange_matched.map(
-          (matchObj) => matchObj.bet_matched_time!,
-        ),
-      );
-    if (matchedTimes.some((x) => !x)) return;
-    const startTime = Math.min(...matchedTimes);
-    const endTime = Math.max(...matchedTimes);
-    return findBetInLogs(
-      startTime,
-      endTime,
-      'D:/projects/python/odds_monkey_bot/dist/logs/custom_logs.log',
-    );
-  });
-  ipcMain.handle('get-logs', (event, bet: BData) => {
-    const matchedTimes = bet.bet_profit.exchange_matched
-      .map((matchObj) => matchObj.bet_matched_time!)
-      .concat(
-        bet.bet_profit.exchange_matched.map(
-          (matchObj) => matchObj.bet_matched_time!,
-        ),
-      );
-    if (matchedTimes.some((x) => !x)) return;
-    const startTime = Math.min(...matchedTimes);
-    const endTime = Math.max(...matchedTimes);
-    return findBetInLogs(startTime, endTime, undefined);
-  });
-  ipcMain.handle('flash-icon', (event, eventId: string) => {
-    if (!eventStatus.get(eventId)) {
-      console.log(eventId);
-      mainWindow!.flashFrame(true); // Flash the taskbar icon
-      eventStatus.set(eventId, true);
-    }
-  });
-  ipcMain.handle('reset-icon-event', (event, eventId: string) => {
-    eventStatus.set(eventId, false); // Reset event status
-  });
-  ipcMain.handle(
-    'update-document',
-    async (event, { collectionName, query, update }) => {
-      return await updateItem({ collectionName, query, update });
-    },
-  );
-  ipcMain.handle('get-images', (event, directoryPath) => {
-    // console.log('images', directoryPath);
-    const ret = getImagesFromDirectoryRecursive(directoryPath); // Use the recursive function
-    return ret;
-  });
-  ipcMain.handle('get-image', async (event, filePath) => {
-    try {
-      // Check if the file exists
-      if (!fs.existsSync(filePath)) {
-        throw new Error('File does not exist');
-      }
-
-      // Validate it's an image file
-      if (!/\.(png|jpe?g|gif|bmp|webp)$/i.test(path.extname(filePath))) {
-        throw new Error('File is not a valid image');
-      }
-
-      return filePath; // Return the valid image path
-    } catch (error) {
-      console.error('Error fetching image:', error);
-      throw error; // Pass the error to the renderer
-    }
-  });
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -266,20 +146,179 @@ const createWindow = async () => {
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
 
-  // Open urls in the user's browser
-  mainWindow.webContents.setWindowOpenHandler((edata) => {
-    shell.openExternal(edata.url);
-    return { action: 'deny' };
-  });
-
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
   new AppUpdater();
 };
 
-/**
- * Add event listeners...
- */
+async function addItem(item: any, collection_name: string) {
+  const collection = client.db('oddsmonkey').collection(collection_name);
+  return await collection.insertOne(item);
+}
+
+async function updateItem({
+  collectionName,
+  query,
+  update,
+}: {
+  collectionName: string;
+  query: any;
+  update: any;
+}) {
+  if (query._id?.buffer) {
+    query._id = new ObjectId(Buffer.from(query._id.buffer));
+  }
+  const collection = client.db('oddsmonkey').collection(collectionName);
+  const result = await collection.updateOne(query, update, { upsert: true });
+  await fetchItems('pending_bets', 'update items');
+  return result.modifiedCount;
+}
+
+async function fetchItems(
+  collection_name: string,
+  func?: string,
+  limit?: number,
+) {
+  const collection = client.db('oddsmonkey').collection(collection_name);
+  let data;
+  if (limit) {
+    data = await collection
+      .find({})
+      .sort({ 'bet_info.bet_unix_time': -1 })
+      .limit(limit)
+      .toArray();
+  } else {
+    data = await collection.find({}).toArray();
+  }
+  if (collection_name === 'pending_bets') {
+    console.log('fetched', func);
+  }
+  mainWindow?.webContents.send(`${collection_name}-fetched`, data);
+  return data;
+}
+
+async function isExeRunning(exeName: string): Promise<boolean> {
+  try {
+    const { stdout } = await new Promise<{ stdout: string }>((resolve) => {
+      exec('tasklist', (err, stdout) => {
+        if (err) return resolve({ stdout: '' });
+        resolve({ stdout });
+      });
+    });
+    return stdout.toLowerCase().includes(exeName.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+// --- IPC handlers ---
+
+ipcMain.handle('fetch-items', async (_event, collection_name: string) => {
+  return await fetchItems(collection_name);
+});
+
+ipcMain.handle(
+  'delete',
+  async (_event, _id: any, replace: { [key: string]: number }) => {
+    const pendingbets = client.db('oddsmonkey').collection('pending_bets');
+    const manualProfitOverride = client
+      .db('oddsmonkey')
+      .collection('manual_profit_override');
+    await manualProfitOverride.updateOne(
+      {},
+      { $push: { profit_tracker: replace } },
+      { upsert: true },
+    );
+    const objectId = new ObjectId(Buffer.from(_id['buffer']));
+    await pendingbets.findOneAndDelete({ _id: objectId });
+  },
+); 
+
+ipcMain.handle('add-item', async (_event, item, collection_name: string) => {
+  return await addItem(item, collection_name);
+});
+
+ipcMain.handle('read-file', async () => {
+  try {
+    const fpath =
+      'D:\\projects\\python\\odds_monkey_bot\\dist\\logs\\custom_logs.log';
+    return fs.readFileSync(fpath, 'utf8');
+  } catch (err) {
+    console.error('Error reading file:', err);
+    return null;
+  }
+});
+
+ipcMain.handle('get-todays-logs', (_event, bet?: BData) => {
+  let startTime = 0;
+  let endTime = 33461130417;
+  if (bet) {
+    const matchedTimes = bet.bet_profit.exchange_matched
+      .map((matchObj) => matchObj.bet_matched_time!)
+      .concat(
+        bet.bet_profit.exchange_matched.map(
+          (matchObj) => matchObj.bet_matched_time!,
+        ),
+      );
+    if (matchedTimes.some((x) => !x)) return;
+    startTime = Math.min(...matchedTimes);
+    endTime = Math.max(...matchedTimes);
+  }
+  return findBetInLogs(
+    startTime,
+    endTime,
+    'D:/projects/python/odds_monkey_bot/dist/logs/custom_logs.log',
+  );
+});
+
+ipcMain.handle('get-logs', (_event, bet?: BData) => {
+  if (!bet) return;
+  const matchedTimes = bet.bet_profit.exchange_matched
+    .map((matchObj) => matchObj.bet_matched_time!)
+    .concat(
+      bet.bet_profit.exchange_matched.map(
+        (matchObj) => matchObj.bet_matched_time!,
+      ),
+    );
+  if (matchedTimes.some((x) => !x)) return;
+  const startTime = Math.min(...matchedTimes);
+  const endTime = Math.max(...matchedTimes);
+  return findBetInLogs(startTime, endTime, undefined);
+});
+
+ipcMain.handle('flash-icon', (_event, eventId: string) => {
+  if (!eventStatus.get(eventId)) {
+    mainWindow?.flashFrame(true);
+    eventStatus.set(eventId, true);
+  }
+});
+
+ipcMain.handle('reset-icon-event', (_event, eventId: string) => {
+  eventStatus.set(eventId, false);
+});
+
+ipcMain.handle(
+  'update-document',
+  async (_event, { collectionName, query, update }) => {
+    return await updateItem({ collectionName, query, update });
+  },
+);
+
+ipcMain.handle('get-images', (_event, directoryPath) => {
+  return getImagesFromDirectoryRecursive(directoryPath);
+});
+
+ipcMain.handle('get-image', async (_event, filePath) => {
+  try {
+    if (!fs.existsSync(filePath)) throw new Error('File does not exist');
+    if (!/\.(png|jpe?g|gif|bmp|webp)$/i.test(path.extname(filePath))) {
+      throw new Error('File is not a valid image');
+    }
+    return filePath;
+  } catch (error) {
+    console.error('Error fetching image:', error);
+    throw error;
+  }
+});
+
 ipcMain.handle('shutdown', () => {
   exec('shutdown /s /t 0', (error, stdout, stderr) => {
     if (error) {
@@ -294,38 +333,45 @@ ipcMain.handle('shutdown', () => {
   });
 });
 
-app.on('window-all-closed', () => {
-  // Respect the OSX convention of having the application in memory even
-  // after all windows have been closed
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+ipcMain.handle('is-exe-running', async (_event, exeName: string) => {
+  return await isExeRunning(exeName);
 });
-async function fetchItems(collection_name: string, func?: string) {
-  const collection = client.db('oddsmonkey').collection(collection_name);
-  const data = await collection
-    .find({})
-    // .sort({
-    //   'bet_profit.lay_win_profit': -1,
-    // })
-    .toArray();
 
-  if (collection_name === 'pending_bets') {
-    console.log('fetched', func);
-  }
-  mainWindow!.webContents.send(`${collection_name}-fetched`, data);
-  return data;
-}
+ipcMain.handle('start-discord-bot', async () => {
+  const exePath =
+    process.env.APPDATA +
+    '\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\discord_bot.lnk';
+  exec(`cmd.exe /c start "" "${exePath}"`, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error opening Startup folder: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Startup folder stderr: ${stderr}`);
+      return;
+    }
+    console.log(`Startup folder opened: ${stdout}`);
+  });
+  return 'Windows Startup folder opened';
+});
+
 fetchItems('config');
 fetchItems('pending_bets', 'init');
 fetchItems('heartbeat');
 fetchItems('balance');
+
 setInterval(() => {
-  fetchItems('pending_bets');
-  fetchItems('balance');
-  fetchItems('config');
-  fetchItems('heartbeat');
+  isExeRunning('discord_bot.exe').then((isRunning) => {});
+  fetchItems('balance', 'timed');
+  fetchItems('config', 'timed');
+  fetchItems('heartbeat', 'timed');
 }, 10000);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
 
 app
   .whenReady()
@@ -336,8 +382,6 @@ app
     });
     createWindow();
     app.on('activate', () => {
-      // On macOS it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
       if (mainWindow === null) createWindow();
     });
   })

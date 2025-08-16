@@ -2,7 +2,6 @@
 import { URL } from 'url';
 import path from 'path';
 import * as fs from 'fs';
-import { machineIdSync } from 'node-machine-id';
 
 export function resolveHtmlPath(htmlFileName: string) {
   if (process.env.NODE_ENV === 'development') {
@@ -49,18 +48,25 @@ export function findBetInLogs(
 ) {
   let { startFileName, endFileName } = findLogFile(startUnix, endUnix);
   if (logFile) endFileName = logFile;
+  if (startUnix === 0 && logFile) startFileName = logFile;
   let lineStart = 0;
   let lineEnd = 0;
   let endBetLine = 0;
+  let errored = false;
   const readLines = (fileName: string): string[] => {
     try {
       return fs.readFileSync(fileName, 'utf8').split('\n');
     } catch (error) {
-      console.error(`Error reading file: ${fileName}`, error);
-      return [];
+      errored = true;
+      return fs
+        .readFileSync(
+          'D:/projects/python/odds_monkey_bot/dist/logs/custom_logs.log',
+          'utf8',
+        )
+        .split('\n');
     }
   };
-
+  //   console.log('startFileName', startFileName);
   const linesStart = readLines(startFileName);
   for (let i = 0; i < linesStart.length; i++) {
     const line = linesStart[i];
@@ -104,5 +110,8 @@ export function findBetInLogs(
     selectedLines = linesEnd.slice(lineStart, sliceEnd);
   }
   //   console.log('sel', selectedLines[0], selectedLines[selectedLines.length - 1]);
+  if (errored) {
+
+  }
   return selectedLines.join('\n');
 }

@@ -26,9 +26,9 @@ const electronHandler = {
     flashIcon: (eventId: string) => ipcRenderer.invoke('flash-icon', eventId),
     resetIconEvent: (eventId: string) =>
       ipcRenderer.invoke('reset-icon-event', eventId),
-    readLog: (bet: BData) => ipcRenderer.invoke('get-logs', bet),
-    tailLog: (bet: BData) => ipcRenderer.invoke('get-todays-logs', bet),
-    fetchItems: (collection_name: string) =>
+    readLog: (bet?: BData) => ipcRenderer.invoke('get-logs', bet),
+    tailLog: (bet?: BData) => ipcRenderer.invoke('get-todays-logs', bet),
+    fetchItems: (collection_name: string, func?: string, limit?: number) =>
       ipcRenderer.invoke('fetch-items', collection_name),
     addItem: (item: any, collection_name: string) =>
       ipcRenderer.invoke('add-item', item, collection_name),
@@ -44,6 +44,10 @@ const electronHandler = {
       ipcRenderer.invoke('update-document', { collectionName, query, update }),
     onDataFetched: (callback: (data: any) => void) =>
       ipcRenderer.on('pending_bets-fetched', (_event, data) => {
+        return callback(data);
+      }),
+    onDataUpdated: (callback: (data: any) => void) =>
+      ipcRenderer.on('pending_bets-updated', (_event, data) => {
         return callback(data);
       }),
     onBalanceFetched: (callback: (data: any) => void) =>
@@ -64,6 +68,12 @@ const electronHandler = {
       ipcRenderer.invoke('delete', _id, replaceAmount),
     ShutDown: () => {
       ipcRenderer.invoke('shutdown');
+    },
+    isExeRunning: (exeName: string) => {
+      return ipcRenderer.invoke('is-exe-running', exeName);
+    },
+    startDiscordBot: () => {
+      ipcRenderer.invoke('start-discord-bot');
     },
   },
 };

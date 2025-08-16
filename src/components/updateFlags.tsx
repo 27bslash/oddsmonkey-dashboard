@@ -1,5 +1,6 @@
 import { Box, Button, ButtonGroup, Typography } from '@mui/material';
 import { green } from '@mui/material/colors';
+import Logs from './bets/Bet/BetCell/logs_reader/logs';
 type UpdateFlagsProps = {
   flags: { [key: string]: string };
   setFlag: (flag: string) => void;
@@ -14,7 +15,7 @@ const UpdateFlags = ({ flags, setFlag }: UpdateFlagsProps) => {
           // marginRight: '10px',
           marginBottom: '10px',
           maxWidth: '340px',
-        //   height: '45px',
+          //   height: '45px',
         }}
         sx={{
           '&.Mui-disabled': {
@@ -43,6 +44,7 @@ const UpdateFlags = ({ flags, setFlag }: UpdateFlagsProps) => {
               : 'update commission'}
           </Typography>
         </Button>
+        <Logs />
       </ButtonGroup>
     </Box>
   );
