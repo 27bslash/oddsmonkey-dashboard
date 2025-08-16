@@ -8,11 +8,11 @@ type LogButtonsProps = {
 };
 const LogButtons = ({ filter, setFilter, tail, setTail }: LogButtonsProps) => {
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
-    console.log(e.target.textContent);
-    if (Object.keys(filter)[0] === e.target.textContent) {
+    const target = e.target as HTMLElement;
+    if (Object.keys(filter)[0] === target.textContent) {
       setFilter({ '': 0 });
     } else {
-      setFilter({ [e.target.textContent]: 0 });
+      setFilter({ [target.textContent!]: 0 });
     }
   };
   return (
@@ -41,6 +41,5 @@ const LogButtons = ({ filter, setFilter, tail, setTail }: LogButtonsProps) => {
       </Button>
     </Box>
   );
-
 };
 export default LogButtons;
