@@ -46,7 +46,7 @@ const ImageGroup = ({ dates, betName, site }: ImageProps) => {
     </>
   );
 };
-const IndividualImage = ({ path }: { path: string }) => {
+export const IndividualImage = ({ path }: { path: string }) => {
   const [showImage, setShowImage] = useState(true);
   const [zoomed, setZoomed] = useState(false);
   return <CustomZoom imageSrc={path} />;
