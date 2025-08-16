@@ -64,6 +64,7 @@ export interface Matched {
 }
 export interface BData {
   _id: ObjectId;
+  anomaly?: boolean;
   bet_info: bInfo;
   bet_odds: BOdds;
   bet_profit: BProfit;
