@@ -8,7 +8,7 @@ const TableSearch = ({ setSearchFilter }: TableSearchProps) => {
   const [error, setError] = useState(false);
 
   return (
-    <Box width={'300px'} marginRight={'20px'} >
+    <Box width={'300px'} marginRight={'20px'}>
       <TextField
         onChange={(e) => {
           const inputValue = e.target.value;
@@ -23,6 +23,9 @@ const TableSearch = ({ setSearchFilter }: TableSearchProps) => {
         }}
         value={value}
         sx={{
+          input: {
+            color: 'black',
+          },
           backgroundColor: 'white',
           borderRadius: '4px',
           marginBottom: '15px',
@@ -45,4 +48,5 @@ const TableSearch = ({ setSearchFilter }: TableSearchProps) => {
     </Box>
   );
 };
+
 export default TableSearch;
