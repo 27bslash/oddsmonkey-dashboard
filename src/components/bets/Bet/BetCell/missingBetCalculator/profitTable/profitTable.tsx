@@ -28,8 +28,8 @@ const ProfitTable = ({
       className="bet-calculator-profit-table"
       sx={{
         backgroundColor: 'black',
-        overflow: 'hidden', 
-        borderRadius: '0 0 20px 20px', 
+        overflow: 'hidden',
+        borderRadius: '0 0 20px 20px',
         border: 'solid 3px black',
       }}
     >
@@ -38,8 +38,7 @@ const ProfitTable = ({
           <TableCell
             sx={{ color: 'white', padding: '10px 20px', fontWeight: 'bold' }}
           >
-            <Typography textTransform="capitalize">
-            </Typography>
+            <Typography textTransform="capitalize"></Typography>
           </TableCell>
           <TableCell
             sx={{ color: 'white', padding: '10px 20px', fontWeight: 'bold' }}

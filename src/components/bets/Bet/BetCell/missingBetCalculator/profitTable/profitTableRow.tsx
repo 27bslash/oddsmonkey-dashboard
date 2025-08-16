@@ -18,11 +18,12 @@ const ProfitTableRow = ({ total, liability, type }: profitTableRowProps) => {
         color: 'white',
       }}
     >
-      <TableCell sx={{ background: isBack ? green[300] : blue[300] }}>
+      <TableCell
+        sx={{ background: isBack ? green[300] : blue[300], color: 'black' }}
+      >
         <Typography
           sx={{
-            textShadow:
-              'none',
+            textShadow: 'none',
           }}
           fontWeight={'bold'}
         >
