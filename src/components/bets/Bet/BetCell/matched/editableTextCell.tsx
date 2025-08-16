@@ -41,7 +41,7 @@ function EditableCell({
     if (!isEditing) {
       setValue(type === 'odds' ? val.toFixed(3) : val.toFixed(2));
     }
-  }, [isEditing, val]);
+  }, [isEditing, bet, val]);
   const { allBets, setAllBets } = useAppContext();
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -131,6 +131,7 @@ function EditableCell({
   return (
     <>
       <Box
+        className="editable-text-cell"
         sx={
           {
             //   color: profit >= 0 ? green['400'] : red['400'],

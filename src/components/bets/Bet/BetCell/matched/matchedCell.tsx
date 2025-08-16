@@ -122,10 +122,17 @@ function MatchedCell({
     setBackWinProfit(backWins - layLiability);
     setLayWinProfit(layWins - backLiability);
   }, [backLay, bet]);
+  const borderBottom =
+    index === bet.bet_profit.back_matched.length - 1 && lay
+      ? 'none'
+      : '1px solid black';
+  if (bet.bet_info.bet == 'Nueva Chicago') {
+    console.log(backLay['back']);
+  }
   return (
     bet && (
       <>
-        <BetTableCell>
+        <BetTableCell borderBottom={borderBottom}>
           {!lay
             ? Object.keys(backLay['back']).map((x, i) => {
                 return (
