@@ -23,11 +23,21 @@ const electronHandler = {
     once(channel: Channels, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
+    detectActiveLogPath: () => ipcRenderer.invoke('detect-active-log-path') as Promise<string>,
+    openPath: (filePath: string) => ipcRenderer.invoke('open-path', filePath),
+    findImagesByName: (baseDir: string, betName: string, betTimestamp?: number) =>
+      ipcRenderer.invoke('find-images-by-name', baseDir, betName, betTimestamp) as Promise<string[]>,
     flashIcon: (eventId: string) => ipcRenderer.invoke('flash-icon', eventId),
     resetIconEvent: (eventId: string) =>
       ipcRenderer.invoke('reset-icon-event', eventId),
-    readLog: (bet?: BData) => ipcRenderer.invoke('get-logs', bet),
-    tailLog: (bet?: BData) => ipcRenderer.invoke('get-todays-logs', bet),
+    readLog: (bet?: BData, logBasePath?: string, logFilePath?: string) =>
+      ipcRenderer.invoke('get-logs', bet, logBasePath, logFilePath),
+    tailLog: (bet?: BData, logBasePath?: string, logFilePath?: string) =>
+      ipcRenderer.invoke('get-todays-logs', bet, logBasePath, logFilePath),
+    listCompatibleLogFiles: (logBasePath?: string) =>
+      ipcRenderer.invoke('list-compatible-log-files', logBasePath) as Promise<
+        { name: string; path: string }[]
+      >,
     fetchItems: (collection_name: string, func?: string, limit?: number) =>
       ipcRenderer.invoke('fetch-items', collection_name),
     addItem: (item: any, collection_name: string) =>

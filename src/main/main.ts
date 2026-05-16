@@ -16,14 +16,18 @@ import MenuBuilder from './menu';
 import { findBetInLogs, resolveHtmlPath } from './util';
 import { MongoClient, ObjectId } from 'mongodb';
 import { exec } from 'child_process';
+import dotenv from 'dotenv';
+
+// Load .env — packaged: extraResources dir, dev: project root
+dotenv.config({ path: path.join(app.isPackaged ? process.resourcesPath : app.getAppPath(), '.env') });
 
 const eventStatus = new Map<string, boolean>();
 const client = new MongoClient(
-  'mongodb+srv://admin:RmQPhObcTdZeLYUX@pro-item-tracker.ifybd.mongodb.net',
+  process.env.MONGO_URI || '',
 );
-
+  
 class AppUpdater {
-  constructor() {
+  constructor() { 
     log.transports.file.level = 'info';
     autoUpdater.logger = log;
     autoUpdater.checkForUpdatesAndNotify();
@@ -247,29 +251,32 @@ ipcMain.handle('read-file', async () => {
   }
 });
 
-ipcMain.handle('get-todays-logs', (_event, bet?: BData) => {
-  let startTime = 0;
-  let endTime = 33461130417;
-  if (bet) {
-    const matchedTimes = bet.bet_profit.exchange_matched
-      .map((matchObj) => matchObj.bet_matched_time!)
-      .concat(
-        bet.bet_profit.exchange_matched.map(
-          (matchObj) => matchObj.bet_matched_time!,
-        ),
-      );
-    if (matchedTimes.some((x) => !x)) return;
-    startTime = Math.min(...matchedTimes);
-    endTime = Math.max(...matchedTimes);
-  }
-  return findBetInLogs(
-    startTime,
-    endTime,
-    'D:/projects/python/odds_monkey_bot/dist/logs/custom_logs.log',
-  );
-});
+ipcMain.handle(
+  'get-todays-logs',
+  (_event, bet?: BData, logBasePath?: string, logFilePath?: string) => {
+    let startTime = 0;
+    let endTime = 33461130417;
+    if (bet) {
+      const matchedTimes = bet.bet_profit.exchange_matched
+        .map((matchObj) => matchObj.bet_matched_time!)
+        .concat(
+          bet.bet_profit.exchange_matched.map(
+            (matchObj) => matchObj.bet_matched_time!,
+          ),
+        );
+      if (matchedTimes.some((x) => !x)) return;
+      startTime = Math.min(...matchedTimes);
+      endTime = Math.max(...matchedTimes);
+    }
+    const basePath =
+      logBasePath || 'D:/projects/python/odds_monkey_bot/dist/logs';
+    return findBetInLogs(startTime, endTime, logFilePath, basePath);
+  },
+);
 
-ipcMain.handle('get-logs', (_event, bet?: BData) => {
+ipcMain.handle(
+  'get-logs',
+  (_event, bet?: BData, logBasePath?: string, logFilePath?: string) => {
   if (!bet) return;
   const matchedTimes = bet.bet_profit.exchange_matched
     .map((matchObj) => matchObj.bet_matched_time!)
@@ -281,7 +288,49 @@ ipcMain.handle('get-logs', (_event, bet?: BData) => {
   if (matchedTimes.some((x) => !x)) return;
   const startTime = Math.min(...matchedTimes);
   const endTime = Math.max(...matchedTimes);
-  return findBetInLogs(startTime, endTime, undefined);
+    return findBetInLogs(startTime, endTime, logFilePath, logBasePath);
+  },
+);
+
+ipcMain.handle('detect-active-log-path', () => {
+  const paths = {
+    dist: 'D:/projects/python/odds_monkey_bot/dist/logs/custom_logs.log',
+    dev: 'D:/projects/python/odds_monkey_bot/logs/custom_logs.log',
+  };
+  try {
+    const distMtime = fs.existsSync(paths.dist) ? fs.statSync(paths.dist).mtimeMs : 0;
+    const devMtime = fs.existsSync(paths.dev) ? fs.statSync(paths.dev).mtimeMs : 0;
+    if (devMtime > distMtime) return 'D:/projects/python/odds_monkey_bot/logs';
+    return 'D:/projects/python/odds_monkey_bot/dist/logs';
+  } catch {
+    return 'D:/projects/python/odds_monkey_bot/dist/logs';
+  }
+});
+
+ipcMain.handle('list-compatible-log-files', (_event, logBasePath?: string) => {
+  const basePath =
+    logBasePath || 'D:/projects/python/odds_monkey_bot/dist/logs';
+  try {
+    const files = fs
+      .readdirSync(basePath, { withFileTypes: true })
+      .filter(
+        (entry) =>
+          entry.isFile() &&
+          /^custom_logs\.log(\.\d{4}-\d{2}-\d{2}\.log)?$/i.test(entry.name),
+      )
+      .map((entry) => ({
+        name: entry.name,
+        path: `${basePath}/${entry.name}`,
+      }))
+      .sort((a, b) => b.name.localeCompare(a.name));
+    return files;
+  } catch {
+    return [];
+  }
+});
+
+ipcMain.handle('open-path', (_event, filePath: string) => {
+  return shell.openPath(filePath);
 });
 
 ipcMain.handle('flash-icon', (_event, eventId: string) => {
@@ -304,6 +353,34 @@ ipcMain.handle(
 
 ipcMain.handle('get-images', (_event, directoryPath) => {
   return getImagesFromDirectoryRecursive(directoryPath);
+});
+
+ipcMain.handle('find-images-by-name', (_event, baseDir: string, betName: string, betTimestamp?: number) => {
+  const results: string[] = [];
+  // Normalize: lowercase + spaces to underscores to match filename convention
+  const normalized = betName.toLowerCase().replaceAll(' ', '_');
+  const TIMESTAMP_WINDOW = 120; // ±120 seconds
+  const walk = (dir: string) => {
+    try {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.isDirectory()) {
+          walk(path.join(dir, entry.name));
+        } else if (
+          entry.name.toLowerCase().includes(normalized) &&
+          /\.(png|jpe?g|webp)$/i.test(entry.name)
+        ) {
+          if (betTimestamp) {
+            const filePath = path.join(dir, entry.name);
+            const fileBirth = fs.statSync(filePath).birthtimeMs / 1000;
+            if (Math.abs(fileBirth - betTimestamp) > TIMESTAMP_WINDOW) continue;
+          }
+          results.push(path.join(dir, entry.name).replace(/\\/g, '/'));
+        }
+      }
+    } catch { /* skip inaccessible dirs */ }
+  };
+  walk(baseDir);
+  return results;
 });
 
 ipcMain.handle('get-image', async (_event, filePath) => {

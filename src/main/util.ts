@@ -17,26 +17,26 @@ function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-function logFile(date: Date): string {
+function logFile(
+  date: Date,
+  basePath = 'D:/projects/python/odds_monkey_bot/dist/logs',
+): string {
   const today = new Date();
   const isToday =
     date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear();
-  // D:\projects\python\odds_monkey_bot\dist\logs\custom_logs.log.2024-12-13.log
   return isToday
-    ? 'D:/projects/python/odds_monkey_bot/dist/logs/custom_logs.log'
-    : `D:/projects/python/odds_monkey_bot/dist/logs/custom_logs.log.${formatDate(date)}.log`;
+    ? `${basePath}/custom_logs.log`
+    : `${basePath}/custom_logs.log.${formatDate(date)}.log`;
 }
 
-function findLogFile(startTime: number, endTime: number) {
+function findLogFile(startTime: number, endTime: number, basePath?: string) {
   const startDateTime = new Date((startTime - 30) * 1000);
   const endDateTime = new Date((endTime + 30) * 1000);
 
-  //   console.log(startDateTime, endDateTime);
-
-  const startFileName = logFile(startDateTime);
-  const endFileName = logFile(endDateTime);
+  const startFileName = logFile(startDateTime, basePath);
+  const endFileName = logFile(endDateTime, basePath);
 
   return { startFileName, endFileName };
 }
@@ -45,8 +45,13 @@ export function findBetInLogs(
   startUnix: number,
   endUnix: number,
   logFile?: string,
+  basePath?: string,
 ) {
-  let { startFileName, endFileName } = findLogFile(startUnix, endUnix);
+  let { startFileName, endFileName } = findLogFile(
+    startUnix,
+    endUnix,
+    basePath,
+  );
   if (logFile) endFileName = logFile;
   if (startUnix === 0 && logFile) startFileName = logFile;
   let lineStart = 0;
@@ -111,7 +116,11 @@ export function findBetInLogs(
   }
   //   console.log('sel', selectedLines[0], selectedLines[selectedLines.length - 1]);
   if (errored) {
-
   }
   return selectedLines.join('\n');
 }
+// betMaths.ts
+
+export const weightedAvgOdds = (stakes: number[], odds: number[]): number =>
+  stakes.reduce((sum, s, i) => sum + s * odds[i], 0) /
+  stakes.reduce((sum, s) => sum + s, 0);
