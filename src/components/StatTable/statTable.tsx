@@ -37,6 +37,46 @@ function StatTable({
 }: StatTableProps) {
   const [totals, setTotals] = useState<TotalProps>();
   const [profitOverride, setProfitOverride] = useState(0);
+
+  const getBetOutcomeProfits = (bet: BData) => {
+    let backWins = 0;
+    let layLiability = 0;
+    let backLiability = 0;
+    let layWins = 0;
+    const backMatchedBets = Array.isArray(bet.bet_profit?.back_matched)
+      ? bet.bet_profit.back_matched
+      : [];
+    const exchangeMatchedBets = Array.isArray(bet.bet_profit?.exchange_matched)
+      ? bet.bet_profit.exchange_matched
+      : [];
+
+    backMatchedBets.forEach((matchedBet) => {
+      (matchedBet.odds ?? []).forEach((odd, i) => {
+        const matched = Array.isArray(matchedBet.matched)
+          ? (matchedBet.matched[i] ?? 0)
+          : 0;
+        backWins +=
+          (odd - 1) * matched * (1 - (bet.bet_odds.back_commission ?? 0.02));
+        backLiability += matched;
+      });
+    });
+
+    exchangeMatchedBets.forEach((matchedBet) => {
+      (matchedBet.odds ?? []).forEach((odd, i) => {
+        const matched = Array.isArray(matchedBet.matched)
+          ? (matchedBet.matched[i] ?? 0)
+          : 0;
+        layWins += matched * (1 - bet.bet_odds.commission);
+        layLiability += (odd - 1) * matched;
+      });
+    });
+
+    return {
+      backWinProfit: backWins - layLiability,
+      layWinProfit: layWins - backLiability,
+    };
+  };
+
   const manualProfitOverride = async () => {
     const data = await window.electron.ipcRenderer.fetchItems(
       'manual_profit_override',
@@ -84,35 +124,29 @@ function StatTable({
   useEffect(() => {
     if (!filteredBets) return;
 
+    const betProfits = filteredBets.map((bet) => getBetOutcomeProfits(bet));
+    if (!betProfits) return;
+
     let avgProfit = +filteredBets
       .reduce(
-        (sum, current) =>
-          sum +
-          (current.bet_profit.back_win_profit +
-            current.bet_profit.lay_win_profit) /
-            2,
+        (sum, _, i) =>
+          sum + (betProfits[i].backWinProfit + betProfits[i].layWinProfit) / 2,
         0,
       )
       .toFixed(2);
     let minProfit = +filteredBets
       .reduce(
-        (sum, current) =>
+        (sum, _, i) =>
           sum +
-          Math.min(
-            current.bet_profit.back_win_profit,
-            current.bet_profit.lay_win_profit,
-          ),
+          Math.min(betProfits[i].backWinProfit, betProfits[i].layWinProfit),
         0,
       )
       .toFixed(2);
     let maxProfit = +filteredBets
       .reduce(
-        (sum, current) =>
+        (sum, _, i) =>
           sum +
-          Math.max(
-            current.bet_profit.back_win_profit,
-            current.bet_profit.lay_win_profit,
-          ),
+          Math.max(betProfits[i].backWinProfit, betProfits[i].layWinProfit),
         0,
       )
       .toFixed(2);
@@ -232,7 +266,7 @@ function StatTable({
           doc.bet_info.event_name === bet.bet_info.event_name &&
           doc.bet_info.event_time === bet.bet_info.event_time &&
           doc.bet_info.bet === bet.bet_info.bet &&
-          doc.bet_info.exchange !== bet.bet_info.exchange
+          doc.bet_info.exchange !== bet.bet_info.exchange,
       );
       const foundBet = timeFilteredBets.find(
         (match) =>
