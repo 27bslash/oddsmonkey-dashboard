@@ -42,6 +42,7 @@ export interface BOdds {
   all_back_odds: number[];
   all_lay_odds: number[];
   commission: number;
+  back_commission: number;
 }
 
 export interface BProfit {
