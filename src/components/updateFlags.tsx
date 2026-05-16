@@ -1,6 +1,6 @@
 import { Box, Button, ButtonGroup, Typography } from '@mui/material';
 import { green } from '@mui/material/colors';
-import Logs from './bets/Bet/BetCell/logs_reader/logs';
+import Logs from './logs_reader/logs';
 type UpdateFlagsProps = {
   flags: { [key: string]: string };
   setFlag: (flag: string) => void;

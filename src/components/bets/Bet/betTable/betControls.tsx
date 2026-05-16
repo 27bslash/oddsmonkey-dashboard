@@ -11,10 +11,12 @@ import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import PanoramaIcon from '@mui/icons-material/Panorama';
 import { useAppContext } from '../../../../renderer/useAppContext';
 import { red } from '@mui/material/colors';
-import LogOverlay from '../BetCell/logs_reader/logOverlay';
-import { useLogs } from '../BetCell/logs_reader/useLogs';
-import Logs from '../BetCell/logs_reader/logs';
+// import LogOverlay from '../BetCell/logs_reader/logOverlay';
+// import { useLogs } from '../BetCell/logs_reader/useLogs';
+// import Logs from '../BetCell/logs_reader/logs';
 import { createPortal } from 'react-dom';
+import { useLogs } from '../../../logs_reader/useLogs';
+import Logs from '../../../logs_reader/logs';
 type BetControlsProps = {
   bet: BData;
   deleteBet: (_id: ObjectId) => void;
