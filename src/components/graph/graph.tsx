@@ -21,7 +21,7 @@ import {
   filterTimestampsByMonth,
   filterTimestampsByYear,
 } from '../bets/bets';
-
+import zoomPlugin from 'chartjs-plugin-zoom';
 ChartJS.register(
   LineElement,
   PointElement,
@@ -31,6 +31,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
+  zoomPlugin,
 );
 
 type BalanceEntry = {
@@ -38,7 +39,7 @@ type BalanceEntry = {
   time: string;
   betfair_balance?: number;
 };
-type TrueBalance = {
+export type TrueBalance = {
   balance: BalanceEntry[];
 };
 type GraphProps = {

@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import ReactDOM from 'react-dom/client';
 import { green, red } from '@mui/material/colors';
@@ -29,6 +29,7 @@ const LineChart = ({
     datasetIndex: number;
   } | null>(null);
   const [showHoverTooltip, setShowHoverTooltip] = useState(true);
+
   useEffect(() => {
     const tooltipEl = document.createElement('div');
     tooltipEl.id = 'external-tooltip';
@@ -51,99 +52,7 @@ const LineChart = ({
       ctx.restore();
     },
   };
-  const options = {
-    responsive: true,
-    type: 'line',
 
-    onHover: (event: any, chartElement: any[]) => {
-      const target = event?.native?.target || event?.target;
-      if (target) {
-        if (chartElement && chartElement.length > 0) {
-          target.style.cursor = 'pointer';
-        } else {
-          target.style.cursor = 'default';
-        }
-      }
-    },
-    onClick: (event: any, elements: any[]) => {
-      if (elements && elements.length > 0) {
-        const { index, datasetIndex } = elements[0];
-        console.log('onClick', index, datasetIndex);
-        const chart = chartRef.current;
-        if (chart) {
-          const meta = chart.getDatasetMeta(datasetIndex);
-          const point = meta.data[index];
-          const rect = chart.canvas.getBoundingClientRect();
-          setClickedPoint({
-            x: rect.left + window.pageXOffset + point.x - 200,
-            y: rect.top + window.pageYOffset + point.y - 80,
-            index,
-            datasetIndex,
-          });
-          setShowHoverTooltip(false); // Hide hover tooltip on click
-          console.log(data);
-        }
-      } else {
-        setClickedPoint(null);
-        setShowHoverTooltip(true); // Show hover tooltip again if nothing is clicked
-      }
-    },
-    plugins: {
-      //   customCanvasBackgroundColor: {
-      //     color: '#212121', // whatever color you want
-      //   },
-      color: 'red',
-      tooltip: {
-        enabled: false,
-        external: (context: any) => {
-          const { chart, tooltip } = context;
-          const tooltipModel = tooltip;
-
-          if (!tooltipRef.current) return;
-
-          if (!showHoverTooltip || tooltipModel.opacity === 0) {
-            tooltipRootRef.current?.render(
-              <CustomTooltip visible={false} x={0} y={0} content={null} />,
-            );
-            return;
-          }
-
-          const position = chart.canvas.getBoundingClientRect();
-          const data = tooltipModel.dataPoints?.[0];
-          const x = position.left + window.pageXOffset + tooltipModel.caretX;
-          const y =
-            position.top + window.pageYOffset + tooltipModel.caretY + 100;
-          const smarkets_balance =
-            dataPoints.smarkets[tooltip.dataPoints[0].dataIndex];
-          const betfair_balance =
-            dataPoints.betfair[tooltip.dataPoints[0].dataIndex];
-
-          const content = (
-            <>
-              <BalanceLabel
-                label={data.dataset.label}
-                amount={data.formattedValue}
-              />
-              <BalanceLabel label="Smarkets" amount={smarkets_balance} />
-              <BalanceLabel label="Betfair" amount={betfair_balance} />
-            </>
-          );
-
-          tooltipRootRef.current?.render(
-            <CustomTooltip x={x} y={y} content={content} visible={true} />,
-          );
-        },
-      },
-    },
-    scales: {
-      y: {
-        // beginAtZero: true,
-        ticks: {
-          callback: (value: number | string) => `£${value}`,
-        },
-      },
-    },
-  };
   const pointColors = labels.map((label, idx) => {
     // idx === clickedPoint?.index ? 'red' : 'rgb(83, 192, 75)',
     if (idx === clickedPoint?.index) {
@@ -171,26 +80,116 @@ const LineChart = ({
         pointBackgroundColor: pointColors,
         pointBorderColor: pointColors,
       },
-      //   {
-      //     label: 'Smarkets',
-      //     data: dataPoints.smarkets.map((x) => x * 2),
-      //     borderColor: 'rgb(75, 184, 192)',
-      //     backgroundColor: 'rgb(23, 127, 145)',
-      //     borderWidth: 2,
-      //     fill: true,
-      //     tension: 0.4,
-      //   },
-      //   {
-      //     label: 'betfair',
-      //     data: dataPoints.betfair.map((x) => x * 2),
-      //     borderColor: 'rgb(182, 192, 75)',
-      //     backgroundColor: 'rgb(206, 193, 48)',
-      //     borderWidth: 2,
-      //     fill: true,
-      //     tension: 0.4,
-      //   },
+      // {
+      //   label: 'Smarkets',
+      //   data: dataPoints.smarkets.map((x) => x * 2),
+      //   borderColor: 'rgb(75, 184, 192)',
+      //   backgroundColor: 'rgb(23, 127, 145)',
+      //   borderWidth: 2,
+      //   fill: true,
+      //   tension: 0.4,
+      // },
+      // {
+      //   label: 'betfair',
+      //   data: dataPoints.betfair.map((x) => x * 2),
+      //   borderColor: 'rgb(182, 192, 75)',
+      //   backgroundColor: 'rgb(206, 193, 48)',
+      //   borderWidth: 2,
+      //   fill: true,
+      //   tension: 0.4,
+      // },
     ],
   };
+  const dataPointsRef = useRef(dataPoints);
+  useEffect(() => {
+    dataPointsRef.current = dataPoints;
+  }, [dataPoints]);
+
+  const showHoverTooltipRef = useRef(showHoverTooltip);
+  useEffect(() => {
+    showHoverTooltipRef.current = showHoverTooltip;
+  }, [showHoverTooltip]);
+
+  const options = useMemo(
+    () => ({
+      responsive: true,
+
+      onHover: (event: any, chartElement: any[]) => {
+        const target = event?.native?.target || event?.target;
+        if (!target) return;
+        const isZoomed = chartRef.current?.getZoomLevel() > 1;
+
+        if (isPanningRef.current) {
+          target.style.cursor = 'grabbing'; // don't let hover override while panning
+          return;
+        }
+        target.style.cursor =
+          chartElement.length > 0 ? 'pointer' : isZoomed ? 'grab' : 'default';
+      },
+
+      onClick: (event: any, elements: any[]) => {
+        if (elements && elements.length > 0) {
+          const { index, datasetIndex } = elements[0];
+          const chart = chartRef.current;
+          if (chart) {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            const point = meta.data[index];
+            const rect = chart.canvas.getBoundingClientRect();
+            setClickedPoint({
+              x: rect.left + window.pageXOffset + point.x - 200,
+              y: rect.top + window.pageYOffset + point.y - 80,
+              index,
+              datasetIndex,
+            });
+            setShowHoverTooltip(false);
+          }
+        } else {
+          setClickedPoint(null);
+          setShowHoverTooltip(true);
+        }
+      },
+
+      plugins: {
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: 'x',
+            cursor: 'help',
+          },
+          zoom: {
+            wheel: {
+              enabled: true,
+            },
+            mode: 'x',
+            onZoom: () => {
+              console.log('ZOOM');
+            },
+          },
+        },
+        tooltip: {
+          enabled: false,
+          external: (context: any) => {
+            return createExternalTooltip(
+              tooltipRef,
+              tooltipRootRef,
+              showHoverTooltipRef,
+              dataPointsRef,
+              context,
+            );
+          },
+        },
+      },
+
+      scales: {
+        y: {
+          ticks: {
+            callback: (value: number | string) => `£${value}`,
+          },
+        },
+      },
+    }),
+    [],
+  );
   const [inputValue, setInputValue] = useState<string>('0');
   useEffect(() => {
     if (!clickedPoint) return;
@@ -204,6 +203,37 @@ const LineChart = ({
     );
     setInputValue(overrides[labels[clickedPoint.index]] || '0');
   }, [clickedPoint]);
+  const isPanningRef = useRef(false);
+
+  useEffect(() => {
+    const canvas = chartRef.current?.canvas;
+    if (!canvas) return;
+
+    const onMouseDown = () => {
+      if (chartRef.current?.getZoomLevel() <= 1) return;
+      isPanningRef.current = true;
+      canvas.style.cursor = 'grabbing';
+    };
+    const onMouseUp = () => {
+      isPanningRef.current = false;
+      canvas.style.cursor = 'grab';
+    };
+    const onMouseLeave = () => {
+      isPanningRef.current = false;
+      canvas.style.cursor = 'default';
+    };
+
+    canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('mouseleave', onMouseLeave);
+    canvas.style.cursor = 'grab';
+
+    return () => {
+      canvas.removeEventListener('mousedown', onMouseDown);
+      canvas.removeEventListener('mouseup', onMouseUp);
+      canvas.removeEventListener('mouseleave', onMouseLeave);
+    };
+  }, []);
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const targetDate = labels[clickedPoint!.index];
@@ -263,6 +293,7 @@ const LineChart = ({
         data={data}
         options={options}
         plugins={[canvasBackground]}
+        updateMode="none"
       />
     </>
   );
@@ -284,6 +315,49 @@ const BalanceLabel = ({
           : amount.replace(',', '')}
       </span>
     </Typography>
+  );
+};
+const createExternalTooltip = (
+  tooltipRef: React.MutableRefObject<HTMLDivElement | null>,
+  tooltipRootRef: React.MutableRefObject<ReactDOM.Root | null>,
+  showHoverTooltipRef: React.MutableRefObject<boolean>,
+  dataPointsRef: React.MutableRefObject<any>,
+  context: any,
+) => {
+  const { chart, tooltip } = context;
+  const tooltipModel = tooltip;
+
+  if (!tooltipRef.current) return;
+
+  if (!showHoverTooltipRef.current || tooltipModel.opacity === 0) {
+    tooltipRootRef.current?.render(
+      <CustomTooltip visible={false} x={0} y={0} content={null} />,
+    );
+    return;
+  }
+
+  const position = chart.canvas.getBoundingClientRect();
+  const dataPoint = tooltipModel.dataPoints?.[0];
+  const x = position.left + window.pageXOffset + tooltipModel.caretX;
+  const y = position.top + window.pageYOffset + tooltipModel.caretY + 100;
+  const smarkets_balance =
+    dataPointsRef.current.smarkets[tooltip.dataPoints[0].dataIndex];
+  const betfair_balance =
+    dataPointsRef.current.betfair[tooltip.dataPoints[0].dataIndex];
+
+  const content = (
+    <>
+      <BalanceLabel
+        label={dataPoint.dataset.label}
+        amount={dataPoint.formattedValue}
+      />
+      <BalanceLabel label="Smarkets" amount={smarkets_balance} />
+      <BalanceLabel label="Betfair" amount={betfair_balance} />
+    </>
+  );
+
+  tooltipRootRef.current?.render(
+    <CustomTooltip x={x} y={y} content={content} visible={true} />,
   );
 };
 export default LineChart;
