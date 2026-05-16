@@ -1,9 +1,4 @@
-import {
-  Box,
-  TableFooter,
-  TablePagination,
-  TableRow,
-} from '@mui/material';
+import { Box, TableFooter, TablePagination, TableRow } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { BData, BetInfo, BetOdds, BetProfit, Matched } from '../../../types';
 import { useAppContext } from '../../renderer/useAppContext';
@@ -14,6 +9,7 @@ import { ObjectId } from 'mongodb';
 import TableSearch from '../search/tableSearch';
 import fuzzysort from 'fuzzysort';
 import FilterButtons from '../StatTable/FilterButtons';
+import { calculateBetProfits } from '../../utils/betCalculations';
 
 export type SortKeys = keyof BetInfo | keyof BetOdds | keyof BetProfit;
 
@@ -167,13 +163,27 @@ function Bets({ flags, setFlags }: BetProps) {
     const indexs: number[] = [];
     const lowProfit = [];
     const Profitable = [...bets].filter((bet, idx) => {
+      const bm = bet.bet_profit.back_matched;
+      console.log('checking bet', bet.bet_info.event_name, bm);
+      if (!bm || !bm.length || !Object.keys(bm[0]).length) {
+        return true;
+      }
+      const {
+        backTotalWin,
+        backLiability,
+        layTotalWin,
+        layLiability: calcdLayLiability,
+      } = calculateBetProfits(
+        bet.bet_profit.back_matched,
+        bet.bet_profit.exchange_matched,
+        bet.bet_odds.back_commission,
+        bet.bet_odds.commission,
+      );
+
+      const netBack = backTotalWin - calcdLayLiability;
+      const netLay = layTotalWin - backLiability;
       const profitZero =
-        (bet.bet_profit.back_win_profit < 0 ||
-          bet.bet_profit.lay_win_profit < 0) &&
-        !(
-          bet.bet_profit.back_win_profit <= 0 &&
-          bet.bet_profit.lay_win_profit <= 0
-        );
+        (netBack < 0 || netLay < 0) && !(netBack <= 0 && netLay <= 0);
       if (
         profitZero &&
         bet.bet_info.unix_time > new Date().getTime() / 1000 - 60 * 90
