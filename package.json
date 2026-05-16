@@ -1,6 +1,6 @@
 {
   "name": "oddsmonkey-dashboard",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A foundation for scalable desktop apps",
   "keywords": [
     "electron",
@@ -27,8 +27,8 @@
   },
   "main": "./src/main/main.ts",
   "scripts": {
-    "dist": "electron-builder",
     "start": "ts-node ./.erb/scripts/check-port-in-use.js && npm run start:renderer",
+    "dist": "electron-builder",
     "package": "ts-node ./.erb/scripts/clean.js dist && npm run build && electron-builder build --publish never && npm run build:dll",
     "publish": "npm run package && electron-builder --publish always",
     "make": "electron-forge make",
@@ -42,7 +42,8 @@
     "start:main": "cross-env NODE_ENV=development electronmon -r ts-node/register/transpile-only .",
     "start:preload": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.preload.dev.ts",
     "start:renderer": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true webpack serve --config ./.erb/configs/webpack.config.renderer.dev.ts ",
-    "test": "jest"
+    "test": "jest",
+    "release": "semantic-release"
   },
   "browserslist": [],
   "prettier": {
@@ -97,6 +98,7 @@
     "@mui/icons-material": "^6.1.9",
     "@mui/material": "^6.1.9",
     "chart.js": "^4.4.8",
+    "chartjs-plugin-zoom": "^2.2.0",
     "dotenv": "^16.4.7",
     "electron-builder": "^25.1.8",
     "electron-debug": "^3.2.0",
@@ -104,8 +106,10 @@
     "electron-squirrel-startup": "^1.0.1",
     "electron-updater": "^6.1.4",
     "fuzzysort": "^3.1.0",
+    "hammerjs": "^2.0.8",
     "highlight.js": "^11.10.0",
     "lodash": "^4.17.21",
+    "lucide-react": "^1.0.1",
     "memory-pager": "^1.5.0",
     "mongodb": "^6.6.2",
     "node-machine-id": "^1.1.12",
@@ -130,6 +134,12 @@
     "@electron/fuses": "^1.8.0",
     "@electron/rebuild": "^3.3.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^11.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^10.3.5",
+    "@semantic-release/npm": "^12.0.2",
+    "@semantic-release/release-notes-generator": "^12.1.0",
     "@svgr/webpack": "^8.1.0",
     "@teamsupercell/typings-for-css-modules-loader": "^2.5.2",
     "@testing-library/jest-dom": "^6.1.3",
@@ -180,6 +190,7 @@
     "rimraf": "^5.0.1",
     "sass": "^1.67.0",
     "sass-loader": "^13.3.2",
+    "semantic-release": "^24.2.5",
     "style-loader": "^3.3.3",
     "terser-webpack-plugin": "^5.3.9",
     "ts-jest": "^29.1.1",
@@ -256,7 +267,8 @@
       "output": "release/build"
     },
     "extraResources": [
-      "./assets/**"
+      "./assets/**",
+      ".env"
     ],
     "publish": {
       "provider": "github",
@@ -267,7 +279,7 @@
   "collective": {
     "url": "https://opencollective.com/electron-react-boilerplate-594"
   },
-  "devEngines": {
+  "engines": {
     "node": ">=14.x",
     "npm": ">=7.x"
   },
