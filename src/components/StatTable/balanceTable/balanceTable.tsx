@@ -5,15 +5,12 @@ import {
   Typography,
   Tooltip,
   Grid2,
-  Button,
-  Dialog,
   Box,
 } from '@mui/material';
 import { blue, green, red } from '@mui/material/colors';
 import { TotalProps } from '../statTable';
-import Graph from '../../graph/graph';
 import React, { SetStateAction, useState } from 'react';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import GraphWrapper from '../../graph/graphWrapper';
 type StatTableBodyProps = {
   totals: TotalProps;
   balance: { smarkets: number; betfair: number };
@@ -89,12 +86,8 @@ function StatTableBody({ totals, balance, filter }: StatTableBodyProps) {
                   ).toFixed(2)}
                 </Typography>
               </Tooltip>
-              <TrendingUpIcon
-                onClick={() => setOpen((prev) => !prev)}
-                color={'success'}
-                className="icon"
-              />
-              <GraphDialog open={open} filter={filter} setOpen={setOpen} />
+
+              <GraphWrapper filter={filter} />
             </Box>
           )}
         </TableCell>
@@ -180,24 +173,4 @@ export interface GraphDialogProps {
   filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
 }
 
-function GraphDialog(props: GraphDialogProps) {
-  const { setOpen, open, filter } = props;
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  return (
-    <Dialog
-      onClose={handleClose}
-      open={open}
-      fullWidth={true}
-      PaperProps={{
-        style: { width: 1300, maxWidth: '90vw' },
-      }}
-    >
-      <Graph filter={filter} />
-    </Dialog>
-  );
-}
 export default StatTableBody;
