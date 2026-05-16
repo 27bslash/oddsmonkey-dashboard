@@ -26,6 +26,7 @@ export type BetCalcParams = {
   backStake: number;
   layStake: number;
   commission: number;
+  backCommission: number;
 };
 
 type CalculatorSectionProps = {
@@ -173,15 +174,13 @@ const CalculatorSection = ({
           />
         </Box>
         <Box display={'flex'} justifyContent={'space-between'}>
-          {type === 'lay' && (
-            <CalculatorTextField
-              bg={baseColor['100']}
-              k={'commission'}
-              valueObj={valueObj}
-              setValue={updateValue}
-              label="current commission"
-            ></CalculatorTextField>
-          )}
+          <CalculatorTextField
+            bg={baseColor['100']}
+            k={type === 'lay' ? 'commission' : 'backCommission'}
+            valueObj={valueObj}
+            setValue={updateValue}
+            label="current commission"
+          ></CalculatorTextField>
           <CalculatorTextField
             bg={baseColor['100']}
             valueObj={valueObj}

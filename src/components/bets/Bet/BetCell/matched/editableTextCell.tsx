@@ -66,22 +66,20 @@ function EditableCell({
         console.log(updateQuery, arr, updateVal);
         updateVal = arr;
         const matchingBet = allBets!.find((match) => match._id === bet._id);
-        bet.bet_profit[lay ? 'exchange_matched' : 'back_matched'] = arr;
-        setAllBets(
-          [...allBets!].map((doc) => ({
-            ...doc,
-            doc: doc._id === bet._id ? bet : doc,
-          })),
-        );
+        // Create updated bet object
+        const updatedBet = {
+          ...bet,
+          bet_profit: {
+            ...bet.bet_profit,
+            [lay ? 'exchange_matched' : 'back_matched']: arr,
+          },
+        };
+        // Update local bet prop
+        setBet(updatedBet);
+        // Update global allBets
+        setAllBets(allBets!.map((b) => (b._id === bet._id ? updatedBet : b)));
         console.log(matchingBet?.bet_info.event_name);
         console.log(bet.bet_info.event_name);
-        // setBet((prev) => ({
-        //   ...prev,
-        //   bet_profit: {
-        //     ...prev.bet_profit,
-        //     [lay ? 'exchange_matched' : 'back_matched']: arr,
-        //   },
-        // }));
       } else {
         updateQuery = `${updateQuery}[${index}].${type}`;
         console.log(updateQuery);
@@ -109,6 +107,8 @@ function EditableCell({
         query: { 'bet_info.bet_unix_time': bet.bet_info.bet_unix_time },
         update: { $set: { [updateQuery]: updateVal } },
       });
+      // Reset editing state after update
+      setIsEditing(false);
     } else if (e.key === 'Escape') {
       setIsEditing(false);
     }
@@ -129,38 +129,36 @@ function EditableCell({
   }, [bet, value]);
   //   console.log(data.bet_info.event_name, matchVal, color);
   return (
-    <>
-      <Box
-        className="editable-text-cell"
-        sx={
-          {
-            //   color: profit >= 0 ? green['400'] : red['400'],
-          }
+    <Box
+      className="editable-text-cell"
+      sx={
+        {
+          //   color: profit >= 0 ? green['400'] : red['400'],
         }
-      >
-        {!isEditing ? (
-          <Typography
-            color={type === 'matched' ? color : 'white'}
-            onClick={handleClick}
-          >
-            {type === 'matched' && <span>£</span>}
-            {value}
-          </Typography>
-        ) : (
-          <>
-            {type === 'matched' && <span>£</span>}
-            <input
-              className="editable-text-input"
-              type="number"
-              onKeyDown={(e) => handleKeyDown(e)}
-              value={value}
-              onChange={handleChange}
-              autoFocus
-            />
-          </>
-        )}
-      </Box>
-    </>
+      }
+    >
+      {!isEditing ? (
+        <Typography
+          color={type === 'matched' ? color : 'white'}
+          onClick={handleClick}
+        >
+          {type === 'matched' && <span>£</span>}
+          {value}
+        </Typography>
+      ) : (
+        <>
+          {type === 'matched' && <span>£</span>}
+          <input
+            className="editable-text-input"
+            type="number"
+            onKeyDown={(e) => handleKeyDown(e)}
+            value={value}
+            onChange={handleChange}
+            autoFocus
+          />
+        </>
+      )}
+    </Box>
   );
 }
 export default EditableCell;

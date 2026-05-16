@@ -1,7 +1,6 @@
 import { Box } from '@mui/material';
-import { useState, useEffect } from 'react';
 import CalculatorTextField from './calculatorTextField';
-import { capitalize } from './calculatorSection';
+import { BetCalcParams, capitalize } from './calculatorSection';
 
 const CalculatorGroup = ({
   type,
@@ -9,31 +8,23 @@ const CalculatorGroup = ({
   bg,
   setValue,
 }: {
-  type: string;
+  type: 'lay' | 'back';
   bg: { [key: string | number]: string };
-  valueObj: {
-    avgBackOdds: number;
-    avgLayOdds: number;
-    currentBackOdds: number;
-    currentLayOdds: number;
-    backStake: number;
-    layStake: number;
-    commission: number;
-  };
+  valueObj: BetCalcParams;
   setValue: any;
 }) => {
   return (
     <Box display={'flex'} justifyContent={'space-between'}>
       <CalculatorTextField
         bg={bg['100']}
-        k={`${type}Stake`}
+        k={`${type}Stake` as keyof BetCalcParams}
         valueObj={valueObj}
         setValue={setValue}
         label="total matched"
       ></CalculatorTextField>
       <CalculatorTextField
         bg={bg['100']}
-        k={`avg${capitalize(type)}Odds`}
+        k={`avg${capitalize(type)}Odds` as keyof BetCalcParams}
         valueObj={valueObj}
         setValue={setValue}
         label="average odds"

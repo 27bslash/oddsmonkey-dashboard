@@ -98,23 +98,18 @@ function MatchedCell({
       });
     }
   }, [bet, show]);
-  //   console.log(bet.bet_info.event_name, bet.bet_profit.exchange_matched, d);
 
-  //   back_wins = round(back_stake * (back_odds - 1), 2);
-  //   lay_liability = round(lay_stake * (lay_odds - 1), 2);
-  //   back_win_profit = round(back_wins - lay_liability, 2);
-  //   lay_wins = round(lay_stake * (1 - commission), 2);
-  //   lay_win_profit = round(lay_wins - back_stake, 2);
   useEffect(() => {
     let backWins = 0;
     let layLiability = 0;
     let backLiability = 0;
     let layWins = 0;
-    Object.entries(backLay['back']).map((x) => {
-      backWins += (+x[0] - 1) * x[1];
+    Object.entries(backLay['back']).forEach((x) => {
+      backWins +=
+        (+x[0] - 1) * x[1] * (1 - (bet.bet_odds.back_commission ?? 0.02));
       backLiability += x[1];
     });
-    Object.entries(backLay['lay']).map((x) => {
+    Object.entries(backLay['lay']).forEach((x) => {
       layWins += +x[1] * (1 - bet.bet_odds.commission);
       layLiability += (+x[0] - 1) * x[1];
     });
