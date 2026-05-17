@@ -10,6 +10,14 @@ type ImageProps = {
   betTimestamp?: number;
 };
 
+const getThumbnailSize = (count: number) => {
+  if (count <= 2) return 220;
+  if (count <= 4) return 180;
+  if (count <= 8) return 145;
+  if (count <= 12) return 120;
+  return 95;
+};
+
 const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageProps) => {
   const [images, setImages] = useState<{ pre_submit: string[]; matched: string[] }>({
     pre_submit: [],
@@ -80,6 +88,7 @@ const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageP
       {(['pre_submit', 'matched'] as const).map((imageType) => {
         const paths = images[imageType];
         if (paths.length === 0) return null;
+        const thumbSize = getThumbnailSize(paths.length);
         return (
           <Box key={imageType}>
             <Box display="flex" alignItems="center" gap={1} mb={0.5}>
@@ -122,7 +131,7 @@ const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageP
               }}
             >
               {paths.map((p) => (
-                <IndividualImage key={p} path={p} />
+                <IndividualImage key={p} path={p} thumbSize={thumbSize} />
               ))}
             </Box>
           </Box>
@@ -132,7 +141,7 @@ const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageP
   );
 };
 
-export const IndividualImage = ({ path }: { path: string }) => {
+export const IndividualImage = ({ path, thumbSize }: { path: string; thumbSize: number }) => {
   const [showImage, setShowImage] = useState(true);
   const [imgPath, setImgPath] = useState(path);
   const [triedAlt, setTriedAlt] = useState(false);
@@ -162,6 +171,7 @@ export const IndividualImage = ({ path }: { path: string }) => {
   return (
     <Box
       sx={{
+        width: `${thumbSize}px`,
         borderRadius: '6px',
         overflow: 'hidden',
         border: '1px solid rgba(255,255,255,0.08)',
@@ -173,7 +183,7 @@ export const IndividualImage = ({ path }: { path: string }) => {
         },
       }}
     >
-      <CustomZoom imageSrc={imgPath} onError={handleError} />
+      <CustomZoom imageSrc={imgPath} onError={handleError} thumbHeight={thumbSize} />
     </Box>
   );
 };

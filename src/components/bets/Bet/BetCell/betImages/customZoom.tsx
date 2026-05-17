@@ -4,8 +4,9 @@ import { createPortal } from 'react-dom';
 type CustomZoomProps = {
   imageSrc: string;
   onError?: () => void;
+  thumbHeight?: number;
 };
-const CustomZoom = ({ imageSrc, onError }: CustomZoomProps) => {
+const CustomZoom = ({ imageSrc, onError, thumbHeight = 150 }: CustomZoomProps) => {
   const [bigPicture, setBigPicture] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [transformOrigin, setTransformOrigin] = useState('center center');
@@ -38,7 +39,14 @@ const CustomZoom = ({ imageSrc, onError }: CustomZoomProps) => {
   }, [bigPicture]);
   return !bigPicture ? (
     <img
-      height="150px"
+      height={thumbHeight}
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'fill',
+        display: 'block',
+        backgroundColor: 'rgba(0,0,0,0.15)',
+      }}
       src={`media:///${imageSrc}`}
       onClick={() => setBigPicture(true)}
       onError={onError}
