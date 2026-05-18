@@ -1,3 +1,30 @@
+# [1.1.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.0.0...v1.1.0) (2026-05-18)
+
+
+### Bug Fixes
+
+* added back commission to anomaly ([e471d30](https://github.com/27bslash/oddsmonkey-dashboard/commit/e471d3079563c75c1111f362f1acd698f3a6f013))
+* added back_commission to overrall profit estimates ([c771f97](https://github.com/27bslash/oddsmonkey-dashboard/commit/c771f97d1263e43e2b3a7184ede0fdb0c701a7fa))
+* added preload paths ([a7165a7](https://github.com/27bslash/oddsmonkey-dashboard/commit/a7165a75ba18fdaddac45652c07455858f6c3d9a))
+* changed zoom component to show images regardless of screenshot time ([31b1b45](https://github.com/27bslash/oddsmonkey-dashboard/commit/31b1b450288c5ace23efd6375f9787548be2d3d3))
+* removed build:dll from package script ([5dcbc4b](https://github.com/27bslash/oddsmonkey-dashboard/commit/5dcbc4be9738b63069398dc1f92749a8365da871))
+* removed unused impors ([05ac00c](https://github.com/27bslash/oddsmonkey-dashboard/commit/05ac00ccfe6215cf9ac9fdeb2649cf19b1822428))
+* updated work flows to fully remove build:dll ([5df58fc](https://github.com/27bslash/oddsmonkey-dashboard/commit/5df58fc71efb9d675d9e9f539a1081fc5a4cf953))
+
+
+### Features
+
+* added back commission to calculator ([7d50cd5](https://github.com/27bslash/oddsmonkey-dashboard/commit/7d50cd53ad38307964b0d7dd5058ebe2b36fe2af))
+* added zoom and pan to graph component ([51cd270](https://github.com/27bslash/oddsmonkey-dashboard/commit/51cd270c9169124647237613f0d9080389d5d951))
+* made images resize to fit container ([0c3ca48](https://github.com/27bslash/oddsmonkey-dashboard/commit/0c3ca48c2ef159f5d6c996474bc7ff17080ec009))
+* new log style applyed globally ([72eb97d](https://github.com/27bslash/oddsmonkey-dashboard/commit/72eb97dd6b3d06291bce2401aa4d377429ee8870))
+* restyled logs to include recurring erros ([2e6c327](https://github.com/27bslash/oddsmonkey-dashboard/commit/2e6c32714710cabbe0ecdffa2014d7dab9b891f2))
+
+
+### Performance Improvements
+
+* changed from loading full db on each poll ([5050014](https://github.com/27bslash/oddsmonkey-dashboard/commit/505001410c8c100df883100434e87f415309fbc4))
+
 # 2.1.0
 
 - Migrate to `css-minifier-webpack-plugin`
