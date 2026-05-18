@@ -9,7 +9,7 @@ type RecurringErrorsPanelProps = {
   totalWarnings: number;
   expanded: boolean;
   setExpanded: (fn: (prev: boolean) => boolean) => void;
-  onNavigate: (sectionId: string) => void;
+  onNavigate: (error: RecurringError) => void;
 };
 
 export default function RecurringErrorsPanel({

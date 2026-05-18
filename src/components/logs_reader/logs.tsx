@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
-import LogOverlay from './logOverlay';
-import { orange, red } from '@mui/material/colors';
+import { red } from '@mui/material/colors';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import { BData } from '../../../types';
 import { IconWrapper } from '../bets/Bet/betTable/betControls';
 import { Button } from '@mui/material';
-import { useLogs } from './useLogs';
-import { useAppContext } from '../../renderer/useAppContext';
+import { useLogs } from './core/useLogs';
 import SimplifiedLogViewer from './stitch';
 type LogsProps = {
   bet?: BData;
@@ -15,10 +13,6 @@ const Logs = ({ bet }: LogsProps) => {
   const [logErrored, setLogErrored] = useState(false);
   const [logOverlay, setLogOverlay] = useState(false);
   const { errored, acknowledgeErrors } = useLogs({ bet });
-  const { devMachine } = useAppContext();
-  if (!devMachine) {
-    return null;
-  }
 
   useEffect(() => {
     setLogErrored(errored);
@@ -42,7 +36,7 @@ const Logs = ({ bet }: LogsProps) => {
       }
       overlayBool={logOverlay}
       setOverlayBool={setLogOverlay}
-      overlayComponent={<LogOverlay bet={bet} />}
+      overlayComponent={<SimplifiedLogViewer bet={bet} />}
       justify="center"
     />
   ) : (

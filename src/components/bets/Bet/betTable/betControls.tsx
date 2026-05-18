@@ -15,7 +15,7 @@ import { red } from '@mui/material/colors';
 // import { useLogs } from '../BetCell/logs_reader/useLogs';
 // import Logs from '../BetCell/logs_reader/logs';
 import { createPortal } from 'react-dom';
-import { useLogs } from '../../../logs_reader/useLogs';
+import { useLogs } from '../../../logs_reader/core/useLogs';
 import Logs from '../../../logs_reader/logs';
 type BetControlsProps = {
   bet: BData;

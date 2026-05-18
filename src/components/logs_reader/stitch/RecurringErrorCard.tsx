@@ -8,9 +8,9 @@ const RecurringErrorCard = ({
   onNavigate,
 }: {
   error: RecurringError;
-  onNavigate?: (id: string) => void;
+  onNavigate?: (error: RecurringError) => void;
 }) => (
-  <ErrorCard onClick={() => onNavigate?.(error.sectionIds[0])}>
+  <ErrorCard onClick={() => onNavigate?.(error)}>
     <Box sx={{ flex: 1, minWidth: 0 }}>
       <Typography
         variant="body2"

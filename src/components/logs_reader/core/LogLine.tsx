@@ -1,5 +1,5 @@
 import React, { SetStateAction } from 'react';
-import { IndividualImage } from '../bets/Bet/BetCell/betImages/debugImage';
+import { IndividualImage } from '../../bets/Bet/BetCell/betImages/debugImage';
 
 type LogLineProps = {
   line: string;
@@ -7,6 +7,7 @@ type LogLineProps = {
   sectionId: string;
   logBasePath?: string;
   lineIdx?: string;
+  highlighted?: boolean;
 };
 
 const LogLine = ({
@@ -15,6 +16,7 @@ const LogLine = ({
   sectionId,
   logBasePath,
   lineIdx,
+  highlighted = false,
 }: LogLineProps) => {
   return (
     <pre
@@ -24,6 +26,15 @@ const LogLine = ({
         color: '#ddd',
         whiteSpace: 'pre-wrap',
         fontFamily: 'monospace',
+        textDecoration: 'none',
+        borderLeft: highlighted
+          ? '2px solid rgba(249, 38, 114, 0.55)'
+          : '2px solid transparent',
+        paddingLeft: '8px',
+        backgroundColor: 'transparent',
+        boxShadow: 'none',
+        borderRadius: undefined,
+        transition: 'all 0.2s ease',
       }}
     >
       {renderLine(line, setFilter, logBasePath)}
@@ -168,13 +179,13 @@ function renderLine(
       }
       if (IMAGE_REGEX.test(part)) {
         return (
-          <>
+          <React.Fragment key={i}>
             <br></br>
             <IndividualImage
-              key={i}
               path={`${basePath}/${part.trim().replace(/screenshot_file_path=\s*/, '')}`}
+              thumbSize={180}
             />
-          </>
+          </React.Fragment>
         );
       }
       return part;

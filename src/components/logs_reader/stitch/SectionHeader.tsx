@@ -1,7 +1,59 @@
 import { Box, Typography, Chip, alpha } from '@mui/material';
 import { ChevronRight as ChevronRightIcon } from '@mui/icons-material';
-import { BetSection } from '../useLogs';
+import { BetSection } from '../core/useLogs';
 import { SectionRow } from './styled';
+
+const TIMESTAMP_REGEXES = [
+  /\b(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:[.,]\d{3,6})?)\b/,
+  /\b(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})\b/,
+  /\b(\d{2}\/\d{2}\/\d{4}[ T]\d{2}:\d{2}:\d{2})\b/,
+];
+
+const extractTimestamp = (line: string) => {
+  for (const regex of TIMESTAMP_REGEXES) {
+    const match = line.match(regex);
+    if (match?.[1]) return match[1];
+  }
+  return null;
+};
+
+const formatTimestampForTag = (value: string) => {
+  const noMs = value.replace(/[.,]\d{3,6}\b/, '');
+  const timeMatch = noMs.match(/\b(\d{2}:\d{2}:\d{2})\b/);
+  return timeMatch ? timeMatch[1] : noMs;
+};
+
+const getSectionTimeRange = (largeSection: BetSection[]) => {
+  const lines = largeSection.flatMap((s) =>
+    s.data.filter(
+      (line) => !line.includes('BET SECTION') && !line.includes('END BET SECTION'),
+    ),
+  );
+
+  let start: string | null = null;
+  let end: string | null = null;
+
+  for (const line of lines) {
+    const ts = extractTimestamp(line);
+    if (ts) {
+      start = ts;
+      break;
+    }
+  }
+
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const ts = extractTimestamp(lines[i]);
+    if (ts) {
+      end = ts;
+      break;
+    }
+  }
+
+  return {
+    start: start ? formatTimestampForTag(start) : null,
+    end: end ? formatTimestampForTag(end) : null,
+  };
+};
 
 const SectionHeader = ({
   largeSection,
@@ -19,6 +71,7 @@ const SectionHeader = ({
   const first = largeSection[0];
   const isIncomplete = first._id.replace(/__\d+$/, '').endsWith('_incomplete');
   const lineCount = largeSection.reduce((sum, s) => sum + s.data.length, 0);
+  const { start, end } = getSectionTimeRange(largeSection);
 
   const getBorderColor = () => {
     if (errors > 0) {
@@ -103,6 +156,21 @@ const SectionHeader = ({
                   backgroundColor: alpha('#f59e0b', 0.15),
                   color: alpha('#f59e0b', 0.7),
                   borderRadius: '3px',
+                }}
+              />
+            )}
+            {start && end && (
+              <Chip
+                label={`${start} -> ${end}`}
+                size="small"
+                sx={{
+                  height: 16,
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  backgroundColor: alpha('#93c5fd', 0.12),
+                  color: alpha('#93c5fd', 0.85),
+                  borderRadius: '3px',
+                  fontFamily: 'monospace',
                 }}
               />
             )}
