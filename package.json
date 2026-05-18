@@ -29,7 +29,7 @@
   "scripts": {
     "start": "ts-node ./.erb/scripts/check-port-in-use.js && npm run start:renderer",
     "dist": "electron-builder",
-    "package": "ts-node ./.erb/scripts/clean.js dist && npm run build && electron-builder build --publish never && npm run build:dll",
+    "package": "ts-node ./.erb/scripts/clean.js dist && npm run build && electron-builder build --publish never",
     "publish": "npm run package && electron-builder --publish always",
     "make": "electron-forge make",
     "build": "concurrently \"npm run build:main\" \"npm run build:renderer\"",
