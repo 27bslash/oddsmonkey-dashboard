@@ -215,9 +215,13 @@ async function isExeRunning(exeName: string): Promise<boolean> {
 
 // --- IPC handlers ---
 
-ipcMain.handle('fetch-items', async (_event, collection_name: string) => {
-  return await fetchItems(collection_name);
-});
+ipcMain.handle(
+  'fetch-items',
+  async (_event, collection_name: string, func?: string, limit?: number) => {
+    return await fetchItems(collection_name, func, limit);
+  },
+);
+
 
 ipcMain.handle(
   'delete',

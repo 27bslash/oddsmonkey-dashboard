@@ -39,7 +39,7 @@ const electronHandler = {
         { name: string; path: string }[]
       >,
     fetchItems: (collection_name: string, func?: string, limit?: number) =>
-      ipcRenderer.invoke('fetch-items', collection_name),
+      ipcRenderer.invoke('fetch-items', collection_name, func, limit),
     addItem: (item: any, collection_name: string) =>
       ipcRenderer.invoke('add-item', item, collection_name),
     updateItem: ({

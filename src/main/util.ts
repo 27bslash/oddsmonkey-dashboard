@@ -33,7 +33,7 @@ function logFile(
 
 function findLogFile(startTime: number, endTime: number, basePath?: string) {
   const startDateTime = new Date((startTime - 30) * 1000);
-  const endDateTime = new Date((endTime + 30) * 1000);
+  const endDateTime = new Date((endTime + 300) * 1000);
 
   const startFileName = logFile(startDateTime, basePath);
   const endFileName = logFile(endDateTime, basePath);
@@ -91,7 +91,7 @@ export function findBetInLogs(
     const match = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
     if (match) {
       const timestamp = new Date(match[0]).getTime() / 1000;
-      if (timestamp >= startUnix - 30 && timestamp <= endUnix + 40) {
+      if (timestamp >= startUnix - 30 && timestamp <= endUnix + 300) {
         lineEnd = i;
         if (line.includes('to pending_bets.json times placed')) {
           endBetLine = i;
@@ -100,7 +100,10 @@ export function findBetInLogs(
     }
   }
   let selectedLines = [];
-  let sliceEnd = endBetLine + 1;
+  // Default to the detected end-of-window line, with a safe fallback.
+  let sliceEnd = (lineEnd > 0 ? lineEnd : linesEnd.length - 1) + 1;
+  // Keep the time-window end as source of truth so follow-on incomplete
+  // sections are retained even after a successful bet marker appears.
   if (logFile) {
     sliceEnd = linesEnd.length;
   }

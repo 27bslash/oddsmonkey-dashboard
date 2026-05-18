@@ -80,15 +80,26 @@ export default function App() {
 
     const interval = setInterval(() => {
       window.electron.ipcRenderer
-        .fetchItems('pending_bets', 'timed', 1)
+        .fetchItems('pending_bets', undefined, 20)
         .then((latestArr: BData[]) => {
           if (!latestArr || latestArr.length === 0) return;
-          const latest = fixProfits(latestArr)[0];
-          console.log('latest', latest);
+          const latestBatch = fixProfits(latestArr);
           setAllBets((prev) => {
-            if (!prev) return [latest];
-            if (prev.some((bet) => bet._id === latest._id)) return prev;
-            return [latest, ...prev];
+            if (!prev) {
+              return [...latestBatch].sort(
+                (a, b) =>
+                  b.bet_info.bet_unix_time - a.bet_info.bet_unix_time,
+              );
+            }
+            const existingIds = new Set(prev.map((bet) => JSON.stringify(bet._id)));
+            const unseen = latestBatch.filter(
+              (bet) => !existingIds.has(JSON.stringify(bet._id)),
+            );
+            if (unseen.length === 0) return prev;
+            return [...unseen, ...prev].sort(
+              (a, b) =>
+                b.bet_info.bet_unix_time - a.bet_info.bet_unix_time,
+            );
           });
         });
     }, 10000);
@@ -132,7 +143,7 @@ export default function App() {
       //   });
       //   setFilteredBets(filteredData);
     };
-
+ 
     window.electron.ipcRenderer.onDataFetched(handleDataFetched);
     // const data = window.electron.ipcRenderer.readLog();
     // console.log(data);
