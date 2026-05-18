@@ -25,8 +25,10 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies (no lifecycle scripts)
+        # semantic-release does not need app build artifacts; skipping lifecycle
+        # scripts avoids postinstall/package failures blocking versioning.
+        run: npm ci --ignore-scripts
 
       - name: Run semantic-release
         env:
