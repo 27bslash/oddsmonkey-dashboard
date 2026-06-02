@@ -6,6 +6,7 @@ import { BData, BetType, Matched } from '../../types';
 import Bets from '../components/bets/bets';
 import TableSearch from '../components/search/tableSearch';
 import isEqual from 'lodash.isequal';
+
 import Graph from '../components/graph/graph';
 import { createTheme, ThemeProvider } from '@mui/material';
 import { blue, red } from '@mui/material/colors';
@@ -15,6 +16,12 @@ type Balance = {
   smarkets: number;
   betfair: number;
 };
+// TODO
+// add calendar component to filter down through dates: med-hard
+// fix sleep arrow adjustment: easy
+// combine recurring errors and new errors into one in logs: easy
+// add indicator for bets that have attempted tradeout: easy
+// look into logs performance improvements: med
 
 export default function App() {
   const [allBets, setAllBets] = useState<BData[]>();
@@ -87,18 +94,18 @@ export default function App() {
           setAllBets((prev) => {
             if (!prev) {
               return [...latestBatch].sort(
-                (a, b) =>
-                  b.bet_info.bet_unix_time - a.bet_info.bet_unix_time,
+                (a, b) => b.bet_info.bet_unix_time - a.bet_info.bet_unix_time,
               );
             }
-            const existingIds = new Set(prev.map((bet) => JSON.stringify(bet._id)));
+            const existingIds = new Set(
+              prev.map((bet) => JSON.stringify(bet._id)),
+            );
             const unseen = latestBatch.filter(
               (bet) => !existingIds.has(JSON.stringify(bet._id)),
             );
             if (unseen.length === 0) return prev;
             return [...unseen, ...prev].sort(
-              (a, b) =>
-                b.bet_info.bet_unix_time - a.bet_info.bet_unix_time,
+              (a, b) => b.bet_info.bet_unix_time - a.bet_info.bet_unix_time,
             );
           });
         });
@@ -143,7 +150,7 @@ export default function App() {
       //   });
       //   setFilteredBets(filteredData);
     };
- 
+
     window.electron.ipcRenderer.onDataFetched(handleDataFetched);
     // const data = window.electron.ipcRenderer.readLog();
     // console.log(data);
