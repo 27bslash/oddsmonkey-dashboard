@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.1.0...v1.1.1) (2026-05-18)
+
+
+### Bug Fixes
+
+* changed to use personal access token ([8356d0f](https://github.com/27bslash/oddsmonkey-dashboard/commit/8356d0f58aaf74ad62dac8e39513060947d7a85d))
+
 # [1.1.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.0.0...v1.1.0) (2026-05-18)
 
 
