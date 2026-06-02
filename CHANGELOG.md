@@ -1,3 +1,19 @@
+# [1.2.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.1.1...v1.2.0) (2026-06-02)
+
+
+### Features
+
+* added ability to use prod or dev logs in viewer ([1ab0b10](https://github.com/27bslash/oddsmonkey-dashboard/commit/1ab0b10f688fb69e22e141a335f8727d74d58f7f))
+* added commission tooltip to flags ([a23aca1](https://github.com/27bslash/oddsmonkey-dashboard/commit/a23aca1d50c96368908181267f4f8705b896b318))
+* added local release CD ([4b25203](https://github.com/27bslash/oddsmonkey-dashboard/commit/4b25203a596382f8c6f00c4618d3ceaa898a5303))
+* added tooltip to graph showing difference from last day ([5e4663e](https://github.com/27bslash/oddsmonkey-dashboard/commit/5e4663e5f061536b3b6748f417e1df315f19813b))
+* added tradeout tracking to logs ([496160b](https://github.com/27bslash/oddsmonkey-dashboard/commit/496160b35d9f479147259985bd5997c644a18e35))
+
+
+### Performance Improvements
+
+* fetch only recent bets ([ebd3f47](https://github.com/27bslash/oddsmonkey-dashboard/commit/ebd3f47c972e6fae7c12f67d9e64c6a2cbbd0289))
+
 ## [1.1.1](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.1.0...v1.1.1) (2026-05-18)
 
 
