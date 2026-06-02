@@ -29,7 +29,7 @@
   "scripts": {
     "start": "ts-node ./.erb/scripts/check-port-in-use.js && npm run start:renderer",
     "dist": "electron-builder",
-    "package": "ts-node ./.erb/scripts/clean.js dist && npm run build && electron-builder build --publish never",
+    "package": "ts-node ./.erb/scripts/clean.js dist && node ./scripts/sync-app-package.js && npm run build && electron-builder build --publish never",
     "publish": "npm run package && node ./scripts/publish.js",
     "release:local": "node ./scripts/release-local.js",
     "make": "electron-forge make",
@@ -274,7 +274,8 @@
     "publish": {
       "provider": "github",
       "owner": "27bslash",
-      "repo": "oddsmonkey-dashboard"
+      "repo": "oddsmonkey-dashboard",
+      "releaseType": "release"
     }
   },
   "collective": {
