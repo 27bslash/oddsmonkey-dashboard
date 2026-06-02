@@ -61,7 +61,7 @@ export function findBetInLogs(
   const readLines = (fileName: string): string[] => {
     try {
       return fs.readFileSync(fileName, 'utf8').split('\n');
-    } catch (error) {
+    } catch  {
       errored = true;
       return fs
         .readFileSync(
@@ -111,18 +111,13 @@ export function findBetInLogs(
     const startLogLines = linesStart.slice(lineStart, linesStart.length);
     const endLogLines = linesEnd.slice(0, sliceEnd);
     selectedLines = startLogLines.concat(endLogLines);
-    // fs.writeFileSync('test_logs/startLog.log', startLogLines.join('\n'));
-    // fs.writeFileSync('test_logs/endLog.log', endLogLines.join('\n'));
-    // fs.writeFileSync('test_logs/selectedLog.log', selectedLines.join('\n'));
+
   } else {
     selectedLines = linesEnd.slice(lineStart, sliceEnd);
   }
-  //   console.log('sel', selectedLines[0], selectedLines[selectedLines.length - 1]);
-  if (errored) {
-  }
+
   return selectedLines.join('\n');
 }
-// betMaths.ts
 
 export const weightedAvgOdds = (stakes: number[], odds: number[]): number =>
   stakes.reduce((sum, s, i) => sum + s * odds[i], 0) /

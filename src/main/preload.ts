@@ -24,6 +24,8 @@ const electronHandler = {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
     detectActiveLogPath: () => ipcRenderer.invoke('detect-active-log-path') as Promise<string>,
+    detectLogPathForBet: (bet?: BData) =>
+      ipcRenderer.invoke('detect-log-path-for-bet', bet) as Promise<string>,
     openPath: (filePath: string) => ipcRenderer.invoke('open-path', filePath),
     findImagesByName: (baseDir: string, betName: string, betTimestamp?: number) =>
       ipcRenderer.invoke('find-images-by-name', baseDir, betName, betTimestamp) as Promise<string[]>,

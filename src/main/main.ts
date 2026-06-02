@@ -311,6 +311,48 @@ ipcMain.handle('detect-active-log-path', () => {
   }
 });
 
+ipcMain.handle('detect-log-path-for-bet', (_event, bet?: BData) => {
+  const fallback = 'D:/projects/python/odds_monkey_bot/dist/logs';
+  if (!bet) return fallback;
+
+  const matchedTimes = bet.bet_profit.exchange_matched
+    .map((matchObj) => matchObj.bet_matched_time!)
+    .concat(
+      bet.bet_profit.exchange_matched.map(
+        (matchObj) => matchObj.bet_matched_time!,
+      ),
+    );
+
+  if (!matchedTimes.length || matchedTimes.some((x) => !x)) {
+    return fallback;
+  }
+
+  const startTime = Math.min(...matchedTimes) - 30;
+  const endTime = Math.max(...matchedTimes) + 300;
+  const candidates = [
+    'D:/projects/python/odds_monkey_bot/dist/logs',
+    'D:/projects/python/odds_monkey_bot/logs',
+  ];
+
+  const toDateStamp = (unix: number) =>
+    new Date(unix * 1000).toISOString().split('T')[0];
+  const datesToCheck = new Set([toDateStamp(startTime), toDateStamp(endTime)]);
+
+  for (const basePath of candidates) {
+    for (const d of datesToCheck) {
+      const archivedPath = `${basePath}/custom_logs.log.${d}.log`;
+      if (fs.existsSync(archivedPath)) {
+        return basePath;
+      }
+    }
+    if (fs.existsSync(`${basePath}/custom_logs.log`)) {
+      return basePath;
+    }
+  }
+
+  return fallback;
+});
+
 ipcMain.handle('list-compatible-log-files', (_event, logBasePath?: string) => {
   const basePath =
     logBasePath || 'D:/projects/python/odds_monkey_bot/dist/logs';
