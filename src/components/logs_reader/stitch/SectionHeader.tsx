@@ -70,6 +70,7 @@ const SectionHeader = ({
 }) => {
   const first = largeSection[0];
   const isIncomplete = first._id.replace(/__\d+$/, '').endsWith('_incomplete');
+  const isTradeout = first._id.replace(/__\d+$/, '').endsWith('_tradeout');
   const lineCount = largeSection.reduce((sum, s) => sum + s.data.length, 0);
   const { start, end } = getSectionTimeRange(largeSection);
 
@@ -155,6 +156,20 @@ const SectionHeader = ({
                   fontWeight: 700,
                   backgroundColor: alpha('#f59e0b', 0.15),
                   color: alpha('#f59e0b', 0.7),
+                  borderRadius: '3px',
+                }}
+              />
+            )}
+            {isTradeout && (
+              <Chip
+                label="TRADEOUT"
+                size="small"
+                sx={{
+                  height: 16,
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  backgroundColor: alpha('#22c55e', 0.15),
+                  color: alpha('#22c55e', 0.75),
                   borderRadius: '3px',
                 }}
               />

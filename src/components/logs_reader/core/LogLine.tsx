@@ -24,6 +24,7 @@ const LogLine = ({
       data-line-idx={lineIdx}
       style={{
         color: '#ddd',
+        fontSize: '16px',
         whiteSpace: 'pre-wrap',
         fontFamily: 'monospace',
         textDecoration: 'none',

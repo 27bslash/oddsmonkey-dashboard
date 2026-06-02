@@ -6,13 +6,31 @@ import { IconWrapper } from '../bets/Bet/betTable/betControls';
 import { Button } from '@mui/material';
 import { useLogs } from './core/useLogs';
 import SimplifiedLogViewer from './stitch';
+import { LOG_PATHS } from './stitch/types';
+
 type LogsProps = {
   bet?: BData;
 };
 const Logs = ({ bet }: LogsProps) => {
   const [logErrored, setLogErrored] = useState(false);
   const [logOverlay, setLogOverlay] = useState(false);
-  const { errored, acknowledgeErrors } = useLogs({ bet });
+  const [logBasePath, setLogBasePath] = useState(LOG_PATHS.DIST);
+  const [logFilePath, setLogFilePath] = useState('');
+
+  const {
+    errored,
+    acknowledgeErrors,
+    filter,
+    setFilter,
+    setSearchStr,
+    searchStr,
+    rawLogString,
+
+  } = useLogs({
+    bet,
+    logBasePath,
+    logFilePath: bet ? undefined : logFilePath,
+  });
 
   useEffect(() => {
     setLogErrored(errored);
@@ -36,7 +54,20 @@ const Logs = ({ bet }: LogsProps) => {
       }
       overlayBool={logOverlay}
       setOverlayBool={setLogOverlay}
-      overlayComponent={<SimplifiedLogViewer bet={bet} />}
+      overlayComponent={
+        <SimplifiedLogViewer
+          bet={bet}
+          filter={filter}
+          setFilter={setFilter}
+          setSearchStr={setSearchStr}
+          searchStr={searchStr}
+          rawLogString={rawLogString}
+          logBasePath={logBasePath}
+          setLogBasePath={setLogBasePath}
+          logFilePath={logFilePath}
+          setLogFilePath={setLogFilePath}
+        />
+      }
       justify="center"
     />
   ) : (
@@ -63,7 +94,20 @@ const Logs = ({ bet }: LogsProps) => {
       }
       overlayBool={logOverlay}
       setOverlayBool={setLogOverlay}
-      overlayComponent={<SimplifiedLogViewer bet={bet} />}
+      overlayComponent={
+        <SimplifiedLogViewer
+          bet={bet}
+          filter={filter}
+          setFilter={setFilter}
+          setSearchStr={setSearchStr}
+          searchStr={searchStr}
+          rawLogString={rawLogString}
+          logBasePath={logBasePath}
+          setLogBasePath={setLogBasePath}
+          logFilePath={logFilePath}
+          setLogFilePath={setLogFilePath}
+        />
+      }
       justify="center"
     />
   );
