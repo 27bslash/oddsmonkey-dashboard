@@ -28,6 +28,7 @@ export const useLogs = ({ bet, logBasePath, logFilePath }: LogsProps) => {
   const [searchStr, setSearchStr] = useState('');
   const hasInitializedErrorBaseline = useRef(false);
   const acknowledgedErrorCountRef = useRef(0);
+  const previousDataRef = useRef<string>('');
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -68,7 +69,12 @@ export const useLogs = ({ bet, logBasePath, logFilePath }: LogsProps) => {
         );
         if (!bet) {
           tailUpdate = findAllBetSections(tailUpdate, bet);
-          setRawLogStr(tailUpdate);
+          // Only update state if data actually changed
+          const dataStr = JSON.stringify(tailUpdate);
+          if (dataStr !== previousDataRef.current) {
+            previousDataRef.current = dataStr;
+            setRawLogStr(tailUpdate);
+          }
         }
       } finally {
         pending = false;

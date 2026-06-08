@@ -55,6 +55,7 @@ function renderLine(
   const LOG_LEVEL_REGEX = /\bDEBUG|INFO|WARNING|ERROR|CRITICAL\b/;
   const NUMBER_REGEX = /\b-?\d+(?:\.\d+)?\b/;
   const STRING_REGEX = /'\w+'/;
+  const FUNCTION_CALL_WITH_LINE_REGEX = /[a-zA-Z_]+\.py->\w+\(\):?\d+/;
   const FUNCTION_CALL_REGEX = /\b->\w+\(.*?\)/;
   const FILE_REGEX = /[a-zA-Z_]+\.py/;
   const IMAGE_REGEX = /screenshot_file_path=\s*(.*\.png)/;
@@ -65,6 +66,7 @@ function renderLine(
       URL_REGEX.source,
       IMAGE_REGEX.source,
       HTML_FILE_REGEX.source,
+      FUNCTION_CALL_WITH_LINE_REGEX.source,
       LOG_LEVEL_REGEX.source,
       NUMBER_REGEX.source,
       STRING_REGEX.source,
@@ -86,6 +88,33 @@ function renderLine(
     .split(TOKEN_REGEX)
     .filter(Boolean)
     .map((part, i) => {
+      // Handle function calls with line numbers: filename.py->functionName():lineNumber
+      if (/[a-zA-Z_]+\.py->\w+\(\):?\d+/.test(part)) {
+        const match = part.match(/([a-zA-Z_]+\.py)->(\w+)\(\):?(\d+)/);
+        if (match) {
+          const [, fileName, functionName, lineNumber] = match;
+          return (
+            <span
+              key={i}
+              onClick={() => {
+                window.electron.ipcRenderer.openInVscode(
+                  fileName,
+                  parseInt(lineNumber),
+                );
+              }}
+              style={{
+                color: '#58a6ff',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+              title={`Click to open ${fileName}:${lineNumber} in VS Code`}
+            >
+              {part}
+            </span>
+          );
+        }
+      }
+      // color numbers
       if (/^-?\d+(\.\d+)?$/.test(part)) {
         return (
           <span key={i} style={{ color: 'rgb(174, 129, 255)' }}>
@@ -93,7 +122,7 @@ function renderLine(
           </span>
         );
       }
-
+      // color strings
       if (/^'\w+'$/.test(part)) {
         return (
           <span key={i} style={{ color: 'rgb(230, 219, 116)' }}>
@@ -101,7 +130,7 @@ function renderLine(
           </span>
         );
       }
-
+      // color function calls
       if (/^->\w+\(.*?\)$/.test(part)) {
         return (
           <span key={i}>
@@ -110,7 +139,7 @@ function renderLine(
           </span>
         );
       }
-
+      // color files
       if (/^[a-zA-Z_]+\.py$/.test(part)) {
         return (
           <span key={i} className="code-file">

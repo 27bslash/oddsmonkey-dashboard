@@ -12,7 +12,6 @@ type LogsProps = {
   bet?: BData;
 };
 const Logs = ({ bet }: LogsProps) => {
-  const [logErrored, setLogErrored] = useState(false);
   const [logOverlay, setLogOverlay] = useState(false);
   const [logBasePath, setLogBasePath] = useState(LOG_PATHS.DIST);
   const [logFilePath, setLogFilePath] = useState('');
@@ -25,7 +24,6 @@ const Logs = ({ bet }: LogsProps) => {
     setSearchStr,
     searchStr,
     rawLogString,
-
   } = useLogs({
     bet,
     logBasePath,
@@ -33,21 +31,16 @@ const Logs = ({ bet }: LogsProps) => {
   });
 
   useEffect(() => {
-    setLogErrored(errored);
-  }, [errored]);
-
-  useEffect(() => {
     if (logOverlay) {
       acknowledgeErrors();
-      setLogErrored(false);
     }
-  }, [logOverlay, acknowledgeErrors]);
+  }, [logOverlay]);
   console.log('rendering Logs, errored:', errored);
   return bet ? (
     <IconWrapper
       icon={
         <TextSnippetIcon
-          sx={{ padding: '5px', color: logErrored ? red['800'] : 'orange' }}
+          sx={{ padding: '5px', color: errored ? red['800'] : 'orange' }}
           className="icon"
           id="log-icon"
         />
@@ -73,13 +66,7 @@ const Logs = ({ bet }: LogsProps) => {
   ) : (
     <IconWrapper
       icon={
-        <Button
-          variant="contained"
-          onClick={() => {
-            setLogErrored(false);
-          }}
-          color={logErrored ? 'error' : 'primary'}
-        >
+        <Button variant="contained" color={errored ? 'error' : 'primary'}>
           logs
           <TextSnippetIcon
             sx={{

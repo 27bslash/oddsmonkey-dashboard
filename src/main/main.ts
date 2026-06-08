@@ -19,15 +19,18 @@ import { exec } from 'child_process';
 import dotenv from 'dotenv';
 
 // Load .env — packaged: extraResources dir, dev: project root
-dotenv.config({ path: path.join(app.isPackaged ? process.resourcesPath : app.getAppPath(), '.env') });
+dotenv.config({
+  path: path.join(
+    app.isPackaged ? process.resourcesPath : app.getAppPath(),
+    '.env',
+  ),
+});
 
 const eventStatus = new Map<string, boolean>();
-const client = new MongoClient(
-  process.env.MONGO_URI || '',
-);
-  
+const client = new MongoClient(process.env.MONGO_URI || '');
+
 class AppUpdater {
-  constructor() { 
+  constructor() {
     log.transports.file.level = 'info';
     autoUpdater.logger = log;
     autoUpdater.checkForUpdatesAndNotify();
@@ -222,7 +225,6 @@ ipcMain.handle(
   },
 );
 
-
 ipcMain.handle(
   'delete',
   async (_event, _id: any, replace: { [key: string]: number }) => {
@@ -238,7 +240,7 @@ ipcMain.handle(
     const objectId = new ObjectId(Buffer.from(_id['buffer']));
     await pendingbets.findOneAndDelete({ _id: objectId });
   },
-); 
+);
 
 ipcMain.handle('add-item', async (_event, item, collection_name: string) => {
   return await addItem(item, collection_name);
@@ -281,17 +283,17 @@ ipcMain.handle(
 ipcMain.handle(
   'get-logs',
   (_event, bet?: BData, logBasePath?: string, logFilePath?: string) => {
-  if (!bet) return;
-  const matchedTimes = bet.bet_profit.exchange_matched
-    .map((matchObj) => matchObj.bet_matched_time!)
-    .concat(
-      bet.bet_profit.exchange_matched.map(
-        (matchObj) => matchObj.bet_matched_time!,
-      ),
-    );
-  if (matchedTimes.some((x) => !x)) return;
-  const startTime = Math.min(...matchedTimes);
-  const endTime = Math.max(...matchedTimes);
+    if (!bet) return;
+    const matchedTimes = bet.bet_profit.exchange_matched
+      .map((matchObj) => matchObj.bet_matched_time!)
+      .concat(
+        bet.bet_profit.exchange_matched.map(
+          (matchObj) => matchObj.bet_matched_time!,
+        ),
+      );
+    if (matchedTimes.some((x) => !x)) return;
+    const startTime = Math.min(...matchedTimes);
+    const endTime = Math.max(...matchedTimes);
     return findBetInLogs(startTime, endTime, logFilePath, logBasePath);
   },
 );
@@ -302,8 +304,12 @@ ipcMain.handle('detect-active-log-path', () => {
     dev: 'D:/projects/python/odds_monkey_bot/logs/custom_logs.log',
   };
   try {
-    const distMtime = fs.existsSync(paths.dist) ? fs.statSync(paths.dist).mtimeMs : 0;
-    const devMtime = fs.existsSync(paths.dev) ? fs.statSync(paths.dev).mtimeMs : 0;
+    const distMtime = fs.existsSync(paths.dist)
+      ? fs.statSync(paths.dist).mtimeMs
+      : 0;
+    const devMtime = fs.existsSync(paths.dev)
+      ? fs.statSync(paths.dev).mtimeMs
+      : 0;
     if (devMtime > distMtime) return 'D:/projects/python/odds_monkey_bot/logs';
     return 'D:/projects/python/odds_monkey_bot/dist/logs';
   } catch {
@@ -379,6 +385,67 @@ ipcMain.handle('open-path', (_event, filePath: string) => {
   return shell.openPath(filePath);
 });
 
+ipcMain.handle(
+  'open-in-vscode',
+  (_event, filePath: string, lineNumber?: number) => {
+    const sourceRoot = 'D:/projects/python/odds_monkey_bot';
+    const fileName = path.basename(filePath);
+
+    // Recursive function to find file
+    const findFile = (dir: string): string | null => {
+      try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+
+          if (entry.isDirectory()) {
+            // Skip common non-source directories
+            if (
+              ![
+                'dist',
+                'build',
+                '.git',
+                'node_modules',
+                '__pycache__',
+                '.pytest_cache',
+                'tests',
+              ].includes(entry.name)
+            ) {
+              const found = findFile(fullPath);
+              if (found) return found;
+            }
+          } else if (entry.name === fileName) {
+            return fullPath;
+          }
+        }
+      } catch (error) {
+        log.error('Error searching directory:', error);
+      }
+      return null;
+    };
+
+    const foundPath = findFile(sourceRoot);
+    const fullPath = foundPath
+      ? foundPath.replace(/\\\\/g, '/')
+      : path.join(sourceRoot, filePath).replace(/\\\\/g, '/');
+
+    const gotoCommand = lineNumber ? `${fullPath}:${lineNumber}` : fullPath;
+    const command = `code --goto "${gotoCommand}"`;
+
+    return new Promise((resolve, reject) => {
+      exec(command, (error) => {
+        if (error) {
+          log.error('Failed to open in VS Code:', error);
+          reject(error);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  },
+);
+
 ipcMain.handle('flash-icon', (_event, eventId: string) => {
   if (!eventStatus.get(eventId)) {
     mainWindow?.flashFrame(true);
@@ -401,33 +468,39 @@ ipcMain.handle('get-images', (_event, directoryPath) => {
   return getImagesFromDirectoryRecursive(directoryPath);
 });
 
-ipcMain.handle('find-images-by-name', (_event, baseDir: string, betName: string, betTimestamp?: number) => {
-  const results: string[] = [];
-  // Normalize: lowercase + spaces to underscores to match filename convention
-  const normalized = betName.toLowerCase().replaceAll(' ', '_');
-  const TIMESTAMP_WINDOW = 120; // ±120 seconds
-  const walk = (dir: string) => {
-    try {
-      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        if (entry.isDirectory()) {
-          walk(path.join(dir, entry.name));
-        } else if (
-          entry.name.toLowerCase().includes(normalized) &&
-          /\.(png|jpe?g|webp)$/i.test(entry.name)
-        ) {
-          if (betTimestamp) {
-            const filePath = path.join(dir, entry.name);
-            const fileBirth = fs.statSync(filePath).birthtimeMs / 1000;
-            if (Math.abs(fileBirth - betTimestamp) > TIMESTAMP_WINDOW) continue;
+ipcMain.handle(
+  'find-images-by-name',
+  (_event, baseDir: string, betName: string, betTimestamp?: number) => {
+    const results: string[] = [];
+    // Normalize: lowercase + spaces to underscores to match filename convention
+    const normalized = betName.toLowerCase().replaceAll(' ', '_');
+    const TIMESTAMP_WINDOW = 120; // ±120 seconds
+    const walk = (dir: string) => {
+      try {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          if (entry.isDirectory()) {
+            walk(path.join(dir, entry.name));
+          } else if (
+            entry.name.toLowerCase().includes(normalized) &&
+            /\.(png|jpe?g|webp)$/i.test(entry.name)
+          ) {
+            if (betTimestamp) {
+              const filePath = path.join(dir, entry.name);
+              const fileBirth = fs.statSync(filePath).birthtimeMs / 1000;
+              if (Math.abs(fileBirth - betTimestamp) > TIMESTAMP_WINDOW)
+                continue;
+            }
+            results.push(path.join(dir, entry.name).replace(/\\/g, '/'));
           }
-          results.push(path.join(dir, entry.name).replace(/\\/g, '/'));
         }
+      } catch {
+        /* skip inaccessible dirs */
       }
-    } catch { /* skip inaccessible dirs */ }
-  };
-  walk(baseDir);
-  return results;
-});
+    };
+    walk(baseDir);
+    return results;
+  },
+);
 
 ipcMain.handle('get-image', async (_event, filePath) => {
   try {

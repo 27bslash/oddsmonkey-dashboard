@@ -23,12 +23,24 @@ const electronHandler = {
     once(channel: Channels, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
-    detectActiveLogPath: () => ipcRenderer.invoke('detect-active-log-path') as Promise<string>,
+    detectActiveLogPath: () =>
+      ipcRenderer.invoke('detect-active-log-path') as Promise<string>,
     detectLogPathForBet: (bet?: BData) =>
       ipcRenderer.invoke('detect-log-path-for-bet', bet) as Promise<string>,
     openPath: (filePath: string) => ipcRenderer.invoke('open-path', filePath),
-    findImagesByName: (baseDir: string, betName: string, betTimestamp?: number) =>
-      ipcRenderer.invoke('find-images-by-name', baseDir, betName, betTimestamp) as Promise<string[]>,
+    openInVscode: (filePath: string, lineNumber?: number) =>
+      ipcRenderer.invoke('open-in-vscode', filePath, lineNumber),
+    findImagesByName: (
+      baseDir: string,
+      betName: string,
+      betTimestamp?: number,
+    ) =>
+      ipcRenderer.invoke(
+        'find-images-by-name',
+        baseDir,
+        betName,
+        betTimestamp,
+      ) as Promise<string[]>,
     flashIcon: (eventId: string) => ipcRenderer.invoke('flash-icon', eventId),
     resetIconEvent: (eventId: string) =>
       ipcRenderer.invoke('reset-icon-event', eventId),
