@@ -1,3 +1,17 @@
+# [1.4.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.3.0...v1.4.0) (2026-06-20)
+
+
+### Bug Fixes
+
+* added polling to graph shows updated true balance amounts ([d008be7](https://github.com/27bslash/oddsmonkey-dashboard/commit/d008be7f4aa86c903bec3aae891f0fe225bc2941))
+* no valid logs crash ([776b0ec](https://github.com/27bslash/oddsmonkey-dashboard/commit/776b0ec3eac279680a5d9a170c74fc910014217f))
+* removed 20 cap on data shown polling for full amount ([7db5439](https://github.com/27bslash/oddsmonkey-dashboard/commit/7db5439b77da51436cfd95da4e8d93559bdd96ae))
+
+
+### Features
+
+* changed the dev machine method to use local files ([0cff31b](https://github.com/27bslash/oddsmonkey-dashboard/commit/0cff31b0a410f03b348c145db4095e5832fc7bcd))
+
 # [1.3.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.2.0...v1.3.0) (2026-06-08)
 
 
