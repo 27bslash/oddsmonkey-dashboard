@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.2.0...v1.3.0) (2026-06-08)
+
+
+### Features
+
+* added vs code navigation from log viewer ([b4138d3](https://github.com/27bslash/oddsmonkey-dashboard/commit/b4138d3f8f1e97a4ae6e4097db3cbcb4ecdf9924))
+
 # [1.2.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.1.1...v1.2.0) (2026-06-02)
 
 
