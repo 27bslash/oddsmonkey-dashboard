@@ -1,6 +1,5 @@
-import { SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import Graph, { filterBets } from './graph';
 import {
   Chart as ChartJS,
   LineElement,
@@ -17,11 +16,13 @@ import GraphDialog from './graphDialog';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import 'hammerjs';
 import { Box, Tooltip as MuiTooltip, Typography } from '@mui/material';
+
 export interface GraphDialogProps {
   open: boolean;
-  setOpen: React.Dispatch<SetStateAction<boolean>>;
+  setOpen: Dispatch<SetStateAction<boolean>>;
   filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
 }
+
 ChartJS.register(
   LineElement,
   PointElement,
@@ -39,9 +40,11 @@ type BalanceEntry = {
   time: string;
   betfair_balance?: number;
 };
+
 type TrueBalance = {
   balance: BalanceEntry[];
 };
+
 type GraphProps = {
   filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
 };
@@ -50,31 +53,31 @@ const GraphWrapper = ({ filter }: GraphProps) => {
   const [open, setOpen] = useState(false);
   const [negative, setNegative] = useState(false);
   const { smarketsBalByDate, betfairBalByDate } = useGetTrueBalance(filter);
+  const prevTrueBalance =
+    smarketsBalByDate.length >= 2 && betfairBalByDate.length >= 2
+      ? smarketsBalByDate.at(-2)! + betfairBalByDate.at(-2)!
+      : 0;
+  const currTrueBalance =
+    smarketsBalByDate.length >= 1 && betfairBalByDate.length >= 1
+      ? smarketsBalByDate.at(-1)! + betfairBalByDate.at(-1)!
+      : 0;
+  const difference = currTrueBalance - prevTrueBalance;
+
   useEffect(() => {
-    const prevTrueBalance =
-      smarketsBalByDate.at(-2)! + betfairBalByDate.at(-2)!;
-    const currTrueBalance =
-      smarketsBalByDate.at(-1)! + betfairBalByDate.at(-1)!;
-    if (currTrueBalance < prevTrueBalance) {
-      setNegative(true);
-    }
-  }, [smarketsBalByDate, betfairBalByDate]);
+    setNegative(currTrueBalance < prevTrueBalance);
+  }, [currTrueBalance, prevTrueBalance]);
+
   return (
     <>
       <MuiTooltip
         title={
-          <Box display={'flex'}>
+          <Box display="flex">
             <Typography>Difference from previous day</Typography>
             <Typography
               color={negative ? 'error' : 'success'}
-              sx={{ fontWeight: 'bold',marginLeft:'5px' }}
+              sx={{ fontWeight: 'bold', marginLeft: '5px' }}
             >
-              £
-              {(
-                smarketsBalByDate.at(-1)! +
-                betfairBalByDate.at(-1)! -
-                (smarketsBalByDate.at(-2)! + betfairBalByDate.at(-2)!)
-              ).toFixed(2)}
+              £{difference.toFixed(2)}
             </Typography>
           </Box>
         }
@@ -90,6 +93,7 @@ const GraphWrapper = ({ filter }: GraphProps) => {
     </>
   );
 };
+
 export function getBetsByDate(
   dates: Set<unknown>,
   trueBalance: TrueBalance[],
@@ -104,4 +108,5 @@ export function getBetsByDate(
   }
   return balance_by_date;
 }
+
 export default GraphWrapper;

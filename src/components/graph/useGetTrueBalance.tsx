@@ -21,12 +21,14 @@ const useGetTrueBalance = (
   const [dates, setDates] = useState<Set<string>>(new Set());
   const [showOverrides, setShowOverrides] = useState(true);
   useEffect(() => {
+    let active = true;
     const fetchBalance = async () => {
       const trueBalance: TrueBalance[] =
         await window.electron.ipcRenderer.fetchItems('true_balance');
       const balanceOverride = await window.electron.ipcRenderer.fetchItems(
         'true_balance_override',
       );
+      if (!active || !trueBalance[0]) return;
       const newDates = new Set<string>(
         trueBalance[0].balance.map((doc) => doc.time),
       );
@@ -55,7 +57,12 @@ const useGetTrueBalance = (
       setBetfairBalByDate(betfairBalByDate);
     };
     fetchBalance();
-  }, [showOverrides]);
+    const interval = setInterval(fetchBalance, 10000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [filter, showOverrides]);
   return {
     smarketsBalByDate,
     betfairBalByDate,
