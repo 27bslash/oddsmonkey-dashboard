@@ -8,7 +8,7 @@ import BetTableCell from '../BetCell/betCell';
 import MatchedCell from '../BetCell/matched/matchedCell';
 import { green, blue, grey } from '@mui/material/colors';
 import React, { SetStateAction } from 'react';
-import { theme } from '../../../../renderer/App';
+import { useAppContext } from '../../../../renderer/useAppContext';
 
 function formatDateFromTimestamp(time: number) {
   return new Date(time * 1000).toLocaleString('en-GB', {
@@ -74,6 +74,7 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
     index === data.bet_profit.back_matched.length - 1 && lay
       ? 'none'
       : '1px solid black';
+  const { devMachine } = useAppContext();
   return (
     <TableRow
       sx={{
@@ -85,7 +86,6 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
           <Typography
             className="help-hover"
             onClick={() => {
-              const devMachine = process.env.NODE_ENV === 'development';
               if (devMachine) {
                 navigator.clipboard.writeText(JSON.stringify(data, null, 2));
                 console.log(data);

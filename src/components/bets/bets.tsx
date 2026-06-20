@@ -164,8 +164,7 @@ function Bets({ flags, setFlags }: BetProps) {
     const lowProfit = [];
     const Profitable = [...bets].filter((bet, idx) => {
       const bm = bet.bet_profit.back_matched;
-      console.log('checking bet', bet.bet_info.event_name, bm);
-      if (!bm || !bm.length || !Object.keys(bm[0]).length) {
+      if (!bm?.length || !Object.keys(bm[0]).length) {
         return true;
       }
       const {
