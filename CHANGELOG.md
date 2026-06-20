@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.4.0...v1.4.1) (2026-06-20)
+
+
+### Bug Fixes
+
+* changed publish to run on semantic release end instead of tag changes ([997f876](https://github.com/27bslash/oddsmonkey-dashboard/commit/997f876239c501f3f0b74b9eaf551588c8b271db))
+
 # [1.4.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.3.0...v1.4.0) (2026-06-20)
 
 
