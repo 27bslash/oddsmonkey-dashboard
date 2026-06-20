@@ -52,8 +52,12 @@ const electronHandler = {
       ipcRenderer.invoke('list-compatible-log-files', logBasePath) as Promise<
         { name: string; path: string }[]
       >,
-    fetchItems: (collection_name: string, func?: string, limit?: number) =>
-      ipcRenderer.invoke('fetch-items', collection_name, func, limit),
+    fetchItems: (
+      collection_name: string,
+      func?: string,
+      limit?: number,
+      skip?: number,
+    ) => ipcRenderer.invoke('fetch-items', collection_name, func, limit, skip),
     addItem: (item: any, collection_name: string) =>
       ipcRenderer.invoke('add-item', item, collection_name),
     updateItem: ({

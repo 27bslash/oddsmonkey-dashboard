@@ -183,22 +183,26 @@ async function fetchItems(
   collection_name: string,
   func?: string,
   limit?: number,
+  skip = 0, 
 ) {
   const collection = client.db('oddsmonkey').collection(collection_name);
-  let data;
-  if (limit) {
-    data = await collection
-      .find({})
-      .sort({ 'bet_info.bet_unix_time': -1 })
-      .limit(limit)
-      .toArray();
-  } else {
-    data = await collection.find({}).toArray();
-  }
+  const cursor = collection.find({});
   if (collection_name === 'pending_bets') {
+    cursor.sort({ 'bet_info.bet_unix_time': -1 });
+  }
+  if (skip) {
+    cursor.skip(skip);
+  }
+  if (typeof limit === 'number') {
+    cursor.limit(limit);
+  }
+  const data = await cursor.toArray();
+  if (collection_name === 'pending_bets' && func) {
     console.log('fetched', func);
   }
-  mainWindow?.webContents.send(`${collection_name}-fetched`, data);
+  if (collection_name !== 'pending_bets' || func) {
+    mainWindow?.webContents.send(`${collection_name}-fetched`, data);
+  }
   return data;
 }
 
@@ -220,8 +224,14 @@ async function isExeRunning(exeName: string): Promise<boolean> {
 
 ipcMain.handle(
   'fetch-items',
-  async (_event, collection_name: string, func?: string, limit?: number) => {
-    return await fetchItems(collection_name, func, limit);
+  async (
+    _event,
+    collection_name: string,
+    func?: string,
+    limit?: number,
+    skip?: number,
+  ) => {
+    return await fetchItems(collection_name, func, limit, skip);
   },
 );
 

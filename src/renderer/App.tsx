@@ -16,12 +16,82 @@ type Balance = {
   smarkets: number;
   betfair: number;
 };
+const PENDING_BETS_PAGE_SIZE = 20;
+
+const updateProfit = (matchData: Matched[], key: string) => {
+  const backLay: any = { back: {}, lay: {} };
+  for (const doc of matchData) {
+    doc.odds.forEach((odd, i) => {
+      backLay[key][odd] = (backLay[key][odd] || 0) + doc.matched[i];
+    });
+  }
+  if (!Object.keys(backLay[key]).length) {
+    backLay[key] = { 0: 0 };
+  }
+  return backLay;
+};
+
+const fixProfits = (newData: BData[]) => {
+  for (const bet of newData) {
+    let backWins = 0;
+    let layLiability = 0;
+    let backLiability = 0;
+    let layWins = 0;
+    if (bet.bet_profit.back_matched) {
+      try {
+        const backObj = updateProfit(bet.bet_profit.back_matched, 'back');
+        const layObj = updateProfit(bet.bet_profit.exchange_matched, 'lay');
+        const backLay: {
+          [key: string]: { [key: number]: number };
+        } = { lay: layObj.lay, back: backObj.back };
+        Object.entries(backLay.back).map((x) => {
+          backWins += (+x[0] - 1) * x[1];
+          backLiability += x[1];
+        });
+        Object.entries(backLay.lay).map((x) => {
+          layWins += +x[1] * (1 - bet.bet_odds.commission);
+          layLiability += (+x[0] - 1) * x[1];
+        });
+        bet.bet_profit.back_win_profit = backWins - layLiability;
+        bet.bet_profit.lay_win_profit = layWins - backLiability;
+      } catch (err) {
+        //   console.log('err', bet.bet_profit, err);
+      }
+    }
+  }
+  return newData;
+};
+
+const sortBetsDesc = (bets: BData[]) =>
+  [...bets].sort((a, b) => b.bet_info.bet_unix_time - a.bet_info.bet_unix_time);
+
+const fetchAllPendingBets = async () => {
+  const allBets: BData[] = [];
+  let skip = 0;
+
+  while (true) {
+    const batch = (await window.electron.ipcRenderer.fetchItems(
+      'pending_bets',
+      undefined,
+      PENDING_BETS_PAGE_SIZE,
+      skip,
+    )) as BData[];
+    if (!batch || batch.length === 0) break;
+    allBets.push(...batch);
+    if (batch.length < PENDING_BETS_PAGE_SIZE) break;
+    skip += PENDING_BETS_PAGE_SIZE;
+  }
+
+  return sortBetsDesc(fixProfits(allBets));
+};
+
 // TODO
 // add calendar component to filter down through dates: med-hard
 // fix sleep arrow adjustment: easy
 // combine recurring errors and new errors into one in logs: easy
 // add indicator for bets that have attempted tradeout: easy
 // look into logs performance improvements: med
+// add a check for expected profit vs actual profit the day before to the toolitip of the graph: easy-mid
 
 export default function App() {
   const [allBets, setAllBets] = useState<BData[]>();
@@ -35,120 +105,17 @@ export default function App() {
     'default',
   );
   const muiTheme = themeName === 'default' ? theme : theme;
-
-  const updateProfit = (matchData: Matched[], key: string) => {
-    const backLay: any = { back: {}, lay: {} };
-    for (let doc of matchData) {
-      doc.odds.forEach((odd, i) => {
-        backLay[key][odd] = (backLay[key][odd] || 0) + doc.matched[i];
-      });
-    }
-    if (!Object.keys(backLay[key]).length) {
-      backLay[key] = { 0: 0 };
-    }
-    return backLay;
-  };
-  const fixProfits = (newData: BData[]) => {
-    for (const bet of newData) {
-      let backWins = 0;
-      let layLiability = 0;
-      let backLiability = 0;
-      let layWins = 0;
-      if (bet.bet_profit.back_matched) {
-        try {
-          const backObj = updateProfit(bet.bet_profit.back_matched, 'back');
-          const layObj = updateProfit(bet.bet_profit.exchange_matched, 'lay');
-          const backLay: {
-            [key: string]: { [key: number]: number };
-          } = { lay: layObj['lay'], back: backObj['back'] };
-          Object.entries(backLay['back']).map((x) => {
-            backWins += (+x[0] - 1) * x[1];
-            backLiability += x[1];
-          });
-          Object.entries(backLay['lay']).map((x) => {
-            layWins += +x[1] * (1 - bet.bet_odds.commission);
-            layLiability += (+x[0] - 1) * x[1];
-          });
-          bet.bet_profit.back_win_profit = backWins - layLiability;
-          bet.bet_profit.lay_win_profit = layWins - backLiability;
-        } catch (err) {
-          //   console.log('err', bet.bet_profit, err);
-        }
-      }
-    }
-    return newData;
-  };
   useEffect(() => {
-    window.electron.ipcRenderer
-      .fetchItems('pending_bets')
-      .then((fetchedData: BData[]) => {
-        setAllBets(fixProfits(fetchedData));
-      });
+    fetchAllPendingBets().then(setAllBets);
 
     const interval = setInterval(() => {
-      window.electron.ipcRenderer
-        .fetchItems('pending_bets', undefined, 20)
-        .then((latestArr: BData[]) => {
-          if (!latestArr || latestArr.length === 0) return;
-          const latestBatch = fixProfits(latestArr);
-          setAllBets((prev) => {
-            if (!prev) {
-              return [...latestBatch].sort(
-                (a, b) => b.bet_info.bet_unix_time - a.bet_info.bet_unix_time,
-              );
-            }
-            const existingIds = new Set(
-              prev.map((bet) => JSON.stringify(bet._id)),
-            );
-            const unseen = latestBatch.filter(
-              (bet) => !existingIds.has(JSON.stringify(bet._id)),
-            );
-            if (unseen.length === 0) return prev;
-            return [...unseen, ...prev].sort(
-              (a, b) => b.bet_info.bet_unix_time - a.bet_info.bet_unix_time,
-            );
-          });
-        });
+      fetchAllPendingBets().then(setAllBets);
     }, 10000);
     return () => clearInterval(interval);
   }, []);
   useEffect(() => {
     const handleDataFetched = (fetchedData: BData[]) => {
-      //   console.log(
-      //     'data fetched',
-      //     fetchedData.map((doc) => {
-      //       const o = {
-      //         [doc.bet_info.event_name]: doc.bet_profit.lay_win_profit,
-      //       };
-      //       return o;
-      //     }),
-      //   );
-      fetchedData = fixProfits(fetchedData);
-      if (allBets) {
-        // console.log(fetchedData, allBets);
-        const fetchSrt = [...fetchedData].sort(
-          (a, b) =>
-            b['bet_info']['bet_unix_time'] - a['bet_info']['bet_unix_time'],
-        );
-        const allbetsSrt = [...allBets].sort(
-          (a, b) =>
-            b['bet_info']['bet_unix_time'] - a['bet_info']['bet_unix_time'],
-        );
-        if (isEqual(allbetsSrt[0], fetchSrt[0])) {
-          return;
-        }
-        setAllBets((prev) => {
-          const newData = [...(prev || []), ...fetchedData];
-          return newData;
-        });
-      } else {
-        setAllBets(fetchedData);
-      }
-
-      //   const filteredData = fetchedData.filter((x) => {
-      //     return x.bet_info.unix_time > new Date().getTime() / 1000;
-      //   });
-      //   setFilteredBets(filteredData);
+      setAllBets(sortBetsDesc(fixProfits(fetchedData)));
     };
 
     window.electron.ipcRenderer.onDataFetched(handleDataFetched);
