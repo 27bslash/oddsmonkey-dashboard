@@ -40,13 +40,15 @@ export const useLogs = ({ bet, logBasePath, logFilePath }: LogsProps) => {
         logBasePath,
         logFilePath,
       );
-
       let tailstr = await window.electron.ipcRenderer.tailLog(
         bet,
         logBasePath,
         logFilePath,
       );
-
+      if (!data && !tailstr) {
+        setRawLogStr([]);
+        return;
+      }
       if (data) {
         data = findAllBetSections(data, bet);
         setRawLogStr(data);
@@ -201,7 +203,8 @@ function findAllBetSections(logs: string, activeBet?: BData) {
   let sectionKey = '';
   const marketTypeRegex = /market type:\s*(.+)/;
   const split = logs.split('\n');
-  const betRegex = /new bet found Event: ([\w+\:\s+]+) bet name: ([\w+\:\s+]+)/;
+  const betRegex =
+    /new bet found Event: ([\w+\:\s+]+) bet name: ([\w+\:\s+]+)(?=market type)/;
 
   const pushError = (line: string, cs: BetSection) => {
     const idx = cs.data.length - 1;
@@ -347,8 +350,11 @@ function findAllBetSections(logs: string, activeBet?: BData) {
     cs.marketType = _marketType || undefined;
     bs.push(cs);
   }
-
   const merged = mergeAdjacentSameId(bs);
+  if (activeBet)
+    console.log(
+      `found ${merged.length} bet sections for ${activeBet.bet_info.event_name}`,
+    );
   // Give each group a unique ID to prevent toggle collisions
   const idCounts: Record<string, number> = {};
   for (const group of merged) {
