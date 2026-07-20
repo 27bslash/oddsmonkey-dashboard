@@ -3,6 +3,8 @@
  * Safe to use in both main and renderer processes
  */
 
+import { Matched } from '../../types';
+
 export const calculateLayLiability = (stake: number, odds: number): number =>
   stake * (odds - 1);
 
@@ -35,8 +37,8 @@ export interface BetProfitCalculation {
 }
 
 export const calculateBetProfits = (
-  backMatched: Array<{ matched: number[]; odds: number[] }>,
-  exchangeMatched: Array<{ matched: number[] }>,
+  backMatched: Matched[],
+  exchangeMatched: Matched[],
   backCommission: number,
   layCommission: number,
 ): BetProfitCalculation => {
@@ -45,17 +47,14 @@ export const calculateBetProfits = (
     0,
   );
 
-  const backLiability = exchangeMatched.reduce(
-    (sum, m) => sum + m.matched[0],
-    0,
-  );
+  const backLiability = backMatched.reduce((sum, m) => sum + m.matched[0], 0);
 
   const layTotalWin = exchangeMatched.reduce(
     (sum, m) => sum + rawLayWin(m.matched[0], layCommission),
     0,
   );
 
-  const layLiability = backMatched.reduce(
+  const layLiability = exchangeMatched.reduce(
     (sum, m) => sum + calculateLayLiability(m.matched[0], m.odds[0]),
     0,
   );

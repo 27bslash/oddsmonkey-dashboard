@@ -10,6 +10,7 @@ import TableSearch from '../search/tableSearch';
 import fuzzysort from 'fuzzysort';
 import FilterButtons from '../StatTable/FilterButtons';
 import { calculateBetProfits } from '../../utils/betCalculations';
+import updateMatched from '../../utils/updateMatched';
 
 export type SortKeys = keyof BetInfo | keyof BetOdds | keyof BetProfit;
 
@@ -156,13 +157,17 @@ function Bets({ flags, setFlags }: BetProps) {
       }
     });
 
-    console.log(sorted);
+    console.log('visible bets', sorted);
     return anomalyCheck(sorted);
   };
   const anomalyCheck = (bets: BData[]) => {
     const indexs: number[] = [];
     const lowProfit = [];
     const Profitable = [...bets].filter((bet, idx) => {
+      updateMatched(
+        bet.bet_profit.back_matched,
+        bet.bet_profit.exchange_matched,
+      );
       const bm = bet.bet_profit.back_matched;
       if (!bm?.length || !Object.keys(bm[0]).length) {
         return true;
@@ -178,7 +183,6 @@ function Bets({ flags, setFlags }: BetProps) {
         bet.bet_odds.back_commission,
         bet.bet_odds.commission,
       );
-
       const netBack = backTotalWin - calcdLayLiability;
       const netLay = layTotalWin - backLiability;
       const profitZero =
@@ -187,6 +191,7 @@ function Bets({ flags, setFlags }: BetProps) {
         profitZero &&
         bet.bet_info.unix_time > new Date().getTime() / 1000 - 60 * 90
       ) {
+        // 0 profit on one side bet is still possible to manually traded out, filter out bets that have completed
         indexs.push(idx);
         return false;
       }
@@ -197,7 +202,8 @@ function Bets({ flags, setFlags }: BetProps) {
       bet.anomaly = true;
       lowProfit.unshift(bet);
     }
-    console.log('new bets', Profitable);
+    // create a new list of bets which are unprofitable and make them always be the first bets sorted by time the
+    // event occurs
     return lowProfit
       .sort((a, b) => b.bet_info.unix_time - a.bet_info.unix_time)
       .concat(Profitable);
