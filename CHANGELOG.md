@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.5.0...v1.5.1) (2026-07-20)
+
+
+### Bug Fixes
+
+* added electron builder back to package.json ([5ad42d2](https://github.com/27bslash/oddsmonkey-dashboard/commit/5ad42d22859911ddcffcd09e9b73cf561a11af8f))
+
 # [1.5.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.4.1...v1.5.0) (2026-07-20)
 
 
