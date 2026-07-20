@@ -49,19 +49,14 @@ function MatchedCell({
     let staked: number[] = [];
     let odds: number[] = [];
     if (index === 0 && matchData.length > 1 && !show) {
-      for (let x of matchData) {
-        for (let k in x) {
-          const keys = k as keyof typeof x;
-          if (keys === 'bet_matched_time') continue;
-
-          if (k === 'matched') matched = matched.concat(x[keys]);
-          if (k === 'staked') staked = staked.concat(x[keys]);
-          if (k === 'odds') odds = odds.concat(x[keys]);
-        }
+      for (const matchedObj of matchData) {
+        matched = matched.concat(matchedObj.matched);
+        staked = staked.concat(matchedObj.staked);
+        odds = odds.concat(matchedObj.odds);
       }
     }
     if (matched.length && staked.length) {
-      const weightedAvgOdds = weightedAverage(matched, odds);
+      const weightedAvgOdds = weightedAverage(matched, odds) || 1;
 
       backLay[key][weightedAvgOdds] = matched.reduce(
         (acc, curr) => (acc += curr),
@@ -92,11 +87,9 @@ function MatchedCell({
     if (!Object.keys(bet).length) return;
     const layObj = updateObj(bet.bet_profit.exchange_matched, 'lay');
     const backObj = updateObj(bet.bet_profit.back_matched, 'back');
-    if (layObj && backObj) {
-      setBackLay(() => {
-        return { lay: layObj['lay'], back: backObj['back'] };
-      });
-    }
+    setBackLay(() => {
+      return { lay: layObj['lay'], back: backObj['back'] };
+    });
   }, [bet, show]);
 
   useEffect(() => {
@@ -121,18 +114,16 @@ function MatchedCell({
     index === bet.bet_profit.back_matched.length - 1 && lay
       ? 'none'
       : '1px solid black';
-  if (bet.bet_info.bet == 'Nueva Chicago') {
-    console.log(backLay['back']);
-  }
   return (
     bet && (
       <>
         <BetTableCell borderBottom={borderBottom}>
-          {!lay
-            ? Object.keys(backLay['back']).map((x, i) => {
+          {lay
+            ? Object.keys(backLay['lay']).map((x, i) => {
                 return (
                   <EditableCell
-                    matchVal={backLay['back']}
+                    key={`lay-odds-${i}`}
+                    matchVal={backLay['lay']}
                     bet={bet}
                     setBet={setBet}
                     lay={false}
@@ -143,10 +134,11 @@ function MatchedCell({
                   />
                 );
               })
-            : Object.keys(backLay['lay']).map((x, i) => {
+            : Object.keys(backLay['back']).map((x, i) => {
                 return (
                   <EditableCell
-                    matchVal={backLay['lay']}
+                    key={`back-odds-${i}`}
+                    matchVal={backLay['back']}
                     bet={bet}
                     setBet={setBet}
                     lay={true}
@@ -164,6 +156,7 @@ function MatchedCell({
               {Object.values(backLay['back']).map((x, i) => {
                 return (
                   <EditableCell
+                    key={`back-matched-${i}`}
                     matchVal={backLay['back']}
                     bet={bet}
                     setBet={setBet}
@@ -182,6 +175,7 @@ function MatchedCell({
               {Object.values(backLay['lay']).map((x, i) => {
                 return (
                   <EditableCell
+                    key={`lay-matched-${i}`}
                     matchVal={backLay['lay']}
                     bet={bet}
                     setBet={setBet}
