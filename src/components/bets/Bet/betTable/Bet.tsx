@@ -1,17 +1,5 @@
-import {
-  bottomNavigationActionClasses,
-  Box,
-  Button,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableSortLabel,
-  Typography,
-} from '@mui/material';
-import { blue, green, grey, red } from '@mui/material/colors';
+import { Box, Button, Table, TableBody, Typography } from '@mui/material';
+import { grey, red } from '@mui/material/colors';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en.json';
 import { useState, useEffect } from 'react';
@@ -23,6 +11,7 @@ import { ObjectId } from 'mongodb';
 import BetControls from './betControls';
 import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
+import updateMatched from '../../../../utils/updateMatched';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -46,7 +35,10 @@ function Bet({
   let value;
   if (betData) value = { betData, updateSort, setBetData };
   const borderColor = bet.anomaly ? red['900'] : grey['800'];
-
+  updateMatched(
+    betData.bet_profit.back_matched,
+    betData.bet_profit.exchange_matched,
+  );
   return (
     value && (
       <BetProvider value={value}>
@@ -76,7 +68,10 @@ function Bet({
           <Table sx={{ position: 'relative' }}>
             <BetTableHead updateSort={updateSort} />
             <TableBody>
-              {bet.bet_profit['back_matched'].map((x, i) => {
+              {(
+                bet.bet_profit['back_matched'] ||
+                bet.bet_profit['exchange_matched']
+              ).map((x, i) => {
                 // console.log(i, x);
                 if (i === 0 || show) {
                   return (

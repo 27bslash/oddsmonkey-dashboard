@@ -51,8 +51,7 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
   };
   const stake = calcStakes(false);
   const timeAgo = new TimeAgo('en-GB');
-  const currentTime = Date.now();
-  const eventTimeDelta = currentTime - data.bet_info.unix_time * 1000;
+  const eventTimeAgo = data.bet_info.unix_time;
   let matchTime = data.bet_info.bet_unix_time;
 
   if (data.bet_profit.back_matched[index].bet_matched_time) {
@@ -65,11 +64,7 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
       matchTime = data.bet_profit.back_matched[index].bet_matched_time;
     }
   }
-  const betTimeDelta = currentTime - matchTime * 1000;
-  const betTimeTooltipText = formatDateFromTimestamp(
-    data.bet_profit.back_matched[index].bet_matched_time ||
-      data.bet_info.bet_unix_time,
-  );
+  const betTimeAgo = matchTime;
   const borderBottom =
     index === data.bet_profit.back_matched.length - 1 && lay
       ? 'none'
@@ -92,14 +87,14 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
               }
             }}
           >
-            {timeAgo.format(Date.now() - eventTimeDelta)}
+            {timeAgo.format(eventTimeAgo * 1000)}
           </Typography>
         </Tooltip>
       </BetTableCell>
       <BetTableCell>
         <Tooltip title={formatDateFromTimestamp(matchTime)}>
           <Typography className="help-hover">
-            {timeAgo.format(Date.now() - betTimeDelta)}
+            {timeAgo.format(betTimeAgo * 1000)}
           </Typography>
         </Tooltip>
       </BetTableCell>
@@ -126,10 +121,10 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
           </Typography>
         )}
       </BetTableCell>
-      {data.bet_profit['back_matched'][0] &&
-      data.bet_profit['exchange_matched'][0] &&
-      data.bet_profit['exchange_matched'][0]['odds'] &&
-      data.bet_profit['back_matched'][0]['odds'] ? (
+      {data.bet_profit['back_matched'][0] ||
+      data.bet_profit['exchange_matched'][0] ||
+      data.bet_profit['exchange_matched'][0] ||
+      data.bet_profit['back_matched'][0] ? (
         <MatchedCell
           lay={lay}
           index={index}
