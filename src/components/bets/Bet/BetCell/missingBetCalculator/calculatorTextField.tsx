@@ -14,7 +14,6 @@ const CalculatorTextField = ({
   setValue,
   label,
 }: CalculatorTextFieldProps) => {
-  console.log(k);
   return (
     <TextField
       onChange={(e) => {
@@ -45,7 +44,7 @@ const CalculatorTextField = ({
       label={label}
       inputProps={{
         step: 0.01,
-        min: k.includes('Odds') ? 1 : 0,
+        min: 0,
       }}
       InputLabelProps={{
         style: {

@@ -9,13 +9,16 @@ type NestedTextProps = {
   color: string;
   clickHandle?: any;
 };
-export const OpenBet = ({
+export const OpenedBetReadyForUpdate = ({
   baseColor,
   liability,
   total,
   updateDb,
   type,
 }: any) => {
+  /* 
+    component opens a section that shows the total staked, liability, and winnings for a bet. It also includes a button to update the database with the current values. The NestedText component is used to display each piece of information in a styled manner.
+  */
   return (
     <Box display={'flex'} paddingRight={2} alignItems={'center'}>
       <Box>

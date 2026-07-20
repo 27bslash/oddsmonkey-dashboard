@@ -90,9 +90,7 @@ export const useBetCalculator = (data: BData): UseBetCalculatorReturn => {
     const oddsArr = vals.map((matchObj) => matchObj.odds);
     const avgOdds =
       weightedAverage(matchArr, oddsArr) || (type === 'back' ? 1 : 15);
-    const stake =
-      vals.reduce((acc, curr) => acc + curr.stake, 0) ||
-      (type === 'back' ? 1 : 15);
+    const stake = vals.reduce((acc, curr) => acc + curr.stake, 0) || 0;
     return { stake, odds: avgOdds };
   };
 

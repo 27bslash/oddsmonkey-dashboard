@@ -3,19 +3,13 @@ import { blue, green, red } from '@mui/material/colors';
 import Typography from '@mui/material/Typography';
 import CalculatorGroup from './partBet';
 import CalculatorTextField from './calculatorTextField';
-import {
-  ChangeEvent,
-  MouseEvent,
-  SetStateAction,
-  useEffect,
-  useState,
-} from 'react';
+import { ChangeEvent, SetStateAction, useEffect, useState } from 'react';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import { BData, Matched } from '../../../../../../types';
 import smarkets from '../../../../../icons/smarkets.png';
 import betfair from '../../../../../icons/betfair.png';
 import { ArrowDownward } from '@mui/icons-material';
-import { OpenBet } from './openBet';
+import { OpenedBetReadyForUpdate } from './openBet';
 import { weightedAverage } from '../matched/matchedCell';
 
 export type BetCalcParams = {
@@ -55,7 +49,7 @@ const CalculatorSection = ({
   link,
   missingBet,
   setMissingBet,
-  valueObj,
+  valueObj: calcInputs,
   updateValue,
   update,
   setUpdate,
@@ -81,54 +75,111 @@ const CalculatorSection = ({
     setUpdate((prev) => !prev);
   };
   const updateDb = () => {
-    const currentOdds =
-      `current${capitalize(type)}Odds` as keyof CalculatorSectionProps['valueObj'];
-    const updateQuery = `bet_profit.${type === 'lay' ? 'exchange_matched' : 'back_matched'}`;
-    let arr =
-      data.bet_profit[
-        `${type === 'lay' ? 'exchange_matched' : 'back_matched'}`
-      ];
-    const currentStake = (valueObj[`${type}Stake`] + missingBetByType!).toFixed(
-      2,
-    );
-    const matchMap = [valueObj[`${type}Stake`], missingBetByType!];
-    const oddsMap = [
-      valueObj[
-        currentOdds.replace(
-          'current',
-          'avg',
-        ) as keyof CalculatorSectionProps['valueObj']
-      ],
-      valueObj[currentOdds],
+    console.log(calcInputs);
+    // Prepare values for both back_matched and exchange_matched
+    const backArr = data.bet_profit.back_matched;
+    const layArr = data.bet_profit.exchange_matched;
+
+    const missingBack = missingBet?.missingBackBet || 0;
+    const missingLay = missingBet?.missingLayBet || 0;
+
+    const currentBackStake = missingBack.toFixed(2);
+    const currentLayStake = missingLay.toFixed(2);
+
+    const backMatchMap = [calcInputs.backStake, missingBack];
+    const layMatchMap = [calcInputs.layStake, missingLay];
+
+    const backOddsMap = [
+      calcInputs[`avgBackOdds` as keyof BetCalcParams],
+      calcInputs[`currentBackOdds` as keyof BetCalcParams],
+    ];
+    const layOddsMap = [
+      calcInputs[`avgLayOdds` as keyof BetCalcParams],
+      calcInputs[`currentLayOdds` as keyof BetCalcParams],
     ];
 
-    const avg = weightedAverage(matchMap, oddsMap);
+    const avgBackOdds = weightedAverage(backMatchMap, backOddsMap);
+    const avgLayOdds = weightedAverage(layMatchMap, layOddsMap);
 
-    const ret = [];
-    for (let i = 0; i < arr.length; i++) {
-      const d = {
-        matched: [+currentStake / arr.length],
-        odds: [+avg],
-        staked: [+currentStake / arr.length],
-        bet_matched_time:
-          data.bet_profit[
-            `${type === 'lay' ? 'exchange_matched' : 'back_matched'}`
-          ][i].bet_matched_time,
-      };
-      ret.push(d);
-    }
-    console.log(
-      valueObj,
-      updateQuery,
-      ret,
-      "{$set: { [updateQuery]: ret, 'bet_info.tradeout': true }",
+    const buildNewMatched = (
+      matchedArr: Matched[],
+      totalStake: number,
+      currentStake: string | number,
+      avg: number,
+      currentCommission: number,
+    ) => {
+      const ret: any[] = [];
+      const missingStake = +currentStake;
+      const len = matchedArr.length || 1;
+      // compute weighted avg commission including existing arr entries and the new stake
+
+      const existingWeightedComm = matchedArr.reduce((s: number, m: any) => {
+        const staked = m.staked.reduce((a: number, b: number) => a + b, 0);
+        return (
+          s + (m.bet_commission ? m.bet_commission : currentCommission) * staked
+        );
+      }, 0);
+      const totalStakedForAverage = totalStake + missingStake;
+      const weightedCommissionAvg =
+        (existingWeightedComm + currentCommission * missingStake) /
+        totalStakedForAverage;
+      console.log(
+        'existingWeightedComm',
+        existingWeightedComm,
+        'weightedCommissionAvg',
+        weightedCommissionAvg,
+        'totalStakedForAverage',
+        totalStakedForAverage,
+      );
+      for (let i = 0; i < len; i++) {
+        const d = {
+          matched: [totalStakedForAverage / len],
+          odds: [parseFloat(avg.toFixed(3))],
+          staked: [totalStakedForAverage / len],
+          bet_matched_time: matchedArr[i]
+            ? matchedArr[i].bet_matched_time
+            : Date.now() / 1000,
+          bet_commission: parseFloat(weightedCommissionAvg.toFixed(2)),
+        };
+        ret.push(d);
+      }
+      return ret;
+    };
+
+    const currentBackCommission = calcInputs.backCommission;
+    const currentLayCommission = calcInputs.commission;
+
+    const retBack = buildNewMatched(
+      backArr,
+      calcInputs.backStake,
+      currentBackStake,
+      avgBackOdds,
+      currentBackCommission,
     );
+    const retLay = buildNewMatched(
+      layArr,
+      calcInputs.layStake,
+      currentLayStake,
+      avgLayOdds,
+      currentLayCommission,
+    );
+
+    console.log('updating both matched arrays', { retBack, retLay });
+
     window.electron.ipcRenderer.updateItem({
       collectionName: 'pending_bets',
       query: { 'bet_info.bet_unix_time': data.bet_info.bet_unix_time },
-      update: { $set: { [updateQuery]: ret, 'bet_info.tradeout': true } },
+      update: {
+        $set: {
+          'bet_profit.back_matched': retBack,
+          'bet_profit.exchange_matched': retLay,
+          'bet_info.manual_tradeout': true,
+        },
+      },
     });
   };
+  // remove from pending tradeouts if manually intervened this does require the user to not be a moron
+  window.electron.ipcRenderer.deleteEntry('pending_tradeouts', data._id);
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const missingBetByType =
       type === 'lay' ? 'missingLayBet' : 'missingBackBet';
@@ -150,7 +201,7 @@ const CalculatorSection = ({
       >
         <CalculatorGroup
           type={type}
-          valueObj={valueObj}
+          valueObj={calcInputs}
           setValue={updateValue}
           bg={baseColor}
         />
@@ -177,13 +228,13 @@ const CalculatorSection = ({
           <CalculatorTextField
             bg={baseColor['100']}
             k={type === 'lay' ? 'commission' : 'backCommission'}
-            valueObj={valueObj}
+            valueObj={calcInputs}
             setValue={updateValue}
             label="current commission"
           ></CalculatorTextField>
           <CalculatorTextField
             bg={baseColor['100']}
-            valueObj={valueObj}
+            valueObj={calcInputs}
             k={`current${capitalize(type)}Odds` as keyof BetCalcParams}
             setValue={updateValue}
             label="current odds"
@@ -242,10 +293,15 @@ const CalculatorSection = ({
               marginLeft={'auto'}
               paddingRight={'16px'}
             >
-              {valueObj.avgBackOdds == 1 || valueObj.avgLayOdds == 1 ? (
-                <span style={{ color: 'red' }}>
+              {calcInputs.avgBackOdds == 1 || calcInputs.avgLayOdds == 1 ? (
+                <Typography
+                  style={{
+                    fontSize: '14.5px',
+                    color: red['600'],
+                  }}
+                >
                   Enter an odds value above 1
-                </span>
+                </Typography>
               ) : (
                 <FileCopyIcon
                   height={'30px'}
@@ -279,7 +335,7 @@ const CalculatorSection = ({
             borderRight={'solid 3px black'}
             paddingLeft={'4px'}
           >
-            <OpenBet
+            <OpenedBetReadyForUpdate
               type={type}
               updateDb={updateDb}
               baseColor={baseColor}
