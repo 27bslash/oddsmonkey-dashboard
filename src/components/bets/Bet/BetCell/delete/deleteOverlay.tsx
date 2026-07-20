@@ -34,7 +34,7 @@ const DeleteOverlay = ({
       time: data.bet_info.bet_unix_time,
       profit: +value,
     };
-    window.electron.ipcRenderer.deleteEntry(data._id, pushObj);
+    window.electron.ipcRenderer.deleteEntryUpdateProfit(data._id, pushObj);
     setOverlay(false);
     deleteBet(data._id);
   };
