@@ -18,7 +18,7 @@ import { MongoClient, ObjectId } from 'mongodb';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
 
-// Load .env — packaged: extraResources dir, dev: project root
+// Load .env from the packaged resources directory or the project root.
 dotenv.config({
   path: path.join(
     app.isPackaged ? process.resourcesPath : app.getAppPath(),
@@ -27,7 +27,21 @@ dotenv.config({
 });
 
 const eventStatus = new Map<string, boolean>();
-const client = new MongoClient(process.env.MONGO_URI || '');
+const mongoUri = process.env.MONGO_URI?.trim();
+
+if (!mongoUri) {
+  throw new Error(
+    'MONGO_URI is missing. Add it to the project root .env for development or bundle it with the packaged app.',
+  );
+}
+
+if (!/^mongodb(\+srv)?:\/\//i.test(mongoUri)) {
+  throw new Error(
+    'MONGO_URI must start with "mongodb://" or "mongodb+srv://".',
+  );
+}
+
+const client = new MongoClient(mongoUri);
 
 class AppUpdater {
   constructor() {
