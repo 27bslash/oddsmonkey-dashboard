@@ -89,6 +89,7 @@ function renderLine(
     .filter(Boolean)
     .map((part, i) => {
       // Handle function calls with line numbers: filename.py->functionName():lineNumber
+      // clicking function opens vscode directly to the line
       if (/[a-zA-Z_]+\.py->\w+\(\):?\d+/.test(part)) {
         const match = part.match(/([a-zA-Z_]+\.py)->(\w+)\(\):?(\d+)/);
         if (match) {
@@ -147,7 +148,7 @@ function renderLine(
           </span>
         );
       }
-
+      // color log levels
       if (/^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$/.test(part)) {
         return (
           <span
@@ -163,6 +164,7 @@ function renderLine(
           </span>
         );
       }
+      // handle local html files including click to open
       if (HTML_FILE_REGEX.test(part) && !IMAGE_REGEX.test(part)) {
         const normalizedPath = part.replace(/\\/g, '/');
         const filePath = normalizedPath.match(/^[a-zA-Z]:\//)
@@ -190,6 +192,7 @@ function renderLine(
           </a>
         );
       }
+      // handle external urls and click to open
       if (URL_REGEX.test(part) && !IMAGE_REGEX.test(part)) {
         return (
           <a
@@ -207,6 +210,7 @@ function renderLine(
           </a>
         );
       }
+      // generate thumbnails of local screenshots
       if (IMAGE_REGEX.test(part)) {
         return (
           <React.Fragment key={i}>

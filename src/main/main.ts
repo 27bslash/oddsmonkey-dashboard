@@ -183,7 +183,7 @@ async function fetchItems(
   collection_name: string,
   func?: string,
   limit?: number,
-  skip = 0, 
+  skip = 0,
 ) {
   const collection = client.db('oddsmonkey').collection(collection_name);
   const cursor = collection.find({});
@@ -234,7 +234,14 @@ ipcMain.handle(
     return await fetchItems(collection_name, func, limit, skip);
   },
 );
-
+ipcMain.handle(
+  'delete-entry',
+  async (_event, collection: string, _id: ObjectId) => {
+    const collectionRef = client.db('oddsmonkey').collection(collection);
+    const objectId = new ObjectId(Buffer.from(_id['buffer']));
+    await collectionRef.findOneAndDelete({ _id: objectId });
+  },
+);
 ipcMain.handle(
   'delete',
   async (_event, _id: any, replace: { [key: string]: number }) => {
@@ -270,19 +277,28 @@ ipcMain.handle('read-file', async () => {
 ipcMain.handle(
   'get-todays-logs',
   (_event, bet?: BData, logBasePath?: string, logFilePath?: string) => {
-    let startTime = 0;
-    let endTime = 33461130417;
+    const currentUnix = Math.floor(Date.now() / 1000);
+    let startTime = currentUnix;
+    let endTime = currentUnix;
     if (bet) {
-      const matchedTimes = bet.bet_profit.exchange_matched
+      const matchedTimes = bet.bet_profit.back_matched
         .map((matchObj) => matchObj.bet_matched_time!)
         .concat(
           bet.bet_profit.exchange_matched.map(
             (matchObj) => matchObj.bet_matched_time!,
           ),
-        );
-      if (matchedTimes.some((x) => !x)) return;
+        )
+        .concat(bet.bet_info.bet_unix_time);
+      if (!matchedTimes || matchedTimes.some((x) => !x)) return;
       startTime = Math.min(...matchedTimes);
       endTime = Math.max(...matchedTimes);
+      if (startTime === Infinity || endTime === -Infinity) {
+        console.error(
+          'Invalid matched times for bet:',
+          bet.bet_info.event_name,
+        );
+        return;
+      }
     }
     const basePath =
       logBasePath || 'D:/projects/python/odds_monkey_bot/dist/logs';
@@ -292,18 +308,27 @@ ipcMain.handle(
 
 ipcMain.handle(
   'get-logs',
-  (_event, bet?: BData, logBasePath?: string, logFilePath?: string) => {
-    if (!bet) return;
+  (_event, bet: BData, logBasePath?: string, logFilePath?: string) => {
     const matchedTimes = bet.bet_profit.exchange_matched
       .map((matchObj) => matchObj.bet_matched_time!)
       .concat(
-        bet.bet_profit.exchange_matched.map(
+        bet.bet_profit.back_matched.map(
           (matchObj) => matchObj.bet_matched_time!,
         ),
+      )
+      .concat(bet.bet_info.bet_unix_time);
+    if (!matchedTimes || matchedTimes.some((x) => !x)) return;
+    let startTime = Math.min(...matchedTimes);
+    let endTime = Math.max(...matchedTimes);
+    if (startTime === Infinity || endTime === -Infinity) {
+      console.error(
+        'Invalid matched times for bet:',
+        bet.bet_info.event_name,
+        bet.bet_info.bet_unix_time,
       );
-    if (matchedTimes.some((x) => !x)) return;
-    const startTime = Math.min(...matchedTimes);
-    const endTime = Math.max(...matchedTimes);
+      return;
+    }
+
     return findBetInLogs(startTime, endTime, logFilePath, logBasePath);
   },
 );

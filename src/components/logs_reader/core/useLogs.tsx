@@ -15,6 +15,7 @@ export type BetSection = {
   betName?: string;
   marketType?: string;
   errors: LogError[];
+  miniSection?: boolean;
 };
 type LogError = {
   lineNum: number;
@@ -35,24 +36,24 @@ export const useLogs = ({ bet, logBasePath, logFilePath }: LogsProps) => {
     let pending = false;
 
     const getData = async () => {
-      let data = await window.electron.ipcRenderer.readLog(
-        bet,
-        logBasePath,
-        logFilePath,
-      );
+      if (bet) {
+        let data = await window.electron.ipcRenderer.readLog(
+          bet,
+          logBasePath,
+          logFilePath,
+        );
+        console.log('data', data.length);
+        if (data) {
+          data = findAllBetSections(data, bet);
+          setRawLogStr(data);
+        }
+      }
       let tailstr = await window.electron.ipcRenderer.tailLog(
         bet,
         logBasePath,
         logFilePath,
       );
-      if (!data && !tailstr) {
-        setRawLogStr([]);
-        return;
-      }
-      if (data) {
-        data = findAllBetSections(data, bet);
-        setRawLogStr(data);
-      } else {
+      if (!bet) {
         tailstr = findAllBetSections(tailstr, bet);
         setRawLogStr(tailstr);
       }
@@ -185,7 +186,7 @@ export const useLogs = ({ bet, logBasePath, logFilePath }: LogsProps) => {
     rawLogString: filteredLogString,
   };
 };
-function findAllBetSections(logs: string, activeBet?: BData) {
+export function findAllBetSections(logs: string, activeBet?: BData) {
   let cs: BetSection = { data: [], _id: '', errors: [] };
   const bs: BetSection[] = [];
   let recording = false;
@@ -203,9 +204,7 @@ function findAllBetSections(logs: string, activeBet?: BData) {
   let sectionKey = '';
   const marketTypeRegex = /market type:\s*(.+)/;
   const split = logs.split('\n');
-  const betRegex =
-    /new bet found Event: ([\w+\:\s+]+) bet name: ([\w+\:\s+]+)(?=market type)/;
-
+  const betRegex = /new bet found Event: (.+) bet name: (.+)(?=market type)/;
   const pushError = (line: string, cs: BetSection) => {
     const idx = cs.data.length - 1;
     if (line.includes('WARNING')) {
@@ -298,7 +297,7 @@ function findAllBetSections(logs: string, activeBet?: BData) {
       } else {
         const unclassified: BetSection = {
           data: [line],
-          _id: 'unclassified',
+          _id: 'setup',
           errors:
             line.includes('ERROR') || line.includes('CRITICAL')
               ? [{ lineNum: 0, errorType: 'error' }]
@@ -392,13 +391,17 @@ function mergeAdjacentSameId(sections: BetSection[]): BetSection[][] {
 
   for (const section of sections) {
     if (current.length > 0 && current[0]._id === section._id) {
+      section.miniSection = true;
       current.push(section);
     } else {
-      if (current.length > 0) m.push(current);
+      if (current.length > 0) {
+        m.push(current);
+      }
+      section.miniSection = true;
       current = [section];
     }
   }
   if (current.length > 0) m.push(current);
-
+  console.log(m);
   return m;
 }

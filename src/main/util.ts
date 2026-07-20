@@ -47,6 +47,10 @@ export function findBetInLogs(
   logFile?: string,
   basePath?: string,
 ) {
+  if (startUnix === endUnix) {
+    endUnix += 300;
+    startUnix -= 300;
+  }
   let { startFileName, endFileName } = findLogFile(
     startUnix,
     endUnix,
@@ -61,7 +65,7 @@ export function findBetInLogs(
   const readLines = (fileName: string): string[] => {
     try {
       return fs.readFileSync(fileName, 'utf8').split('\n');
-    } catch  {
+    } catch {
       errored = true;
       return fs
         .readFileSync(
@@ -78,7 +82,11 @@ export function findBetInLogs(
     const match = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
     if (match) {
       const timestamp = new Date(match[0]).getTime() / 1000;
-      if (timestamp >= startUnix - 15 && lineStart === 0) {
+      if (
+        timestamp >= startUnix - 15 &&
+        lineStart === 0 &&
+        line.toLowerCase().includes('new bet found')
+      ) {
         lineStart = i;
         break;
       }
@@ -111,7 +119,6 @@ export function findBetInLogs(
     const startLogLines = linesStart.slice(lineStart, linesStart.length);
     const endLogLines = linesEnd.slice(0, sliceEnd);
     selectedLines = startLogLines.concat(endLogLines);
-
   } else {
     selectedLines = linesEnd.slice(lineStart, sliceEnd);
   }

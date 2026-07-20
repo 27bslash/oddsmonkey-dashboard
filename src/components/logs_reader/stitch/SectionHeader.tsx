@@ -26,7 +26,8 @@ const formatTimestampForTag = (value: string) => {
 const getSectionTimeRange = (largeSection: BetSection[]) => {
   const lines = largeSection.flatMap((s) =>
     s.data.filter(
-      (line) => !line.includes('BET SECTION') && !line.includes('END BET SECTION'),
+      (line) =>
+        !line.includes('BET SECTION') && !line.includes('END BET SECTION'),
     ),
   );
 
@@ -110,8 +111,9 @@ const SectionHeader = ({
               sx={{
                 color: '#3bbffa',
                 fontWeight: 700,
-                fontFamily: 'monospace',
-                fontSize: '12px',
+                // fontFamily: 'monospace',
+                letterSpacing: 2,
+                fontSize: '13px',
               }}
             >
               {first.eventName}
@@ -126,8 +128,9 @@ const SectionHeader = ({
               component="span"
               sx={{
                 color: '#f59e0b',
-                fontFamily: 'monospace',
-                fontSize: '12px',
+                // fontFamily: 'monospace',
+                fontSize: '13px',
+                letterSpacing: 2,
               }}
             >
               {first.betName}
@@ -138,7 +141,7 @@ const SectionHeader = ({
                 size="small"
                 sx={{
                   height: 16,
-                  fontSize: '9px',
+                  fontSize: '11px',
                   fontWeight: 600,
                   backgroundColor: alpha('#3bbffa', 0.1),
                   color: alpha('#3bbffa', 0.7),
@@ -152,7 +155,7 @@ const SectionHeader = ({
                 size="small"
                 sx={{
                   height: 16,
-                  fontSize: '9px',
+                  fontSize: '11px',
                   fontWeight: 700,
                   backgroundColor: alpha('#f59e0b', 0.15),
                   color: alpha('#f59e0b', 0.7),
@@ -166,7 +169,7 @@ const SectionHeader = ({
                 size="small"
                 sx={{
                   height: 16,
-                  fontSize: '9px',
+                  fontSize: '11px',
                   fontWeight: 700,
                   backgroundColor: alpha('#22c55e', 0.15),
                   color: alpha('#22c55e', 0.75),
@@ -180,7 +183,7 @@ const SectionHeader = ({
                 size="small"
                 sx={{
                   height: 16,
-                  fontSize: '9px',
+                  fontSize: '11px',
                   fontWeight: 600,
                   backgroundColor: alpha('#93c5fd', 0.12),
                   color: alpha('#93c5fd', 0.85),
@@ -189,8 +192,22 @@ const SectionHeader = ({
                 }}
               />
             )}
+            <Chip
+              label={`sections: ${largeSection.length}`}
+              sx={{
+                height: 16,
+                fontSize: '11px',
+                textTransform: 'capitalize',
+                fontWeight: 600,
+                backgroundColor: alpha('#93c5fd', 0.12),
+                color: alpha('#93c5fd', 0.85),
+                borderRadius: '3px',
+                fontFamily: 'monospace',
+              }}
+            ></Chip>
           </Box>
         ) : (
+          // should only trigger for setup
           <Typography
             sx={{
               color: alpha('#dee5ff', 0.6),
@@ -203,6 +220,7 @@ const SectionHeader = ({
           </Typography>
         )}
       </Box>
+
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {errors > 0 && (
           <Chip
@@ -234,8 +252,8 @@ const SectionHeader = ({
         )}
         <Typography
           sx={{
-            color: alpha('#dee5ff', 0.2),
-            fontSize: '10px',
+            color: alpha('#dee5ff', 0.3),
+            fontSize: '11px',
             fontFamily: 'monospace',
           }}
         >

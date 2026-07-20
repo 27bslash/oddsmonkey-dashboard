@@ -44,7 +44,7 @@ const electronHandler = {
     flashIcon: (eventId: string) => ipcRenderer.invoke('flash-icon', eventId),
     resetIconEvent: (eventId: string) =>
       ipcRenderer.invoke('reset-icon-event', eventId),
-    readLog: (bet?: BData, logBasePath?: string, logFilePath?: string) =>
+    readLog: (bet: BData, logBasePath?: string, logFilePath?: string) =>
       ipcRenderer.invoke('get-logs', bet, logBasePath, logFilePath),
     tailLog: (bet?: BData, logBasePath?: string, logFilePath?: string) =>
       ipcRenderer.invoke('get-todays-logs', bet, logBasePath, logFilePath),
@@ -92,8 +92,12 @@ const electronHandler = {
       }),
     getAllImages: async (directoryPath: string) =>
       await ipcRenderer.invoke('get-images', directoryPath),
-    deleteEntry: (_id: ObjectId, replaceAmount: { [key: string]: number }) =>
-      ipcRenderer.invoke('delete', _id, replaceAmount),
+    deleteEntry: (collection: string, _id: ObjectId) =>
+      ipcRenderer.invoke('delete-entry', collection, _id),
+    deleteEntryUpdateProfit: (
+      _id: ObjectId,
+      replaceAmount: { [key: string]: number },
+    ) => ipcRenderer.invoke('delete', _id, replaceAmount),
     ShutDown: () => {
       ipcRenderer.invoke('shutdown');
     },

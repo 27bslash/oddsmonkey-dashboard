@@ -1,5 +1,5 @@
 import { RefObject } from 'react';
-import { Box, alpha } from '@mui/material';
+import { Box, Divider, alpha } from '@mui/material';
 import { BetSection } from '../core/useLogs';
 import LogLine from '../core/LogLine';
 import SectionHeader from './SectionHeader';
@@ -96,7 +96,10 @@ export default function LogSectionList({
                     }}
                   >
                     {section.data
-                      .map((line: string, lineIdx: number) => ({ line, lineIdx }))
+                      .map((line: string, lineIdx: number) => ({
+                        line,
+                        lineIdx,
+                      }))
                       .filter(({ line }) => !line.includes('BET SECTION'))
                       .map(({ line, lineIdx }) => (
                         <LogLine
@@ -112,6 +115,26 @@ export default function LogSectionList({
                           logBasePath={logBasePath}
                         />
                       ))}
+                    {/* if the large section is made up of many small sections divide them unless it's the last section */}
+                    {section.miniSection &&
+                      largeSection.length > 1 &&
+                      idx !== largeSection.length - 1 && (
+                        <Divider
+                          aria-hidden={true}
+                          sx={{
+                            color: '#FFD700',
+                            marginBottom: '10px',
+                            marginTop: '10px',
+                            fontSize: '17px',
+                            '&::before, &::after': {
+                              borderTopWidth: '2px',
+                              borderTopColor: '#FFD700',
+                            },
+                          }}
+                        >
+                          End Sub Section {idx + 1}
+                        </Divider>
+                      )}
                   </Box>
                 ))}
             </Box>
