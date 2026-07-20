@@ -20,7 +20,10 @@ jobs:
       - name: Checkout git repo
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          # Use the latest tip of the branch after semantic-release has pushed
+          # its version-bump commit, not the pre-release SHA that triggered the run.
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
 
       - name: Install Node and NPM
         uses: actions/setup-node@v4
