@@ -27,6 +27,7 @@
   },
   "main": "./src/main/main.ts",
   "scripts": {
+    "startDev": "ts-node ./.erb/scripts/check-port-in-use.js && npm run build:dll && npm run start:renderer",
     "start": "ts-node ./.erb/scripts/check-port-in-use.js && npm run start:renderer",
     "dist": "electron-builder",
     "package": "ts-node ./.erb/scripts/clean.js dist && node ./scripts/sync-app-package.js && npm run build && electron-builder build --publish never",
@@ -101,7 +102,6 @@
     "chart.js": "^4.4.8",
     "chartjs-plugin-zoom": "^2.2.0",
     "dotenv": "^16.4.7",
-    "electron-builder": "^25.1.8",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
     "electron-squirrel-startup": "^1.0.1",
