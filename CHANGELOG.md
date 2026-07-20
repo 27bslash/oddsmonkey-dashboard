@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.5.1...v1.5.2) (2026-07-20)
+
+
+### Bug Fixes
+
+* changed final publish target ([af1949c](https://github.com/27bslash/oddsmonkey-dashboard/commit/af1949c7f26eb2a8a3db566e8f0c76791c4badbd))
+
 ## [1.5.1](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.5.0...v1.5.1) (2026-07-20)
 
 
