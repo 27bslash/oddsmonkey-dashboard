@@ -1,3 +1,22 @@
+# [1.5.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.4.1...v1.5.0) (2026-07-20)
+
+
+### Bug Fixes
+
+* changed timestamps to seconds ([fbb24ec](https://github.com/27bslash/oddsmonkey-dashboard/commit/fbb24ecafd99840606367b8f82465a8d82efe8f2))
+* fixed anomly logic ([1f4b8f2](https://github.com/27bslash/oddsmonkey-dashboard/commit/1f4b8f2271cea6f08974a49fcccf2f624c918533))
+* update delete ipc call ([3e7a64a](https://github.com/27bslash/oddsmonkey-dashboard/commit/3e7a64a62fec35a9b31cfe6a92e265954020718a))
+
+
+### Features
+
+* added build dev script ([4d6667f](https://github.com/27bslash/oddsmonkey-dashboard/commit/4d6667f248c01e63833accfa1b95f5480e88157d))
+* added commissoin amount to commission button ([297c33a](https://github.com/27bslash/oddsmonkey-dashboard/commit/297c33a5309d51f6433907c27ab0c0396f299d90))
+* added log reader test ([28a8226](https://github.com/27bslash/oddsmonkey-dashboard/commit/28a8226179b74aeeb4bdc3ec34b54d0e13f1ea86))
+* added support for empty back/lay matched ([0a92868](https://github.com/27bslash/oddsmonkey-dashboard/commit/0a92868353330a53d043d813c75779b5c374b8ea))
+* betCalculator now updates both sides ([eda9239](https://github.com/27bslash/oddsmonkey-dashboard/commit/eda9239f3ca28172880efe2318cb747c7080f7e0))
+* log reader now correctly splits bets into sections ([7bf4fe0](https://github.com/27bslash/oddsmonkey-dashboard/commit/7bf4fe071133f4c6bb06a5d3feba7f7a0fa93cb4))
+
 ## [1.4.1](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.4.0...v1.4.1) (2026-06-20)
 
 
