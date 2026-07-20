@@ -1,5 +1,5 @@
 import { Box, Button, ButtonGroup, Tooltip, Typography } from '@mui/material';
-import { green } from '@mui/material/colors';
+import { green, red } from '@mui/material/colors';
 import Logs from './logs_reader/logs';
 import { useEffect, useState } from 'react';
 type UpdateFlagsProps = {
@@ -51,16 +51,26 @@ const UpdateFlags = ({ flags, setFlag }: UpdateFlagsProps) => {
           </Typography>
         </Button>
         <Tooltip
-          title={<CommissionTooltip smarketsCommission={smarketsCommission!} />}
+          title={
+            <CommissionTooltip
+              smarketsCommission={smarketsCommission!}
+              verbose={true}
+            />
+          }
         >
           <Button
             onClick={() => setFlag('update_commission')}
             disabled={flags['update_balance'] === 'updating'}
           >
             <Typography>
-              {flags['update_commission'] === 'updating'
-                ? 'updating'
-                : 'update commission'}
+              {flags['update_commission'] === 'updating' ? (
+                'updating'
+              ) : (
+                <CommissionTooltip
+                  smarketsCommission={smarketsCommission!}
+                  verbose={false}
+                />
+              )}
             </Typography>
           </Button>
         </Tooltip>
@@ -75,8 +85,12 @@ type CommissionTooltipProps = {
     expiration_date: string;
     updated: number;
   }[];
+  verbose: boolean;
 };
-const CommissionTooltip = ({ smarketsCommission }: CommissionTooltipProps) => {
+const CommissionTooltip = ({
+  smarketsCommission,
+  verbose,
+}: CommissionTooltipProps) => {
   if (!smarketsCommission) {
     return (
       <Box>
@@ -87,15 +101,50 @@ const CommissionTooltip = ({ smarketsCommission }: CommissionTooltipProps) => {
   const commissionPerc = smarketsCommission[0].commission_perc;
   const expirationDate = smarketsCommission[0].expiration_date;
   const updated = smarketsCommission[0].updated;
-  console.log('rendering tooltip with', smarketsCommission[0]);
+  const updatedDate = new Date(updated * 1000).toLocaleDateString();
+  const currentDate = new Date().toLocaleDateString();
+
   return (
     <Box>
-      <Typography>
-        {`Current Smarkets Commission: ${commissionPerc}% expires on ${expirationDate}`}
-      </Typography>
-      <Typography>
-        last updated: {new Date(updated * 1000).toLocaleString()}
-      </Typography>
+      {verbose ? (
+        <>
+          <Box display={'flex'}>
+            <Typography>
+              Smarkets Commission:
+              <span
+                style={{
+                  marginLeft: '5px',
+                  color: commissionPerc === 0 ? green['600'] : red['600'],
+                }}
+              >
+                {commissionPerc * 100}%
+              </span>
+            </Typography>
+          </Box>
+          <Typography>
+            Last Updated:
+            <span
+              style={{
+                marginLeft: '5px',
+                color: updatedDate !== currentDate ? red['600'] : green['600'],
+              }}
+            >
+              {updatedDate}
+            </span>
+            {expirationDate ? `Expires: ${expirationDate}` : ''}
+          </Typography>
+        </>
+      ) : (
+        <Typography>
+          Commission
+          <Typography
+            sx={{ color: commissionPerc === 0 ? green['600'] : red['600'] }}
+          >
+            {commissionPerc * 100}%
+          </Typography>
+          {expirationDate && verbose ? `Expires: ${expirationDate}` : ''}
+        </Typography>
+      )}
     </Box>
   );
 };
