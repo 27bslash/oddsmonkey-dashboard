@@ -62,6 +62,8 @@ export interface Matched {
   staked: number[];
   bet_matched_time?: number;
   matched: number[];
+  bet_commission?: number;
+  type?: 'standard' | 'tradeout';
 }
 export interface BData {
   _id: ObjectId;
