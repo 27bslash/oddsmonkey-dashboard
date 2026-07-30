@@ -179,7 +179,11 @@ const CalculatorSection = ({
     });
   };
   // remove from pending tradeouts if manually intervened this does require the user to not be a moron
-  window.electron.ipcRenderer.deleteEntry('pending_tradeouts', data._id);
+  window.electron.ipcRenderer.deleteEntry(
+    'pending_tradeouts',
+    'bet_info.event_name',
+    data.bet_info.event_name,
+  );
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const missingBetByType =
       type === 'lay' ? 'missingLayBet' : 'missingBackBet';

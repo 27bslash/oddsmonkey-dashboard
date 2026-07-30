@@ -92,7 +92,7 @@ const electronHandler = {
       }),
     getAllImages: async (directoryPath: string) =>
       await ipcRenderer.invoke('get-images', directoryPath),
-    deleteEntry: (collection: string, _id: ObjectId) =>
+    deleteEntry: (collection: string, key: string, value: string) =>
       ipcRenderer.invoke('delete-entry', collection, _id),
     deleteEntryUpdateProfit: (
       _id: ObjectId,

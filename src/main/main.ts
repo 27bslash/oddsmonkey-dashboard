@@ -262,10 +262,9 @@ ipcMain.handle(
 );
 ipcMain.handle(
   'delete-entry',
-  async (_event, collection: string, _id: ObjectId) => {
+  async (_event, collection: string, key: string, value: string) => {
     const collectionRef = client.db('oddsmonkey').collection(collection);
-    const objectId = new ObjectId(Buffer.from(_id['buffer']));
-    await collectionRef.findOneAndDelete({ _id: objectId });
+    await collectionRef.findOneAndDelete({ key: value });
   },
 );
 ipcMain.handle(
