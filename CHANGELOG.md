@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.5.2...v1.5.3) (2026-07-20)
+
+
+### Bug Fixes
+
+* update publish workflow include mdb ([e55ad21](https://github.com/27bslash/oddsmonkey-dashboard/commit/e55ad216346b122c05f50324dac76922b664ff16))
+
 ## [1.5.2](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.5.1...v1.5.2) (2026-07-20)
 
 
