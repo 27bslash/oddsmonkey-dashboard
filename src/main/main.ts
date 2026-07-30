@@ -17,6 +17,7 @@ import { findBetInLogs, resolveHtmlPath } from './util';
 import { MongoClient, ObjectId } from 'mongodb';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
+import Store from 'electron-store';
 
 // Load .env from the packaged resources directory or the project root.
 dotenv.config({
@@ -25,7 +26,7 @@ dotenv.config({
     '.env',
   ),
 });
-
+const store = new Store();
 const eventStatus = new Map<string, boolean>();
 const mongoUri = process.env.MONGO_URI?.trim();
 
@@ -47,13 +48,22 @@ class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
     autoUpdater.logger = log;
+    autoUpdater.autoInstallOnAppQuit = true;
+
     autoUpdater.checkForUpdatesAndNotify();
 
     // Example: listen for update events
     autoUpdater.on('update-available', () => {
       log.info('Update available');
     });
-    autoUpdater.on('update-downloaded', () => {
+    autoUpdater.on('update-downloaded', (info) => {
+      const lastNotified = store.get('lastNotifiedVersion');
+      if (lastNotified === info.version) {
+        log.info(
+          `Already notified user about ${info.version}, skipping dialog`,
+        );
+        return; // it'll still install on quit thanks to autoInstallOnAppQuit
+      }
       dialog
         .showMessageBox({
           type: 'info',
@@ -62,6 +72,8 @@ class AppUpdater {
           buttons: ['Restart', 'Later'],
         })
         .then((result) => {
+          store.set('lastNotifiedVersion', info.version);
+          console.log(info.version, 'downloaded');
           if (result.response === 0) autoUpdater.quitAndInstall();
         });
     });
