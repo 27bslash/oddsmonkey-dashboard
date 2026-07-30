@@ -1,3 +1,11 @@
+# [1.6.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.5.3...v1.6.0) (2026-07-30)
+
+
+### Features
+
+* added electron store to store if a user has updated to the current version ([c79d2e2](https://github.com/27bslash/oddsmonkey-dashboard/commit/c79d2e231a49ea752b0e2d7708e1916d6d5acb08))
+* delete bets from pending_tradeouts if they have been manually adjusted using the calculator ([c3a015d](https://github.com/27bslash/oddsmonkey-dashboard/commit/c3a015d8c662b741d9fb59c38cc1bd6f5a744930))
+
 ## [1.5.3](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.5.2...v1.5.3) (2026-07-20)
 
 
