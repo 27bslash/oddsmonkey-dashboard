@@ -68,7 +68,7 @@ class AppUpdater {
         .showMessageBox({
           type: 'info',
           title: 'Update Ready',
-          message: 'A new version is ready. Restart now to install?',
+          message: `New Version ${info.version} Found current version: ${store.get('lastNotifiedVersion')}. Restart now to install?`,
           buttons: ['Restart', 'Later'],
         })
         .then((result) => {
