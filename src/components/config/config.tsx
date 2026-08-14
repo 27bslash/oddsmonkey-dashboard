@@ -17,7 +17,9 @@ export function Config() {
   const [update, setUpdate] = useState({});
   const [status, setStatus] = useState('');
   const [flashed, setFlashed] = useState(false);
-  const [exeRunning, setExeRunning] = useState(false);
+  const [discordExeRunning, setDiscordExeRunning] = useState(false);
+  const [oddsmonkeyExeRunning, setOddsmonkeyExeRunning] = useState(false);
+
   const { devMachine } = useAppContext();
   const handleUpdate = async (
     updateType: 'updateRunningState' | 'updateConfig',
@@ -29,6 +31,19 @@ export function Config() {
         update: { $set: update },
       };
       if (updateType === 'updateRunningState') {
+        if (devMachine) {
+          const checkOddsmonkeyExe = async () => {
+            const oddsmonkeyExeRUnning =
+              await window.electron.ipcRenderer.isExeRunning('oddsmonkey.exe');
+            if (!oddsmonkeyExeRUnning) {
+              const started =
+                await window.electron.ipcRenderer.startExe('oddsmonkey');
+              setOddsmonkeyExeRunning(started);
+            }
+          };
+          checkOddsmonkeyExe();
+          return;
+        }
         updateObj = {
           collectionName: 'config',
           query: {},
@@ -71,7 +86,7 @@ export function Config() {
           .isExeRunning('discord_bot.exe')
           .then((isRunning) => {
             console.log('isExeRunning', isRunning);
-            setExeRunning(isRunning);
+            setDiscordExeRunning(isRunning);
           });
       };
       t();
@@ -82,6 +97,13 @@ export function Config() {
       clearInterval(interval);
     };
   }, []);
+  const runButtonText = running
+    ? oddsmonkeyExeRunning
+      ? 'Stop (App & EXE running)'
+      : 'Stop (App running)'
+    : oddsmonkeyExeRunning
+      ? 'Start (EXE running)'
+      : 'Start';
   return (
     <>
       {config && (
@@ -132,15 +154,15 @@ export function Config() {
               }}
               color={!running ? 'success' : 'error'}
             >
-              {running ? 'Stop' : 'Start'}
+              {runButtonText}
             </Button>
           </div>
           <Box display={'flex'}>
-            {!exeRunning && devMachine && (
+            {!discordExeRunning && devMachine && (
               <Button
                 variant="contained"
                 onClick={() => {
-                  return window.electron.ipcRenderer.startDiscordBot();
+                  return window.electron.ipcRenderer.startExe('discord-bot');
                 }}
                 sx={{
                   marginRight: '10px',

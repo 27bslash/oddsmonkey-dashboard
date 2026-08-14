@@ -593,10 +593,10 @@ ipcMain.handle('is-exe-running', async (_event, exeName: string) => {
   return await isExeRunning(exeName);
 });
 
-ipcMain.handle('start-discord-bot', async () => {
+ipcMain.handle('start-exe', async (exeName) => {
   const exePath =
     process.env.APPDATA +
-    '\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\discord_bot.lnk';
+    `\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\${exeName}.lnk`;
   exec(`cmd.exe /c start "" "${exePath}"`, (error, stdout, stderr) => {
     if (error) {
       console.error(`Error opening Startup folder: ${error.message}`);
@@ -608,7 +608,7 @@ ipcMain.handle('start-discord-bot', async () => {
     }
     console.log(`Startup folder opened: ${stdout}`);
   });
-  return 'Windows Startup folder opened';
+  return true;
 });
 
 fetchItems('config');

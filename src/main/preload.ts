@@ -104,8 +104,8 @@ const electronHandler = {
     isExeRunning: (exeName: string) => {
       return ipcRenderer.invoke('is-exe-running', exeName);
     },
-    startDiscordBot: () => {
-      ipcRenderer.invoke('start-discord-bot');
+    startExe: (exeName: string) => {
+      return ipcRenderer.invoke('start-exe', exeName);
     },
   },
 };
