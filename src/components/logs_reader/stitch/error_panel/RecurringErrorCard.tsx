@@ -1,7 +1,7 @@
 import { Box, Typography, Chip, alpha } from '@mui/material';
 import { OpenInNew as ExternalLinkIcon } from '@mui/icons-material';
-import { RecurringError } from './types';
-import { ErrorCard } from './styled';
+import { RecurringError } from '../types';
+import { ErrorCard } from '../styled';
 
 const RecurringErrorCard = ({
   error,

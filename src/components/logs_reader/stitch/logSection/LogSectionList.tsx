@@ -1,8 +1,9 @@
 import { RefObject } from 'react';
 import { Box, Divider, alpha } from '@mui/material';
-import { BetSection } from '../core/useLogs';
-import LogLine from '../core/LogLine';
-import SectionHeader from './SectionHeader';
+import { BetSection } from '../../core/useLogs';
+import LogLine from '../../core/LogLine';
+import SectionHeader from '../section_header/SectionHeader';
+import ExpandedLogSection from './expandedSection';
 
 type SectionStats = { errors: number; warnings: number };
 
@@ -84,59 +85,14 @@ export default function LogSectionList({
                   }
                 />
               </Box>
-
-              {isExpanded &&
-                largeSection.map((section, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      pl: 2,
-                      borderLeft: `1px solid ${alpha('#1e293b', 0.3)}`,
-                      ml: 2,
-                    }}
-                  >
-                    {section.data
-                      .map((line: string, lineIdx: number) => ({
-                        line,
-                        lineIdx,
-                      }))
-                      .filter(({ line }) => !line.includes('BET SECTION'))
-                      .map(({ line, lineIdx }) => (
-                        <LogLine
-                          key={lineIdx}
-                          line={line}
-                          lineIdx={`${idx}-${lineIdx}`}
-                          highlighted={
-                            highlightedTarget?.sectionId === section._id &&
-                            highlightedTarget?.lineIdx === `${idx}-${lineIdx}`
-                          }
-                          setFilter={setFilter}
-                          sectionId={section._id}
-                          logBasePath={logBasePath}
-                        />
-                      ))}
-                    {/* if the large section is made up of many small sections divide them unless it's the last section */}
-                    {section.miniSection &&
-                      largeSection.length > 1 &&
-                      idx !== largeSection.length - 1 && (
-                        <Divider
-                          aria-hidden={true}
-                          sx={{
-                            color: '#FFD700',
-                            marginBottom: '10px',
-                            marginTop: '10px',
-                            fontSize: '17px',
-                            '&::before, &::after': {
-                              borderTopWidth: '2px',
-                              borderTopColor: '#FFD700',
-                            },
-                          }}
-                        >
-                          End Sub Section {idx + 1}
-                        </Divider>
-                      )}
-                  </Box>
-                ))}
+              {isExpanded && (
+                <ExpandedLogSection
+                  highlightedTarget={highlightedTarget}
+                  logBasePath={logBasePath}
+                  largeSection={largeSection}
+                  setFilter={setFilter}
+                />
+              )}
             </Box>
           );
         })}

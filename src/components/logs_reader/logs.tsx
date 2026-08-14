@@ -91,7 +91,6 @@ const Logs = ({ bet }: LogsProps) => {
     );
   }
 
-  // When a `bet` is provided, show the icon (similar to previous behavior).
   return (
     <>
       <div

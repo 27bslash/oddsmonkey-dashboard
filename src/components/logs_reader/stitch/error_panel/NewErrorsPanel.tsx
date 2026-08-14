@@ -3,7 +3,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
-import { RecurringError } from './types';
+import { RecurringError } from '../types';
 import RecurringErrorCard from './RecurringErrorCard';
 
 type NewErrorsPanelProps = {
@@ -65,7 +65,11 @@ export default function NewErrorsPanel({
           }}
         >
           {newErrors.map((error, idx) => (
-            <RecurringErrorCard key={`${error.pattern}-${idx}`} error={error} onNavigate={onNavigate} />
+            <RecurringErrorCard
+              key={`${error.pattern}-${idx}`}
+              error={error}
+              onNavigate={onNavigate}
+            />
           ))}
         </Box>
       )}

@@ -7,13 +7,8 @@ import DeleteOverlay from '../BetCell/delete/deleteOverlay';
 import BetCalculator from '../BetCell/missingBetCalculator/betCalculator';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
-import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import PanoramaIcon from '@mui/icons-material/Panorama';
 import { useAppContext } from '../../../../renderer/useAppContext';
-import { red } from '@mui/material/colors';
-// import LogOverlay from '../BetCell/logs_reader/logOverlay';
-// import { useLogs } from '../BetCell/logs_reader/useLogs';
-// import Logs from '../BetCell/logs_reader/logs';
 import { createPortal } from 'react-dom';
 import { useLogs } from '../../../logs_reader/core/useLogs';
 import Logs from '../../../logs_reader/logs';
@@ -29,6 +24,7 @@ const BetControls = ({ bet, deleteBet }: BetControlsProps) => {
   const [imageOverlay, setImageOverlay] = useState(false);
   const { errored } = useLogs({
     bet,
+    subscribe: false,
   });
   const isRecentBet = Date.now() / 1000 - bet.bet_info.bet_unix_time < 300;
   const { devMachine } = useAppContext();

@@ -3,10 +3,10 @@ import { Box } from '@mui/material';
 import { BData } from '../../../../types';
 import { RecurringError } from './types';
 import ViewerHeader from './ViewerHeader';
-import RecurringErrorsPanel from './RecurringErrorsPanel';
-import NewErrorsPanel from './NewErrorsPanel';
+import RecurringErrorsPanel from './error_panel/RecurringErrorsPanel';
+import NewErrorsPanel from './error_panel/NewErrorsPanel';
 import LevelFilter from './LevelFilter';
-import LogSectionList from './LogSectionList';
+import LogSectionList from './logSection/LogSectionList';
 import { BetSection } from '../core/useLogs';
 import { useLogPathSelection } from './hooks/useLogPathSelection';
 import {

@@ -6,6 +6,7 @@ type LogsProps = {
   bet?: BData;
   logBasePath?: string;
   logFilePath?: string;
+  subscribe?: boolean;
 };
 
 export type BetSection = {
@@ -21,7 +22,12 @@ type LogError = {
   lineNum: number;
   errorType: 'critical' | 'error' | 'warning';
 };
-export const useLogs = ({ bet, logBasePath, logFilePath }: LogsProps) => {
+export const useLogs = ({
+  bet,
+  logBasePath,
+  logFilePath,
+  subscribe = true,
+}: LogsProps) => {
   const [rawLogString, setRawLogStr] = useState<BetSection[][]>([]);
   const [tail, setTail] = useState(false);
   const [filter, setFilter] = useState<{ [key: string]: number }>({ INFO: 0 });
@@ -32,6 +38,8 @@ export const useLogs = ({ bet, logBasePath, logFilePath }: LogsProps) => {
   const previousDataRef = useRef<string>('');
 
   useEffect(() => {
+    if (!subscribe) return;
+
     let interval: NodeJS.Timeout;
     let pending = false;
 
@@ -87,7 +95,7 @@ export const useLogs = ({ bet, logBasePath, logFilePath }: LogsProps) => {
     return () => {
       clearInterval(interval);
     };
-  }, [logBasePath, logFilePath, bet]);
+  }, [logBasePath, logFilePath, bet, subscribe]);
 
   const LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'];
 
@@ -390,6 +398,10 @@ function mergeAdjacentSameId(sections: BetSection[]): BetSection[][] {
   let current: BetSection[] = [];
 
   for (const section of sections) {
+    if (section._id === 'setup') {
+      current.push(section);
+      continue;
+    }
     if (current.length > 0 && current[0]._id === section._id) {
       section.miniSection = true;
       current.push(section);
@@ -402,6 +414,5 @@ function mergeAdjacentSameId(sections: BetSection[]): BetSection[][] {
     }
   }
   if (current.length > 0) m.push(current);
-  console.log(m);
   return m;
 }

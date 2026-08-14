@@ -1,6 +1,9 @@
 import { Box, Typography, Chip, IconButton, alpha } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
-import { RecurringError } from './types';
+import {
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+} from '@mui/icons-material';
+import { RecurringError } from '../types';
 import RecurringErrorCard from './RecurringErrorCard';
 
 type RecurringErrorsPanelProps = {
@@ -19,8 +22,8 @@ export default function RecurringErrorsPanel({
   expanded,
   setExpanded,
   onNavigate,
-}: Readonly <RecurringErrorsPanelProps>) {
-//   if (repeatedErrors.length === 0) return null;
+}: Readonly<RecurringErrorsPanelProps>) {
+  //   if (repeatedErrors.length === 0) return null;
 
   return (
     <Box
@@ -97,7 +100,11 @@ export default function RecurringErrorsPanel({
           }}
         >
           {repeatedErrors.map((error, idx) => (
-            <RecurringErrorCard key={idx} error={error} onNavigate={onNavigate} />
+            <RecurringErrorCard
+              key={idx}
+              error={error}
+              onNavigate={onNavigate}
+            />
           ))}
         </Box>
       )}
