@@ -1,3 +1,15 @@
+# [1.7.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.6.0...v1.7.0) (2026-08-02)
+
+
+### Bug Fixes
+
+* moved pending tradeouts db delete into update db function ([9d43875](https://github.com/27bslash/oddsmonkey-dashboard/commit/9d43875f2d3c7d9900a8637331ff1470b60b1221))
+
+
+### Features
+
+* added version numbers to update dialog ([a11291c](https://github.com/27bslash/oddsmonkey-dashboard/commit/a11291c53613e85b5200e0bce534377e0a02e1f4))
+
 # [1.6.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.5.3...v1.6.0) (2026-07-30)
 
 
