@@ -1,3 +1,15 @@
+# [1.8.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.7.0...v1.8.0) (2026-08-14)
+
+
+### Bug Fixes
+
+* refactored logs and fixed setup end section spam ([2f99f66](https://github.com/27bslash/oddsmonkey-dashboard/commit/2f99f66a6bc290f72ca0731da5660c48bf6da71f))
+
+
+### Features
+
+* added exe start when on dev machine for bot itself ([66fca6b](https://github.com/27bslash/oddsmonkey-dashboard/commit/66fca6b5f2cc2c41a7ea04bbf9d434969856ce19))
+
 # [1.7.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.6.0...v1.7.0) (2026-08-02)
 
 
