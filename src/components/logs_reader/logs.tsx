@@ -3,7 +3,7 @@ import { red } from '@mui/material/colors';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import { BData } from '../../../types';
 import { Button } from '@mui/material';
-import { useLogs } from './core/useLogs';
+import { useJsonLogs } from './core/useJsonLogs';
 import SimplifiedLogViewer from './stitch';
 import { LOG_PATHS } from './stitch/types';
 import { createPortal } from 'react-dom';
@@ -24,7 +24,7 @@ const Logs = ({ bet }: LogsProps) => {
     setSearchStr,
     searchStr,
     rawLogString,
-  } = useLogs({
+  } = useJsonLogs({
     bet,
     logBasePath,
     logFilePath: bet ? undefined : logFilePath,
