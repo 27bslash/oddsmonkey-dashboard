@@ -302,6 +302,16 @@ ipcMain.handle('read-file', async () => {
 ipcMain.handle(
   'get-todays-logs',
   (_event, bet?: BData, logBasePath?: string, logFilePath?: string) => {
+    if (!bet) {
+      const basePath =
+        logBasePath || 'D:/projects/python/odds_monkey_bot/dist/logs';
+      const filePath = logFilePath || `${basePath}/custom_logs.log`;
+      try {
+        return fs.readFileSync(filePath, 'utf8');
+      } catch {
+        return '';
+      }
+    }
     const currentUnix = Math.floor(Date.now() / 1000);
     let startTime = currentUnix;
     let endTime = currentUnix;

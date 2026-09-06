@@ -41,6 +41,11 @@ function findLogFile(startTime: number, endTime: number, basePath?: string) {
   return { startFileName, endFileName };
 }
 
+function isNewBetLine(line: string): boolean {
+  const lower = line.toLowerCase();
+  return lower.includes('new bet found') || lower.includes('new_bet_found');
+}
+
 export function findBetInLogs(
   startUnix: number,
   endUnix: number,
@@ -85,7 +90,7 @@ export function findBetInLogs(
       if (
         timestamp >= startUnix - 15 &&
         lineStart === 0 &&
-        line.toLowerCase().includes('new bet found')
+        isNewBetLine(line)
       ) {
         lineStart = i;
         break;
