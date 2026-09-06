@@ -1,3 +1,14 @@
+# [1.9.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.8.0...v1.9.0) (2026-09-06)
+
+
+### Features
+
+* added level field so warnings can be differentiated from errors ([4ad2657](https://github.com/27bslash/oddsmonkey-dashboard/commit/4ad2657f12bbdf156e4b284a785000315d393b40))
+* button to add new bets ([6d41fee](https://github.com/27bslash/oddsmonkey-dashboard/commit/6d41feebf7136feee45f096c7ccd2f1f779fa85b))
+* json support for finding bet slices ([dd1ce47](https://github.com/27bslash/oddsmonkey-dashboard/commit/dd1ce473fe57cbdb6ca734d4ba38c203deb8bfb2))
+* reworked recurring errors to invlude warnings + dropsdown UI ([9fe2ef5](https://github.com/27bslash/oddsmonkey-dashboard/commit/9fe2ef5adf0291620e46031006880705fdb43cb8))
+* switched to structured json logs ([32ab1f6](https://github.com/27bslash/oddsmonkey-dashboard/commit/32ab1f6ebfb3c881b932761826879c65f157a9ea))
+
 # [1.8.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.7.0...v1.8.0) (2026-08-14)
 
 
