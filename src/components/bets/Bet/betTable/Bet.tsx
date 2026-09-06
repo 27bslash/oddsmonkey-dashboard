@@ -1,4 +1,12 @@
-import { Box, Button, Table, TableBody, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  Typography,
+} from '@mui/material';
 import { grey, red } from '@mui/material/colors';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en.json';
@@ -12,6 +20,7 @@ import BetControls from './betControls';
 import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import updateMatched from '../../../../utils/updateMatched';
+import AddMatchedBetDialog from '../BetCell/matched/addMatchedBetDialog';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -27,18 +36,14 @@ function Bet({
   const theme = useTheme();
   const [show, setShow] = useState(false);
   const [betData, setBetData] = useState<BData>(bet);
+  const [showAddBetDialog, setShowAddBetDialog] = useState(false);
   useEffect(() => {
-    if (betData !== bet) {
-      setBetData(bet);
-    }
+    setBetData(bet);
   }, [bet]);
   let value;
   if (betData) value = { betData, updateSort, setBetData };
   const borderColor = bet.anomaly ? red['900'] : grey['800'];
-  updateMatched(
-    betData.bet_profit.back_matched,
-    betData.bet_profit.exchange_matched,
-  );
+  updateMatched(betData.bet_profit.back_matched, betData.bet_profit.exchange_matched);
   return (
     value && (
       <BetProvider value={value}>
@@ -69,22 +74,22 @@ function Bet({
             <BetTableHead updateSort={updateSort} />
             <TableBody>
               {(
-                bet.bet_profit['back_matched'] ||
-                bet.bet_profit['exchange_matched']
+                betData.bet_profit['back_matched'] ||
+                betData.bet_profit['exchange_matched']
               ).map((x, i) => {
                 // console.log(i, x);
                 if (i === 0 || show) {
                   return (
                     <>
                       <BetTableRow
-                        data={bet}
+                        data={betData}
                         setBet={setBetData}
                         index={i}
                         lay={false}
                         show={show}
                       />
                       <BetTableRow
-                        data={bet}
+                        data={betData}
                         setBet={setBetData}
                         index={i}
                         lay={true}
@@ -94,8 +99,22 @@ function Bet({
                   );
                 }
               })}
+              {show && (
+                <TableRow>
+                  <TableCell colSpan={9} sx={{ borderBottom: 'none' }}>
+                    <Box display="flex" justifyContent="flex-end">
+                      <Button
+                        variant="contained"
+                        onClick={() => setShowAddBetDialog(true)}
+                      >
+                        Add bet
+                      </Button>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
-            {bet.bet_profit['back_matched'].length > 1 && (
+            {betData.bet_profit['back_matched'].length > 1 && (
               <Button
                 variant="contained"
                 disableElevation
@@ -112,12 +131,18 @@ function Bet({
                 onClick={() => setShow((prev) => !prev)}
               >
                 <Typography>
-                  {bet.bet_profit['back_matched'].length - 1}
+                  {betData.bet_profit['back_matched'].length - 1}
                 </Typography>
                 {!show ? <KeyboardArrowDown /> : <KeyboardArrowUp />}
               </Button>
             )}
           </Table>
+          <AddMatchedBetDialog
+            open={showAddBetDialog}
+            onClose={() => setShowAddBetDialog(false)}
+            bet={betData}
+            setBet={setBetData}
+          />
         </Box>
       </BetProvider>
     )

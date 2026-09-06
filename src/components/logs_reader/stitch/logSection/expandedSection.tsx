@@ -1,6 +1,7 @@
 import { Box, Divider } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import LogLine from '../../core/LogLine';
+import JsonLogLine from '../../core/JsonLogLine';
+import { parseJsonLine } from '../../core/useJsonLogs';
 import { BetSection } from '../../core/useLogs';
 type ExpandedLogSectionProps = {
   largeSection: BetSection[];
@@ -27,15 +28,12 @@ function ExpandedLogSection({
           }}
         >
           {section.data
-            .map((line, lineIdx) => ({
-              line,
-              lineIdx,
-            }))
-            .filter(({ line }) => !line.includes('BET SECTION'))
-            .map(({ line, lineIdx }) => (
-              <LogLine
+            .map((line, lineIdx) => ({ entry: parseJsonLine(line), lineIdx }))
+            .filter(({ entry }) => entry !== undefined)
+            .map(({ entry, lineIdx }) => (
+              <JsonLogLine
                 key={lineIdx}
-                line={line}
+                entry={entry!}
                 lineIdx={`${idx}-${lineIdx}`}
                 highlighted={
                   highlightedTarget?.sectionId === section._id &&

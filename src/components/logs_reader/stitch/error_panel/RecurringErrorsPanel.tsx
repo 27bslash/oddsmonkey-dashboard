@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Box, Typography, Chip, IconButton, alpha } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -15,6 +16,12 @@ type RecurringErrorsPanelProps = {
   onNavigate: (error: RecurringError) => void;
 };
 
+const LEVEL_COLORS: Record<RecurringError['level'], string> = {
+  warning: '#f59e0b',
+  error: '#f92672',
+  critical: '#f92672',
+};
+
 export default function RecurringErrorsPanel({
   repeatedErrors,
   totalErrors,
@@ -23,7 +30,84 @@ export default function RecurringErrorsPanel({
   setExpanded,
   onNavigate,
 }: Readonly<RecurringErrorsPanelProps>) {
-  //   if (repeatedErrors.length === 0) return null;
+  const [errorsExpanded, setErrorsExpanded] = useState(false);
+  const [warningsExpanded, setWarningsExpanded] = useState(false);
+
+  const errorItems = repeatedErrors.filter((e) => e.level !== 'warning');
+  const warningItems = repeatedErrors.filter((e) => e.level === 'warning');
+
+  const renderDropdown = (
+    key: string,
+    label: string,
+    color: string,
+    items: RecurringError[],
+    isExpanded: boolean,
+    setIsExpanded: (fn: (prev: boolean) => boolean) => void,
+  ) => (
+    <Box key={key} sx={{ mb: 1, '&:last-of-type': { mb: 0 } }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: isExpanded ? 1 : 0,
+          cursor: 'pointer',
+          py: 0.5,
+        }}
+        onClick={() => setIsExpanded((prev) => !prev)}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            sx={{
+              fontSize: '10px',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+              color: alpha(color, 0.9),
+            }}
+          >
+            {label} ({items.length})
+          </Typography>
+          <Chip
+            label={`x${items.reduce((sum, e) => sum + e.count, 0)}`}
+            size="small"
+            sx={{
+              height: 16,
+              fontSize: '9px',
+              fontWeight: 700,
+              bgcolor: alpha(color, 0.15),
+              color,
+              border: `1px solid ${alpha(color, 0.3)}`,
+              borderRadius: '4px',
+            }}
+          />
+        </Box>
+        <IconButton size="small" sx={{ color: alpha('#dee5ff', 0.3) }}>
+          {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+      </Box>
+
+      {isExpanded && items.length > 0 && (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
+            gap: 1.5,
+            maxHeight: '200px',
+            overflowY: 'auto',
+          }}
+        >
+          {items.map((error, idx) => (
+            <RecurringErrorCard
+              key={`${key}-${idx}`}
+              error={error}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
 
   return (
     <Box
@@ -90,23 +174,26 @@ export default function RecurringErrorsPanel({
       </Box>
 
       {expanded && (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-            gap: 1.5,
-            maxHeight: '200px',
-            overflowY: 'auto',
-          }}
-        >
-          {repeatedErrors.map((error, idx) => (
-            <RecurringErrorCard
-              key={idx}
-              error={error}
-              onNavigate={onNavigate}
-            />
-          ))}
-        </Box>
+        <>
+          {errorItems.length > 0 &&
+            renderDropdown(
+              'errors',
+              'Errors',
+              LEVEL_COLORS.error,
+              errorItems,
+              errorsExpanded,
+              setErrorsExpanded,
+            )}
+          {warningItems.length > 0 &&
+            renderDropdown(
+              'warnings',
+              'Warnings',
+              LEVEL_COLORS.warning,
+              warningItems,
+              warningsExpanded,
+              setWarningsExpanded,
+            )}
+        </>
       )}
     </Box>
   );
