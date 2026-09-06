@@ -1,15 +1,39 @@
 import type React from 'react';
 import { BetSection } from '../../core/useLogs';
+import { parseJsonLine } from '../../core/useJsonLogs';
 import { ERROR_SOURCE_REGEX, RecurringError } from '../types';
 
-type ErrorPatternMap = Map<string, { count: number; sectionIds: Set<string> }>;
+type ErrorPattern = {
+  pattern: string;
+  level: 'warning' | 'error' | 'critical';
+};
 
-const buildErrorPattern = (line: string) => {
+type ErrorPatternMap = Map<
+  string,
+  { count: number; sectionIds: Set<string>; level: ErrorPattern['level'] }
+>;
+
+const REPORTED_LEVELS = new Set(['ERROR', 'CRITICAL', 'WARNING']);
+
+const buildErrorPattern = (line: string): ErrorPattern | null => {
+  const entry = parseJsonLine(line);
+  if (entry) {
+    if (!REPORTED_LEVELS.has(entry.levelname)) return null;
+    const message = entry.result ?? '';
+    if (message.toLowerCase().includes('taking_screenshot')) return null;
+    return {
+      pattern: `${entry.filename}:${entry.funcName} ${message.slice(0, 80)}`,
+      level: entry.levelname.toLowerCase() as ErrorPattern['level'],
+    };
+  }
   const match = line.match(ERROR_SOURCE_REGEX);
   if (!match || match[4].toLowerCase().includes('taking screenshot')) {
     return null;
   }
-  return `${match[1]}:${match[2]} ${match[4].slice(0, 80)}`;
+  return {
+    pattern: `${match[1]}:${match[2]} ${match[4].slice(0, 80)}`,
+    level: match[3].toLowerCase() as ErrorPattern['level'],
+  };
 };
 
 function processErrorLine(
@@ -17,17 +41,18 @@ function processErrorLine(
   sectionId: string,
   patternMap: ErrorPatternMap,
 ): void {
-  const pattern = buildErrorPattern(line);
-  if (!pattern) return;
+  const result = buildErrorPattern(line);
+  if (!result) return;
 
-  const existing = patternMap.get(pattern);
+  const existing = patternMap.get(result.pattern);
   if (existing) {
     existing.count++;
     existing.sectionIds.add(sectionId);
   } else {
-    patternMap.set(pattern, {
+    patternMap.set(result.pattern, {
       count: 1,
       sectionIds: new Set([sectionId]),
+      level: result.level,
     });
   }
 }
@@ -47,6 +72,7 @@ export function getRepeatedErrors(rawLogString: BetSection[][]): RecurringError[
   return Array.from(patternMap.entries())
     .map(([pattern, v]) => ({
       pattern,
+      level: v.level,
       count: v.count,
       sectionIds: Array.from(v.sectionIds),
     }))
@@ -58,20 +84,28 @@ export function getNewErrors(rawLogString: BetSection[][]): RecurringError[] {
   if (!latestSection?.length) return [];
 
   const sectionId = latestSection[0]._id;
-  const patternMap = new Map<string, number>();
+  const patternMap = new Map<
+    string,
+    { count: number; level: ErrorPattern['level'] }
+  >();
 
   for (const sub of latestSection) {
     for (const line of sub.data) {
-      const pattern = buildErrorPattern(line);
-      if (!pattern) continue;
-      patternMap.set(pattern, (patternMap.get(pattern) ?? 0) + 1);
+      const result = buildErrorPattern(line);
+      if (!result) continue;
+      const prev = patternMap.get(result.pattern);
+      patternMap.set(result.pattern, {
+        count: (prev?.count ?? 0) + 1,
+        level: prev?.level ?? result.level,
+      });
     }
   }
 
   return Array.from(patternMap.entries())
-    .map(([pattern, count]) => ({
+    .map(([pattern, v]) => ({
       pattern,
-      count,
+      level: v.level,
+      count: v.count,
       sectionIds: [sectionId],
     }))
     .sort((a, b) => b.count - a.count);
@@ -110,7 +144,7 @@ export function findErrorTarget(
     sectionGroup.forEach((sub, subIdx) => {
       sub.data.forEach((line, dataIdx) => {
         const linePattern = buildErrorPattern(line);
-        if (linePattern !== error.pattern) return;
+        if (!linePattern || linePattern.pattern !== error.pattern) return;
         matches.push({ sectionId, lineIdx: `${subIdx}-${dataIdx}` });
       });
     });

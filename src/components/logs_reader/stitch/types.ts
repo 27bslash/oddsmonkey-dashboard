@@ -10,6 +10,7 @@ export const ERROR_SOURCE_REGEX =
 
 export type RecurringError = {
   pattern: string;
+  level: 'warning' | 'error' | 'critical';
   count: number;
   sectionIds: string[];
 };
