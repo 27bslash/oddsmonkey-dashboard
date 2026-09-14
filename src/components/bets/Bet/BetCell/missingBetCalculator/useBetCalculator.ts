@@ -77,7 +77,7 @@ export const useBetCalculator = (data: BData): UseBetCalculatorReturn => {
     return dataArr
       .map((matchObj) =>
         matchObj.matched.map((stake, i) => ({
-          stake: stake,
+          stake,
           odds: matchObj.odds[i],
         })),
       )
@@ -133,7 +133,7 @@ export const useBetCalculator = (data: BData): UseBetCalculatorReturn => {
   };
 
   const betCalculatorMaths = (): MissingBet | undefined => {
-    if (!back_matched[0]['matched'] || !exchange_matched[0]['matched']) {
+    if (!back_matched[0].matched || !exchange_matched[0].matched) {
       return;
     }
     try {

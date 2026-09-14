@@ -81,23 +81,22 @@ function StatTable({
     const data = await window.electron.ipcRenderer.fetchItems(
       'manual_profit_override',
     );
-    let filtered: { time: number; profit: number }[] =
-      data[0]['profit_tracker'];
+    let filtered: { time: number; profit: number }[] = data[0].profit_tracker;
     if (filter === 'active') {
-      filtered = data[0]['profit_tracker'].filter(
+      filtered = data[0].profit_tracker.filter(
         (x: { [key: string]: number }) =>
           x.time >= new Date().getTime() / 1000 - 5400,
       );
     } else if (filter === 'day') {
       const { startHour, endHour } = filterTimestampsByDay();
-      filtered = data[0]['profit_tracker'].filter(
+      filtered = data[0].profit_tracker.filter(
         (x: { [key: string]: number }) =>
           x.time >= startHour && x.time <= endHour,
       );
     } else if (filter === 'week') {
       const startOfWeek = filterTimestampsByWeek() + 6000;
       console.log(startOfWeek);
-      filtered = data[0]['profit_tracker'].filter(
+      filtered = data[0].profit_tracker.filter(
         (x: { [key: string]: number }) => x.time >= startOfWeek,
       );
     }
@@ -111,7 +110,7 @@ function StatTable({
   const { allBets, balance } = useAppContext();
   const updateProfit = (matchData: Matched[], key: string) => {
     const backLay: any = { back: {}, lay: {} };
-    for (let doc of matchData) {
+    for (const doc of matchData) {
       doc.odds.forEach((odd, i) => {
         backLay[key][odd] = (backLay[key][odd] || 0) + doc.matched[i];
       });
@@ -168,17 +167,17 @@ function StatTable({
       //   console.log(trueBalance[0].balance);
       const convertedTodayTime = new Date().toISOString().split('T')[0];
       const arr = ['smarkets_balance', 'betfair_balance'];
-      let TrueBalanceTotal = 0;
+      const TrueBalanceTotal = 0;
 
       const o: { [key: string]: any } = {};
       [
         trueBalance[0].balance[trueBalance[0].balance.length - 1],
         trueBalance[0].balance[trueBalance[0].balance.length - 2],
       ].forEach((x) => {
-        if (x['smarkets_balance']) {
-          o['smarkets'] = x;
-        } else if (x['betfair_balance']) {
-          o['betfair'] = x;
+        if (x.smarkets_balance) {
+          o.smarkets = x;
+        } else if (x.betfair_balance) {
+          o.betfair = x;
         }
       });
 
@@ -199,8 +198,8 @@ function StatTable({
     setTotals((prev) => ({
       ...prev!,
       totalProfit: avgProfit,
-      minProfit: minProfit,
-      maxProfit: maxProfit,
+      minProfit,
+      maxProfit,
       smarketsLoss: +smarketsLoss.toFixed(2),
       betfairLoss: +betfairLoss.toFixed(2),
       totalLiability: +totalLiability.toFixed(2),
@@ -209,10 +208,10 @@ function StatTable({
   }, [allBets, filteredBets, profitOverride]);
   return (
     <Box
-      display={'flex'}
-      justifyContent={'space-between'}
-      width={'100%'}
-      marginBottom={'50px'}
+      display="flex"
+      justifyContent="space-between"
+      width="100%"
+      marginBottom="50px"
     >
       <UpdateFlags flags={flags} setFlag={setFlag} />
       {totals && totals.accurateBalance && (
@@ -221,7 +220,7 @@ function StatTable({
           <StatTableBody totals={totals} filter={filter} balance={balance} />
         </Table>
       )}
-      <Config></Config>
+      <Config />
     </Box>
   );
 

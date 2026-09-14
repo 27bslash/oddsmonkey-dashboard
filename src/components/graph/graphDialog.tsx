@@ -13,7 +13,7 @@ function GraphDialog(props: GraphDialogProps) {
     <Dialog
       onClose={handleClose}
       open={open}
-      fullWidth={true}
+      fullWidth
       PaperProps={{
         style: { width: 1300, maxWidth: '90vw' },
         onWheel: (e: any) => e.stopPropagation(), // ← add this

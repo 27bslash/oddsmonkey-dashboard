@@ -1,4 +1,4 @@
-const CustomTooltip = ({ x, y, content, visible }: CustomTooltipProps) => {
+function CustomTooltip({ x, y, content, visible }: CustomTooltipProps) {
   if (!visible) return null;
 
   return (
@@ -6,7 +6,7 @@ const CustomTooltip = ({ x, y, content, visible }: CustomTooltipProps) => {
       id="custom-tooltip"
       style={{
         position: 'absolute',
-        top: y+10,
+        top: y + 10,
         left: x,
         transform: 'translate(-50%, -100%)',
         background: '#23272f',
@@ -24,5 +24,5 @@ const CustomTooltip = ({ x, y, content, visible }: CustomTooltipProps) => {
       {content}
     </div>
   );
-};
+}
 export default CustomTooltip;

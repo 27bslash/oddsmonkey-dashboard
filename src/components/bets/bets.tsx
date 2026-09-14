@@ -1,13 +1,13 @@
 import { Box, TableFooter, TablePagination, TableRow } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
+import { ObjectId } from 'mongodb';
+import fuzzysort from 'fuzzysort';
 import { BData, BetInfo, BetOdds, BetProfit, Matched } from '../../../types';
 import { useAppContext } from '../../renderer/useAppContext';
-import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
 import StatTable from '../StatTable/statTable';
 import Bet from './Bet/betTable/Bet';
-import { ObjectId } from 'mongodb';
 import TableSearch from '../search/tableSearch';
-import fuzzysort from 'fuzzysort';
 import FilterButtons from '../StatTable/FilterButtons';
 import { calculateBetProfits } from '../../utils/betCalculations';
 import updateMatched from '../../utils/updateMatched';
@@ -259,17 +259,21 @@ function Bets({ flags, setFlags }: BetProps) {
           threshold = 3000;
         }
         return x.bet_info.unix_time > new Date().getTime() / 1000 - threshold;
-      } else if (timeFilter === 'day') {
+      }
+      if (timeFilter === 'day') {
         return (
           x.bet_info.bet_unix_time >= startHour &&
           x.bet_info.bet_unix_time <= endHour
         );
         // return x.bet_info.bet_unix_time > new Date().getTime() / 1000 - 86400;
-      } else if (timeFilter === 'week') {
+      }
+      if (timeFilter === 'week') {
         return x.bet_info.bet_unix_time >= startOfWeekUnix;
-      } else if (timeFilter === 'month') {
+      }
+      if (timeFilter === 'month') {
         return x.bet_info.bet_unix_time >= filterTimestampsByMonth();
-      } else if (timeFilter === 'year') {
+      }
+      if (timeFilter === 'year') {
         return x.bet_info.bet_unix_time >= filterTimestampsByYear();
       }
       return x;
@@ -333,16 +337,9 @@ function Bets({ flags, setFlags }: BetProps) {
               zIndex: 9,
             }}
           >
-            <Box
-              display={'flex'}
-              width={'100%'}
-              justifyContent={'space-between'}
-            >
-              <FilterButtons
-                filter={timeFilter}
-                setFilter={setTimeFilter}
-              ></FilterButtons>
-              <TableSearch setSearchFilter={setSearchFilter}></TableSearch>
+            <Box display="flex" width="100%" justifyContent="space-between">
+              <FilterButtons filter={timeFilter} setFilter={setTimeFilter} />
+              <TableSearch setSearchFilter={setSearchFilter} />
             </Box>
           </div>
           {sortedData.slice(page * 10, page * 10 + 10).map((bet, i) => {
@@ -352,7 +349,7 @@ function Bets({ flags, setFlags }: BetProps) {
                 updateSort={handleRequestSort}
                 bet={bet}
                 deleteBet={deleteBet}
-              ></Bet>
+              />
             );
           })}
           <TableFooter>

@@ -22,9 +22,9 @@ type BetProviderProps = {
   children: ReactNode;
   value: BetContextType;
 };
-const BetProvider = ({ children, value }: BetProviderProps) => {
+function BetProvider({ children, value }: BetProviderProps) {
   return <Bet.Provider value={value}>{children}</Bet.Provider>;
-};
+}
 export const useBet = () => {
   const context = useContext(Bet);
   if (!context) {

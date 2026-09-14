@@ -52,13 +52,13 @@ function EditableCell({
         const arr = bet!.bet_profit[lay ? 'exchange_matched' : 'back_matched'];
 
         const updateBetValue = +value / arr.length;
-        for (let x of arr) {
+        for (const x of arr) {
           if (type !== 'odds') {
-            x['matched'] = [updateBetValue];
-            x['odds'] = [+Object.keys(matchVal)];
-            x['staked'] = [updateBetValue];
+            x.matched = [updateBetValue];
+            x.odds = [+Object.keys(matchVal)];
+            x.staked = [updateBetValue];
           } else if (type === 'odds') {
-            x['odds'] = [+value];
+            x.odds = [+value];
           }
         }
         console.log(arr);

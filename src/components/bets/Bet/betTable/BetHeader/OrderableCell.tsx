@@ -1,7 +1,7 @@
 import { TableCell, TableSortLabel } from '@mui/material';
 import { useState } from 'react';
 
-export const OrderableCell = (props: any) => {
+export function OrderableCell(props: any) {
   const [sortDirection, setSortDirection] = useState(props.sortDirection);
   return (
     <TableCell size="small" sx={{ borderBottom: 'none' }}>
@@ -18,4 +18,4 @@ export const OrderableCell = (props: any) => {
       </TableSortLabel>
     </TableCell>
   );
-};
+}

@@ -11,9 +11,9 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
 import useGetTrueBalance from './useGetTrueBalance';
 import GraphDialog from './graphDialog';
-import zoomPlugin from 'chartjs-plugin-zoom';
 import 'hammerjs';
 import { Box, Tooltip as MuiTooltip, Typography } from '@mui/material';
 
@@ -49,7 +49,7 @@ type GraphProps = {
   filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
 };
 
-const GraphWrapper = ({ filter }: GraphProps) => {
+function GraphWrapper({ filter }: GraphProps) {
   const [open, setOpen] = useState(false);
   const [negative, setNegative] = useState(false);
   const { smarketsBalByDate, betfairBalByDate } = useGetTrueBalance(filter);
@@ -92,7 +92,7 @@ const GraphWrapper = ({ filter }: GraphProps) => {
       {open && <GraphDialog filter={filter} open={open} setOpen={setOpen} />}
     </>
   );
-};
+}
 
 export function getBetsByDate(
   dates: Set<unknown>,

@@ -1,11 +1,16 @@
-import { Box, Typography } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Dialog,
+  DialogActions,
+  DialogTitle,
+} from '@mui/material';
 import Button from '@mui/material/Button';
 import { useState } from 'react';
-import { Dialog, DialogActions, DialogTitle } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
 import { useAppContext } from '../../renderer/useAppContext';
 
-const ShutDown = () => {
+function ShutDown() {
   const [shutdownConfirmWindow, setShutdownConfirmWindow] = useState(false);
   const { devMachine } = useAppContext();
   const handleClick = async () => {
@@ -21,9 +26,9 @@ const ShutDown = () => {
       const heartBeat = window.electron.ipcRenderer
         .fetchItems('heartbeat')
         .then((data) => {
-          const stopped = data[0].stopped;
+          const { stopped } = data[0];
           console.log('heartbeat', data[0]);
-          const last_active = data[0].last_active;
+          const { last_active } = data[0];
           if (stopped || last_active < Date.now() - 10000) {
             console.log('shutdown');
             const updateObj = {
@@ -40,13 +45,13 @@ const ShutDown = () => {
 
   return (
     devMachine && (
-      <Box marginRight={'8px'}>
+      <Box marginRight="8px">
         <Button
           variant="contained"
           color="error"
           onClick={() => setShutdownConfirmWindow(true)}
         >
-          <Typography textAlign={'center'} sx={{ textShadow: 'none' }}>
+          <Typography textAlign="center" sx={{ textShadow: 'none' }}>
             Shutdown
           </Typography>
         </Button>
@@ -58,18 +63,14 @@ const ShutDown = () => {
           <DialogTitle>
             <Typography
               variant="h5"
-              textAlign={'center'}
+              textAlign="center"
               sx={{ textShadow: 'none' }}
             >
               Shutdown?
             </Typography>
           </DialogTitle>
           <DialogActions>
-            <Box
-              display={'flex'}
-              justifyContent={'space-around'}
-              width={'100%'}
-            >
+            <Box display="flex" justifyContent="space-around" width="100%">
               <Button
                 variant="contained"
                 startIcon={<Check />}
@@ -93,5 +94,5 @@ const ShutDown = () => {
       </Box>
     )
   );
-};
+}
 export default ShutDown;

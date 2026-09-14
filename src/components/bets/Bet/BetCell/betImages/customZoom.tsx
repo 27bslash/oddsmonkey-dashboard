@@ -6,7 +6,7 @@ type CustomZoomProps = {
   onError?: () => void;
   thumbHeight?: number;
 };
-const CustomZoom = ({ imageSrc, onError, thumbHeight = 150 }: CustomZoomProps) => {
+function CustomZoom({ imageSrc, onError, thumbHeight = 150 }: CustomZoomProps) {
   const [bigPicture, setBigPicture] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [transformOrigin, setTransformOrigin] = useState('center center');
@@ -88,7 +88,7 @@ const CustomZoom = ({ imageSrc, onError, thumbHeight = 150 }: CustomZoomProps) =
             style={{
               transform: `scale(${zoom})`,
               transition: 'transform 0.3s ease',
-              transformOrigin: transformOrigin,
+              transformOrigin,
               maxWidth: '100%',
             }}
             src={`media:///${imageSrc}`}
@@ -106,6 +106,6 @@ const CustomZoom = ({ imageSrc, onError, thumbHeight = 150 }: CustomZoomProps) =
       document.querySelector('.wrapper')!,
     )
   );
-};
+}
 
 export default CustomZoom;

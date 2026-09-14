@@ -3,6 +3,7 @@ import { Box, Button, ButtonGroup, Typography } from '@mui/material';
 import { blue, green } from '@mui/material/colors';
 import { SetStateAction, Dispatch } from 'react';
 import UpdateFlags from '../updateFlags';
+
 type FilterButtonProps = {
   filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
   setFilter: Dispatch<SetStateAction<FilterButtonProps['filter']>>;
@@ -20,7 +21,7 @@ function FilterButtons({ filter, setFilter }: FilterButtonProps) {
     >
       <Typography
         variant="h5"
-        textTransform={'capitalize'}
+        textTransform="capitalize"
         // marginBottom={'60px'}
       >
         {/* filter by Bet Placed Time */}

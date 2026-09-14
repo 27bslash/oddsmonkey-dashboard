@@ -1,7 +1,8 @@
 import { Box, Slider, Typography } from '@mui/material';
-import { MatchObj } from './betCalculator';
 import { useEffect, useState } from 'react';
 import { blue } from '@mui/material/colors';
+import { MatchObj } from './betCalculator';
+
 type MissingBetSliderProps = {
   obj: MatchObj['back'];
   updateValues: (stake: number, odds: number, type: 'back' | 'lay') => void;
@@ -10,12 +11,12 @@ type MissingBetSliderProps = {
     odds: number;
   };
 };
-const MissingBetSlider = ({
+function MissingBetSlider({
   obj,
   updateValues,
   initialiseValues,
-}: MissingBetSliderProps) => {
-//   console.log(obj);
+}: MissingBetSliderProps) {
+  //   console.log(obj);
   const initialValues = initialiseValues('back');
   const initialStake = initialValues.stake;
   const initialOdds = initialValues.odds;
@@ -33,9 +34,9 @@ const MissingBetSlider = ({
   }, [val]);
   const marks = [
     {
-      value: initialStake /modifier,
+      value: initialStake / modifier,
       label: '',
-    }, 
+    },
     {
       value: initialStake * modifier,
       label: '',
@@ -43,10 +44,10 @@ const MissingBetSlider = ({
   ];
   return (
     <Box
-      display={'flex'}
-      flexDirection={'column'}
-      justifyContent={'center'}
-      alignItems={'center'}
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
       //   sx={{ width: '80%' }}
     >
       <Slider
@@ -85,5 +86,5 @@ const MissingBetSlider = ({
       {/* <Slider defaultValue={50} aria-label="Default" valueLabelDisplay="auto" /> */}
     </Box>
   );
-};
+}
 export default MissingBetSlider;

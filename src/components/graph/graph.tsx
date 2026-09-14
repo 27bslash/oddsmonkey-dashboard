@@ -11,8 +11,9 @@ import {
 } from 'chart.js';
 import { useEffect, useState } from 'react';
 
-import LineChart from './LineChart';
 import { Button, Switch, FormControlLabel } from '@mui/material';
+import zoomPlugin from 'chartjs-plugin-zoom';
+import LineChart from './LineChart';
 import { useAppContext } from '../../renderer/useAppContext';
 import { BData } from '../../../types';
 import {
@@ -21,7 +22,7 @@ import {
   filterTimestampsByMonth,
   filterTimestampsByYear,
 } from '../bets/bets';
-import zoomPlugin from 'chartjs-plugin-zoom';
+
 ChartJS.register(
   LineElement,
   PointElement,
@@ -51,13 +52,17 @@ export function filterBets(betDates: number[], timeFilter: string) {
     const balanceTime = new Date(x).getTime();
     if (timeFilter === 'active') {
       return x;
-    } else if (timeFilter === 'day') {
+    }
+    if (timeFilter === 'day') {
       return x;
-    } else if (timeFilter === 'week') {
+    }
+    if (timeFilter === 'week') {
       return balanceTime >= filterTimestampsByWeek();
-    } else if (timeFilter === 'month') {
+    }
+    if (timeFilter === 'month') {
       return balanceTime >= filterTimestampsByMonth();
-    } else if (timeFilter === 'year') {
+    }
+    if (timeFilter === 'year') {
       return balanceTime >= yearFilter;
     }
     return x;
@@ -67,7 +72,7 @@ export function filterBets(betDates: number[], timeFilter: string) {
     return new Date(x * 1000).toISOString().split('T')[0];
   });
 }
-const Graph = ({ filter }: GraphProps) => {
+function Graph({ filter }: GraphProps) {
   const [labels, setLabels] = useState<string[]>([]);
   const [dataPoints, setDataPoints] = useState<{
     total: number[];
@@ -162,7 +167,7 @@ const Graph = ({ filter }: GraphProps) => {
       setDataPoints({
         smarkets: smarketsBalByDate,
         betfair: betfairBalByDate,
-        total: total,
+        total,
       });
     }
     setLabels(Array.from(dates));
@@ -195,7 +200,7 @@ const Graph = ({ filter }: GraphProps) => {
       )}
     </div>
   );
-};
+}
 export default Graph;
 function getBetsByDate(
   dates: Set<unknown>,

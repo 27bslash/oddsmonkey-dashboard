@@ -1,14 +1,14 @@
 import { Box } from '@mui/material';
 import { blue, green, red } from '@mui/material/colors';
 import Typography from '@mui/material/Typography';
-import CalculatorGroup from './partBet';
-import CalculatorTextField from './calculatorTextField';
 import { ChangeEvent, SetStateAction, useEffect, useState } from 'react';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
+import { ArrowDownward } from '@mui/icons-material';
+import CalculatorGroup from './partBet';
+import CalculatorTextField from './calculatorTextField';
 import { BData, Matched } from '../../../../../../types';
 import smarkets from '../../../../../icons/smarkets.png';
 import betfair from '../../../../../icons/betfair.png';
-import { ArrowDownward } from '@mui/icons-material';
 import { OpenedBetReadyForUpdate } from './openBet';
 import { weightedAverage } from '../matched/matchedCell';
 
@@ -41,7 +41,7 @@ type CalculatorSectionProps = {
   >;
 };
 
-const CalculatorSection = ({
+function CalculatorSection({
   data,
   total,
   liability,
@@ -53,7 +53,7 @@ const CalculatorSection = ({
   updateValue,
   update,
   setUpdate,
-}: CalculatorSectionProps) => {
+}: CalculatorSectionProps) {
   const baseColor = type === 'lay' ? blue : green;
 
   const [missingBetByType, setMissingBetByType] = useState<number>();
@@ -201,7 +201,7 @@ const CalculatorSection = ({
           background: baseColor['200'],
         }}
         padding={2}
-        color={'black'}
+        color="black"
       >
         <CalculatorGroup
           type={type}
@@ -209,7 +209,7 @@ const CalculatorSection = ({
           setValue={updateValue}
           bg={baseColor}
         />
-        <Box display={'flex'}>
+        <Box display="flex">
           <ArrowDownward
             className="icon"
             onClick={() => {
@@ -228,21 +228,21 @@ const CalculatorSection = ({
             }}
           />
         </Box>
-        <Box display={'flex'} justifyContent={'space-between'}>
+        <Box display="flex" justifyContent="space-between">
           <CalculatorTextField
             bg={baseColor['100']}
             k={type === 'lay' ? 'commission' : 'backCommission'}
             valueObj={calcInputs}
             setValue={updateValue}
             label="current commission"
-          ></CalculatorTextField>
+          />
           <CalculatorTextField
             bg={baseColor['100']}
             valueObj={calcInputs}
             k={`current${capitalize(type)}Odds` as keyof BetCalcParams}
             setValue={updateValue}
             label="current odds"
-          ></CalculatorTextField>
+          />
         </Box>
       </Box>
       <>
@@ -250,20 +250,16 @@ const CalculatorSection = ({
           <Box
             bgcolor={baseColor['900']}
             padding={0.5}
-            display={'flex'}
-            borderLeft={'solid 3px black'}
-            borderRight={'solid 3px black'}
-            alignItems={'center'}
+            display="flex"
+            borderLeft="solid 3px black"
+            borderRight="solid 3px black"
+            alignItems="center"
           >
-            <Box
-              display={'flex'}
-              justifyContent={'center'}
-              alignItems={'center'}
-            >
+            <Box display="flex" justifyContent="center" alignItems="center">
               <Typography
                 className="missing-bet-text"
-                fontWeight={'bold'}
-                textTransform={'capitalize'}
+                fontWeight="bold"
+                textTransform="capitalize"
                 // padding={0.5}
                 paddingLeft={2}
                 sx={{
@@ -293,9 +289,9 @@ const CalculatorSection = ({
             </Box>
             <Box
               className="icon-group"
-              display={'flex'}
-              marginLeft={'auto'}
-              paddingRight={'16px'}
+              display="flex"
+              marginLeft="auto"
+              paddingRight="16px"
             >
               {calcInputs.avgBackOdds == 1 || calcInputs.avgLayOdds == 1 ? (
                 <Typography
@@ -308,7 +304,7 @@ const CalculatorSection = ({
                 </Typography>
               ) : (
                 <FileCopyIcon
-                  height={'30px'}
+                  height="30px"
                   className="icon"
                   sx={{
                     height: '30px',
@@ -323,7 +319,7 @@ const CalculatorSection = ({
 
               <img
                 className="icon"
-                height={'30px'}
+                height="30px"
                 src={
                   link.toLowerCase().includes('smarkets') ? smarkets : betfair
                 }
@@ -335,9 +331,9 @@ const CalculatorSection = ({
         {!!missingBetByType && update && (
           <Box
             bgcolor={baseColor['900']}
-            borderLeft={'solid 3px black'}
-            borderRight={'solid 3px black'}
-            paddingLeft={'4px'}
+            borderLeft="solid 3px black"
+            borderRight="solid 3px black"
+            paddingLeft="4px"
           >
             <OpenedBetReadyForUpdate
               type={type}
@@ -351,7 +347,7 @@ const CalculatorSection = ({
       </>
     </>
   );
-};
+}
 
 export const capitalize = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1);

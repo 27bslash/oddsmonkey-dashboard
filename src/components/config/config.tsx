@@ -4,6 +4,7 @@ import ShutDown from './shutdown';
 import Sleep from './sleep';
 import { useAppContext } from '../../renderer/useAppContext';
 import discord from '../../icons/discord.png';
+
 type configObj = {
   SINGLE_BET_MAX: number;
   USE_MONEY: boolean;
@@ -34,7 +35,7 @@ export function Config() {
         if (devMachine) {
           const checkOddsmonkeyExe = async () => {
             const oddsmonkeyExeRUnning =
-              await window.electron.ipcRenderer.isExeRunning('oddsmonkey.exe');
+              await window.electron.ipcRenderer.isExeRunning('oddsmonkey');
             if (!oddsmonkeyExeRUnning) {
               const started =
                 await window.electron.ipcRenderer.startExe('oddsmonkey');
@@ -42,8 +43,8 @@ export function Config() {
             }
           };
           checkOddsmonkeyExe();
-          return;
         }
+        console.log('running', running);
         updateObj = {
           collectionName: 'config',
           query: {},
@@ -90,20 +91,21 @@ export function Config() {
           });
       };
       t();
-    }, 1000);
+    }, 10000);
     return () => {
       window.electron.ipcRenderer.onConfigFetched(() => {});
       window.electron.ipcRenderer.onHeartbeatFetched(() => {});
       clearInterval(interval);
     };
   }, []);
-  const runButtonText = running
-    ? oddsmonkeyExeRunning
+  let runButtonText = 'Start Exe';
+  if (running) {
+    runButtonText = oddsmonkeyExeRunning
       ? 'Stop (App & EXE running)'
-      : 'Stop (App running)'
-    : oddsmonkeyExeRunning
-      ? 'Start (EXE running)'
-      : 'Start';
+      : 'Stop (App running)';
+  } else if (oddsmonkeyExeRunning) {
+    runButtonText = 'Start (EXE running)';
+  }
   return (
     <>
       {config && (
@@ -111,7 +113,7 @@ export function Config() {
           padding={2}
           //   border={'solid 1px black'}
           //   borderRadius={'3px'}
-          bgcolor={'inherit'}
+          bgcolor="inherit"
         >
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {Object.entries(config).map(([key, value]) => {
@@ -157,7 +159,7 @@ export function Config() {
               {runButtonText}
             </Button>
           </div>
-          <Box display={'flex'}>
+          <Box display="flex">
             {!discordExeRunning && devMachine && (
               <Button
                 variant="contained"
@@ -168,7 +170,7 @@ export function Config() {
                   marginRight: '10px',
                 }}
               >
-                <img src={discord} height={'25px'}></img>
+                <img src={discord} height="25px" />
               </Button>
             )}
             <ShutDown />
@@ -223,9 +225,9 @@ export function NumberInput({
         max="1000"
         style={{ fontSize: '20px', padding: '5px' }}
         step={1}
-      ></input>
+      />
       <label>
-        <Typography padding={0.3} textTransform={'capitalize'}>
+        <Typography padding={0.3} textTransform="capitalize">
           {label}
         </Typography>
       </label>

@@ -4,13 +4,13 @@ import CalculatorSection from './calculatorSection';
 import ProfitTable from './profitTable/profitTable';
 import { useBetCalculator } from './useBetCalculator';
 
-const BetCalculator = ({
+function BetCalculator({
   data,
   setShowBetCalc,
 }: {
   data: BData;
   setShowBetCalc: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
+}) {
   const {
     obj,
     betCalculationParams,
@@ -30,9 +30,9 @@ const BetCalculator = ({
   return (
     <Box
       className="bet-calculator"
-      display={'flex'}
-      flexDirection={'column'}
-      width={'500px'}
+      display="flex"
+      flexDirection="column"
+      width="500px"
     >
       <CalculatorSection
         total={backTotal}
@@ -46,7 +46,7 @@ const BetCalculator = ({
         update={update}
         missingBet={missingBet!}
         setMissingBet={setMissingBet}
-      ></CalculatorSection>
+      />
       <CalculatorSection
         total={layTotal}
         liability={layLiabilityTotal}
@@ -59,7 +59,7 @@ const BetCalculator = ({
         update={update}
         missingBet={missingBet}
         setMissingBet={setMissingBet}
-      ></CalculatorSection>
+      />
 
       <ProfitTable
         data={data}
@@ -67,9 +67,9 @@ const BetCalculator = ({
         backTotal={backTotal}
         layLiability={layLiabilityTotal}
         layTotal={layTotal}
-      ></ProfitTable>
+      />
     </Box>
   );
-};
+}
 
 export default BetCalculator;

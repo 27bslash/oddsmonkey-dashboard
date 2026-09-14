@@ -1,7 +1,7 @@
 import { Typography } from '@mui/material';
 import { green, red } from '@mui/material/colors';
-import EditableCell from './editableTextCell';
 import { useState, useEffect, SetStateAction } from 'react';
+import EditableCell from './editableTextCell';
 import { BData, Matched } from '../../../../../../types';
 import { useBet } from '../../../betContext';
 import BetTableCell from '../betCell';
@@ -88,7 +88,7 @@ function MatchedCell({
     const layObj = updateObj(bet.bet_profit.exchange_matched, 'lay');
     const backObj = updateObj(bet.bet_profit.back_matched, 'back');
     setBackLay(() => {
-      return { lay: layObj['lay'], back: backObj['back'] };
+      return { lay: layObj.lay, back: backObj.back };
     });
   }, [bet, show]);
 
@@ -97,12 +97,12 @@ function MatchedCell({
     let layLiability = 0;
     let backLiability = 0;
     let layWins = 0;
-    Object.entries(backLay['back']).forEach((x) => {
+    Object.entries(backLay.back).forEach((x) => {
       backWins +=
         (+x[0] - 1) * x[1] * (1 - (bet.bet_odds.back_commission ?? 0.02));
       backLiability += x[1];
     });
-    Object.entries(backLay['lay']).forEach((x) => {
+    Object.entries(backLay.lay).forEach((x) => {
       layWins += +x[1] * (1 - bet.bet_odds.commission);
       layLiability += (+x[0] - 1) * x[1];
     });
@@ -119,31 +119,31 @@ function MatchedCell({
       <>
         <BetTableCell borderBottom={borderBottom}>
           {lay
-            ? Object.keys(backLay['lay']).map((x, i) => {
+            ? Object.keys(backLay.lay).map((x, i) => {
                 return (
                   <EditableCell
                     key={`lay-odds-${i}`}
-                    matchVal={backLay['lay']}
+                    matchVal={backLay.lay}
                     bet={bet}
                     setBet={setBet}
                     lay={false}
-                    type={'odds'}
+                    type="odds"
                     index={index}
                     show={show}
                     val={+x}
                   />
                 );
               })
-            : Object.keys(backLay['back']).map((x, i) => {
+            : Object.keys(backLay.back).map((x, i) => {
                 return (
                   <EditableCell
                     key={`back-odds-${i}`}
-                    matchVal={backLay['back']}
+                    matchVal={backLay.back}
                     bet={bet}
                     setBet={setBet}
-                    lay={true}
+                    lay
                     val={+x}
-                    type={'odds'}
+                    type="odds"
                     index={index}
                     show={show}
                   />
@@ -153,15 +153,15 @@ function MatchedCell({
         <BetTableCell>
           {!lay ? (
             <>
-              {Object.values(backLay['back']).map((x, i) => {
+              {Object.values(backLay.back).map((x, i) => {
                 return (
                   <EditableCell
                     key={`back-matched-${i}`}
-                    matchVal={backLay['back']}
+                    matchVal={backLay.back}
                     bet={bet}
                     setBet={setBet}
                     lay={false}
-                    type={'matched'}
+                    type="matched"
                     stake={stake}
                     index={index}
                     show={show}
@@ -172,19 +172,19 @@ function MatchedCell({
             </>
           ) : (
             <>
-              {Object.values(backLay['lay']).map((x, i) => {
+              {Object.values(backLay.lay).map((x, i) => {
                 return (
                   <EditableCell
                     key={`lay-matched-${i}`}
-                    matchVal={backLay['lay']}
+                    matchVal={backLay.lay}
                     bet={bet}
                     setBet={setBet}
-                    lay={true}
+                    lay
                     val={x}
                     show={show}
                     index={index}
                     stake={stake}
-                    type={'matched'}
+                    type="matched"
                   />
                 );
               })}

@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import CustomZoom from './customZoom';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
+import CustomZoom from './customZoom';
 
 type ImageProps = {
   betName: string;
@@ -18,8 +18,16 @@ const getThumbnailSize = (count: number) => {
   return 95;
 };
 
-const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageProps) => {
-  const [images, setImages] = useState<{ pre_submit: string[]; matched: string[] }>({
+function ImageGroup({
+  betName,
+  site,
+  screenshotBasePaths,
+  betTimestamp,
+}: ImageProps) {
+  const [images, setImages] = useState<{
+    pre_submit: string[];
+    matched: string[];
+  }>({
     pre_submit: [],
     matched: [],
   });
@@ -33,8 +41,16 @@ const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageP
       await Promise.all(
         screenshotBasePaths.map(async (base) => {
           const [pre, mat] = await Promise.all([
-            window.electron.ipcRenderer.findImagesByName(`${base}/pre_submit`, betName, betTimestamp),
-            window.electron.ipcRenderer.findImagesByName(`${base}/matched`, betName, betTimestamp),
+            window.electron.ipcRenderer.findImagesByName(
+              `${base}/pre_submit`,
+              betName,
+              betTimestamp,
+            ),
+            window.electron.ipcRenderer.findImagesByName(
+              `${base}/matched`,
+              betName,
+              betTimestamp,
+            ),
           ]);
           allPreSubmit.push(...pre);
           allMatched.push(...mat);
@@ -42,8 +58,12 @@ const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageP
       );
       const siteLower = site.toLowerCase();
       setImages({
-        pre_submit: allPreSubmit.filter((p) => p.toLowerCase().includes(`/${siteLower}/`)),
-        matched: allMatched.filter((p) => p.toLowerCase().includes(`/${siteLower}/`)),
+        pre_submit: allPreSubmit.filter((p) =>
+          p.toLowerCase().includes(`/${siteLower}/`),
+        ),
+        matched: allMatched.filter((p) =>
+          p.toLowerCase().includes(`/${siteLower}/`),
+        ),
       });
       setLoading(false);
     };
@@ -64,7 +84,10 @@ const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageP
             '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
           }}
         />
-        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px' }}>
+        <Typography
+          variant="caption"
+          sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px' }}
+        >
           Searching...
         </Typography>
       </Box>
@@ -74,9 +97,20 @@ const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageP
   const hasAny = images.pre_submit.length > 0 || images.matched.length > 0;
   if (!hasAny) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1, opacity: 0.4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          py: 1,
+          opacity: 0.4,
+        }}
+      >
         <BrokenImageIcon sx={{ fontSize: 16 }} />
-        <Typography variant="caption" sx={{ fontSize: '11px', fontStyle: 'italic' }}>
+        <Typography
+          variant="caption"
+          sx={{ fontSize: '11px', fontStyle: 'italic' }}
+        >
           No screenshots found
         </Typography>
       </Box>
@@ -108,7 +142,8 @@ const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageP
                 sx={{
                   flex: 1,
                   height: '1px',
-                  background: 'linear-gradient(90deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+                  background:
+                    'linear-gradient(90deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
                 }}
               />
               <Typography
@@ -139,9 +174,15 @@ const ImageGroup = ({ betName, site, screenshotBasePaths, betTimestamp }: ImageP
       })}
     </Box>
   );
-};
+}
 
-export const IndividualImage = ({ path, thumbSize }: { path: string; thumbSize: number }) => {
+export function IndividualImage({
+  path,
+  thumbSize,
+}: {
+  path: string;
+  thumbSize: number;
+}) {
   const [showImage, setShowImage] = useState(true);
   const [imgPath, setImgPath] = useState(path);
   const [triedAlt, setTriedAlt] = useState(false);
@@ -183,9 +224,13 @@ export const IndividualImage = ({ path, thumbSize }: { path: string; thumbSize: 
         },
       }}
     >
-      <CustomZoom imageSrc={imgPath} onError={handleError} thumbHeight={thumbSize} />
+      <CustomZoom
+        imageSrc={imgPath}
+        onError={handleError}
+        thumbHeight={thumbSize}
+      />
     </Box>
   );
-};
+}
 
 export default ImageGroup;

@@ -11,14 +11,14 @@ import { grey, red } from '@mui/material/colors';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en.json';
 import { useState, useEffect } from 'react';
+import { ObjectId } from 'mongodb';
+import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import { BData } from '../../../../../types';
 import BetProvider from '../../betContext';
 import BetTableHead from './BetHeader/betTableHead';
 import BetTableRow from './betRow';
-import { ObjectId } from 'mongodb';
 import BetControls from './betControls';
-import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
 import updateMatched from '../../../../utils/updateMatched';
 import AddMatchedBetDialog from '../BetCell/matched/addMatchedBetDialog';
 
@@ -43,7 +43,10 @@ function Bet({
   let value;
   if (betData) value = { betData, updateSort, setBetData };
   const borderColor = bet.anomaly ? red['900'] : grey['800'];
-  updateMatched(betData.bet_profit.back_matched, betData.bet_profit.exchange_matched);
+  updateMatched(
+    betData.bet_profit.back_matched,
+    betData.bet_profit.exchange_matched,
+  );
   return (
     value && (
       <BetProvider value={value}>
@@ -60,22 +63,22 @@ function Bet({
           <Box>
             <div className="flex" style={{ alignItems: 'center' }}>
               <Typography variant="h6" color="white">
-                {betData.bet_info['event_name']}
+                {betData.bet_info.event_name}
               </Typography>
-              <BetControls bet={bet} deleteBet={deleteBet}></BetControls>
+              <BetControls bet={bet} deleteBet={deleteBet} />
             </div>
             <Typography color={grey['400']} variant="caption">
-              {bet.bet_info['market_type']}
+              {bet.bet_info.market_type}
             </Typography>
           </Box>
 
-          <Typography>{bet.bet_info['bet']}</Typography>
+          <Typography>{bet.bet_info.bet}</Typography>
           <Table sx={{ position: 'relative' }}>
             <BetTableHead updateSort={updateSort} />
             <TableBody>
               {(
-                betData.bet_profit['back_matched'] ||
-                betData.bet_profit['exchange_matched']
+                betData.bet_profit.back_matched ||
+                betData.bet_profit.exchange_matched
               ).map((x, i) => {
                 // console.log(i, x);
                 if (i === 0 || show) {
@@ -92,7 +95,7 @@ function Bet({
                         data={betData}
                         setBet={setBetData}
                         index={i}
-                        lay={true}
+                        lay
                         show={show}
                       />
                     </>
@@ -114,7 +117,7 @@ function Bet({
                 </TableRow>
               )}
             </TableBody>
-            {betData.bet_profit['back_matched'].length > 1 && (
+            {betData.bet_profit.back_matched.length > 1 && (
               <Button
                 variant="contained"
                 disableElevation
@@ -131,7 +134,7 @@ function Bet({
                 onClick={() => setShow((prev) => !prev)}
               >
                 <Typography>
-                  {betData.bet_profit['back_matched'].length - 1}
+                  {betData.bet_profit.back_matched.length - 1}
                 </Typography>
                 {!show ? <KeyboardArrowDown /> : <KeyboardArrowUp />}
               </Button>

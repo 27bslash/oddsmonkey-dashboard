@@ -1,13 +1,13 @@
 import { TableRow, Tooltip, Typography, TableCell } from '@mui/material';
 import TimeAgo from 'javascript-time-ago';
 import { Link } from 'react-router-dom';
+import { green, blue, grey } from '@mui/material/colors';
+import React, { SetStateAction } from 'react';
 import { BData } from '../../../../../types';
 import smarkets from '../../../../icons/smarkets.png';
 import betfair from '../../../../icons/betfair.png';
 import BetTableCell from '../BetCell/betCell';
 import MatchedCell from '../BetCell/matched/matchedCell';
-import { green, blue, grey } from '@mui/material/colors';
-import React, { SetStateAction } from 'react';
 import { useAppContext } from '../../../../renderer/useAppContext';
 
 function formatDateFromTimestamp(time: number) {
@@ -29,8 +29,7 @@ type BetTableBodyProps = {
 };
 
 function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
-  const stake_img =
-    data.bet_info['exchange'] !== 'betfair' ? betfair : smarkets;
+  const stake_img = data.bet_info.exchange !== 'betfair' ? betfair : smarkets;
   const lay_img = stake_img !== smarkets ? smarkets : betfair;
   const calcStakes = (liability: boolean) => {
     if (show) return data.bet_profit[!lay ? 'back_stake' : 'lay_stake'];
@@ -73,7 +72,7 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
   return (
     <TableRow
       sx={{
-        borderBottom: borderBottom,
+        borderBottom,
       }}
     >
       <BetTableCell>
@@ -104,7 +103,7 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
           to={data.bet_info[!lay ? 'bookie_link' : 'exchange_link']}
           target="_blank"
         >
-          <img src={!lay ? stake_img : lay_img} height={30}></img>
+          <img src={!lay ? stake_img : lay_img} height={30} />
         </Link>
       </TableCell>
 
@@ -121,10 +120,10 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
           </Typography>
         )}
       </BetTableCell>
-      {data.bet_profit['back_matched'][0] ||
-      data.bet_profit['exchange_matched'][0] ||
-      data.bet_profit['exchange_matched'][0] ||
-      data.bet_profit['back_matched'][0] ? (
+      {data.bet_profit.back_matched[0] ||
+      data.bet_profit.exchange_matched[0] ||
+      data.bet_profit.exchange_matched[0] ||
+      data.bet_profit.back_matched[0] ? (
         <MatchedCell
           lay={lay}
           index={index}
@@ -139,8 +138,8 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
           <BetTableCell>{stake}</BetTableCell>
           <BetTableCell color={green['400']}>
             {!lay
-              ? data.bet_profit['back_win_profit']
-              : data.bet_profit['lay_win_profit']}
+              ? data.bet_profit.back_win_profit
+              : data.bet_profit.lay_win_profit}
           </BetTableCell>
         </>
       )}

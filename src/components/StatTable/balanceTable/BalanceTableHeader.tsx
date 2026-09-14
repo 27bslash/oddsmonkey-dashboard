@@ -24,13 +24,13 @@ function TableHeader({ filter }: { filter: string }) {
       </TableCell>
       <TableCell>
         <Typography
-          textTransform={'capitalize'}
+          textTransform="capitalize"
           color="white"
         >{`${dateFilterStr} profit`}</Typography>
       </TableCell>
       <TableCell>
         <Typography
-          textTransform={'capitalize'}
+          textTransform="capitalize"
           color="white"
         >{`${dateFilterStr} liability`}</Typography>
       </TableCell>

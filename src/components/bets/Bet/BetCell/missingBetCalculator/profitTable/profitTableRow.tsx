@@ -1,11 +1,12 @@
 import { TableRow, TableCell, Typography } from '@mui/material';
 import { blue, green, red } from '@mui/material/colors';
+
 type profitTableRowProps = {
   total: number;
   liability: number;
   type: 'back' | 'lay';
 };
-const ProfitTableRow = ({ total, liability, type }: profitTableRowProps) => {
+function ProfitTableRow({ total, liability, type }: profitTableRowProps) {
   const isBack = type === 'back';
   const roundedTotal = +total ? +total.toFixed(2) : 0;
   const roundedLiability = +liability ? +liability.toFixed(2) : 0;
@@ -25,7 +26,7 @@ const ProfitTableRow = ({ total, liability, type }: profitTableRowProps) => {
           sx={{
             textShadow: 'none',
           }}
-          fontWeight={'bold'}
+          fontWeight="bold"
         >
           {isBack ? 'Back Wins' : 'Lay Wins'}
         </Typography>
@@ -50,5 +51,5 @@ const ProfitTableRow = ({ total, liability, type }: profitTableRowProps) => {
       </TableCell>
     </TableRow>
   );
-};
+}
 export default ProfitTableRow;

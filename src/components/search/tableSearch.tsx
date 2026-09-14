@@ -1,14 +1,15 @@
 import { Box, TextField } from '@mui/material';
 import { SetStateAction, useState } from 'react';
+
 type TableSearchProps = {
   setSearchFilter: React.Dispatch<SetStateAction<string | undefined>>;
 };
-const TableSearch = ({ setSearchFilter }: TableSearchProps) => {
+function TableSearch({ setSearchFilter }: TableSearchProps) {
   const [value, setValue] = useState('');
   const [error, setError] = useState(false);
 
   return (
-    <Box width={'300px'} marginRight={'20px'}>
+    <Box width="300px" marginRight="20px">
       <TextField
         onChange={(e) => {
           const inputValue = e.target.value;
@@ -44,9 +45,9 @@ const TableSearch = ({ setSearchFilter }: TableSearchProps) => {
         label=""
         placeholder="Search For Event Name"
         variant="filled"
-      ></TextField>
+      />
     </Box>
   );
-};
+}
 
 export default TableSearch;

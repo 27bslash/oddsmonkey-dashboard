@@ -6,9 +6,10 @@ import {
   Typography,
   TableBody,
 } from '@mui/material';
+import { blue, green, red } from '@mui/material/colors';
 import { BData } from '../../../../../../../types';
 import ProfitTableRow from './profitTableRow';
-import { blue, green, red } from '@mui/material/colors';
+
 type ProfitTableProps = {
   data: BData;
   backTotal: number;
@@ -16,13 +17,13 @@ type ProfitTableProps = {
   backLiability: number;
   layLiability: number;
 };
-const ProfitTable = ({
+function ProfitTable({
   data,
   backTotal,
   layTotal,
   backLiability,
   layLiability,
-}: ProfitTableProps) => {
+}: ProfitTableProps) {
   return (
     <Table
       className="bet-calculator-profit-table"
@@ -38,7 +39,7 @@ const ProfitTable = ({
           <TableCell
             sx={{ color: 'white', padding: '10px 20px', fontWeight: 'bold' }}
           >
-            <Typography textTransform="capitalize"></Typography>
+            <Typography textTransform="capitalize" />
           </TableCell>
           <TableCell
             sx={{ color: 'white', padding: '10px 20px', fontWeight: 'bold' }}
@@ -66,14 +67,10 @@ const ProfitTable = ({
           total={backTotal}
           type="back"
           liability={layLiability}
-        ></ProfitTableRow>
-        <ProfitTableRow
-          total={layTotal}
-          type="lay"
-          liability={backLiability}
-        ></ProfitTableRow>
+        />
+        <ProfitTableRow total={layTotal} type="lay" liability={backLiability} />
       </TableBody>
     </Table>
   );
-};
+}
 export default ProfitTable;

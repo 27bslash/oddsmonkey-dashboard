@@ -1,5 +1,6 @@
 import { TextField } from '@mui/material';
 import { BetCalcParams } from './calculatorSection';
+
 type CalculatorTextFieldProps = {
   bg: string;
   valueObj: BetCalcParams;
@@ -7,13 +8,13 @@ type CalculatorTextFieldProps = {
   label: string;
   k: keyof CalculatorTextFieldProps['valueObj'];
 };
-const CalculatorTextField = ({
+function CalculatorTextField({
   bg,
   valueObj,
   k,
   setValue,
   label,
-}: CalculatorTextFieldProps) => {
+}: CalculatorTextFieldProps) {
   return (
     <TextField
       onChange={(e) => {
@@ -55,7 +56,7 @@ const CalculatorTextField = ({
           borderBottom: 'none',
         },
       }}
-    ></TextField>
+    />
     // <TextField
     //   onChange={(e) => {
     //     const inputValue = e.target.value;
@@ -70,5 +71,5 @@ const CalculatorTextField = ({
     //   inputProps={{ step: 0.1 }}
     // />
   );
-};
+}
 export default CalculatorTextField;

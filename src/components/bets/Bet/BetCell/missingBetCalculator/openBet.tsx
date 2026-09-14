@@ -9,18 +9,18 @@ type NestedTextProps = {
   color: string;
   clickHandle?: any;
 };
-export const OpenedBetReadyForUpdate = ({
+export function OpenedBetReadyForUpdate({
   baseColor,
   liability,
   total,
   updateDb,
   type,
-}: any) => {
+}: any) {
   /* 
     component opens a section that shows the total staked, liability, and winnings for a bet. It also includes a button to update the database with the current values. The NestedText component is used to display each piece of information in a styled manner.
   */
   return (
-    <Box display={'flex'} paddingRight={2} alignItems={'center'}>
+    <Box display="flex" paddingRight={2} alignItems="center">
       <Box>
         <NestedText
           bgColor={baseColor['900']}
@@ -43,8 +43,8 @@ export const OpenedBetReadyForUpdate = ({
       </Box>
       <Button
         onClick={() => updateDb()}
-        color={'success'}
-        startIcon={<img height={'25px'} src={mongodbIcon}></img>}
+        color="success"
+        startIcon={<img height="25px" src={mongodbIcon} />}
         variant="contained"
         sx={{
           width: '35%',
@@ -58,14 +58,14 @@ export const OpenedBetReadyForUpdate = ({
       </Button>
     </Box>
   );
-};
-const NestedText = ({
+}
+function NestedText({
   firstStr,
   secondStr,
   bgColor,
   color,
   clickHandle,
-}: NestedTextProps) => {
+}: NestedTextProps) {
   return (
     <div
       style={{
@@ -76,8 +76,8 @@ const NestedText = ({
     >
       <Typography
         className="missing-bet-text"
-        fontWeight={'bold'}
-        textTransform={'capitalize'}
+        fontWeight="bold"
+        textTransform="capitalize"
         // padding={0.5}
         paddingLeft={2}
         sx={{
@@ -90,7 +90,7 @@ const NestedText = ({
           onClick={clickHandle}
           style={{
             marginLeft: '4px',
-            color: color,
+            color,
             cursor: 'pointer',
             userSelect: 'none',
           }}
@@ -100,4 +100,4 @@ const NestedText = ({
       </Typography>
     </div>
   );
-};
+}

@@ -8,8 +8,8 @@ import {
 import { useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import { BData } from '../../../../../../types';
 import { ObjectId } from 'mongodb';
+import { BData } from '../../../../../../types';
 
 type DeleteOverlayProps = {
   bet: BData;
@@ -17,11 +17,11 @@ type DeleteOverlayProps = {
   deleteBet: (_id: ObjectId) => void;
 };
 
-const DeleteOverlay = ({
+function DeleteOverlay({
   bet: data,
   setOverlay,
   deleteBet,
-}: DeleteOverlayProps) => {
+}: DeleteOverlayProps) {
   const [value, setValue] = useState<string | number | undefined>();
   const [error, setError] = useState(false);
   const handleDelete = () => {
@@ -154,6 +154,6 @@ const DeleteOverlay = ({
       )}
     </Box>
   );
-};
+}
 
 export default DeleteOverlay;

@@ -2,7 +2,7 @@ import Button from '@mui/material/Button';
 import { ChangeEvent, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 
-const Sleep = () => {
+function Sleep() {
   const [sleepTime, setSleepTime] = useState<number>(2);
   const [sleeping, setSleeping] = useState(false);
   const [manualSleeping, setManualSleeping] = useState(false);
@@ -63,7 +63,7 @@ const Sleep = () => {
   }, [manualSleeping]);
 
   return (
-    <Box display="flex" alignItems={'center'}>
+    <Box display="flex" alignItems="center">
       <Button
         sx={{
           height: '37.7px',
@@ -94,11 +94,11 @@ const Sleep = () => {
             max="1000"
             style={{ fontSize: '16px', padding: '5px', width: '30px' }}
             step={1}
-          ></input>
+          />
         )}
       </Button>
     </Box>
   );
-};
+}
 
 export default Sleep;

@@ -1,23 +1,24 @@
 import { Box, Button } from '@mui/material';
 import { useState } from 'react';
-import { BData } from '../../../../../types';
 import { ObjectId } from 'mongodb';
-import DebugImages from '../BetCell/betImages/debugImages';
-import DeleteOverlay from '../BetCell/delete/deleteOverlay';
-import BetCalculator from '../BetCell/missingBetCalculator/betCalculator';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
 import PanoramaIcon from '@mui/icons-material/Panorama';
-import { useAppContext } from '../../../../renderer/useAppContext';
 import { createPortal } from 'react-dom';
+import { BData } from '../../../../../types';
+import DebugImages from '../BetCell/betImages/debugImages';
+import DeleteOverlay from '../BetCell/delete/deleteOverlay';
+import BetCalculator from '../BetCell/missingBetCalculator/betCalculator';
+import { useAppContext } from '../../../../renderer/useAppContext';
 import { useLogs } from '../../../logs_reader/core/useLogs';
 import Logs from '../../../logs_reader/logs';
+
 type BetControlsProps = {
   bet: BData;
   deleteBet: (_id: ObjectId) => void;
 };
 
-const BetControls = ({ bet, deleteBet }: BetControlsProps) => {
+function BetControls({ bet, deleteBet }: BetControlsProps) {
   const [showBetCalc, setShowBetCalc] = useState(false);
   const [deleteOverlay, setDeleteOverlay] = useState(false);
   const [logOverlay, setLogOverlay] = useState(false);
@@ -111,7 +112,7 @@ const BetControls = ({ bet, deleteBet }: BetControlsProps) => {
       </Box>
     </>
   );
-};
+}
 
 type IconWrapperProps = {
   icon: React.ReactNode;
@@ -121,13 +122,13 @@ type IconWrapperProps = {
   justify: string;
 };
 
-export const IconWrapper = ({
+export function IconWrapper({
   icon,
   overlayBool,
   setOverlayBool,
   overlayComponent,
   justify,
-}: IconWrapperProps) => {
+}: IconWrapperProps) {
   return (
     <>
       <div
@@ -163,6 +164,6 @@ export const IconWrapper = ({
         )}
     </>
   );
-};
+}
 
 export default BetControls;

@@ -1,7 +1,8 @@
 import { Box, Button, ButtonGroup, Tooltip, Typography } from '@mui/material';
 import { green, red } from '@mui/material/colors';
-import Logs from './logs_reader/logs';
 import { useEffect, useState } from 'react';
+import Logs from './logs_reader/logs';
+
 type UpdateFlagsProps = {
   flags: { [key: string]: string };
   setFlag: (flag: string) => void;
@@ -11,7 +12,7 @@ type UpdateFlagsProps = {
 //                         'expiration_date': (
 //                             expiration_date.group() if expiration_date else None
 //                         ),
-const UpdateFlags = ({ flags, setFlag }: UpdateFlagsProps) => {
+function UpdateFlags({ flags, setFlag }: UpdateFlagsProps) {
   const [smarketsCommission, setSmarketsCommission] = useState();
   useEffect(() => {
     const g = async () => {
@@ -24,7 +25,7 @@ const UpdateFlags = ({ flags, setFlag }: UpdateFlagsProps) => {
   }, []);
 
   return (
-    <Box display={'flex'} justifyContent={'center'} alignItems={'center'}>
+    <Box display="flex" justifyContent="center" alignItems="center">
       <ButtonGroup
         variant="contained"
         style={{
@@ -42,10 +43,10 @@ const UpdateFlags = ({ flags, setFlag }: UpdateFlagsProps) => {
       >
         <Button
           onClick={() => setFlag('update_balance')}
-          disabled={flags['update_balance'] === 'updating'}
+          disabled={flags.update_balance === 'updating'}
         >
           <Typography>
-            {flags['update_balance'] === 'updating'
+            {flags.update_balance === 'updating'
               ? 'updating'
               : 'update balance'}
           </Typography>
@@ -54,16 +55,16 @@ const UpdateFlags = ({ flags, setFlag }: UpdateFlagsProps) => {
           title={
             <CommissionTooltip
               smarketsCommission={smarketsCommission!}
-              verbose={true}
+              verbose
             />
           }
         >
           <Button
             onClick={() => setFlag('update_commission')}
-            disabled={flags['update_balance'] === 'updating'}
+            disabled={flags.update_balance === 'updating'}
           >
             <Typography>
-              {flags['update_commission'] === 'updating' ? (
+              {flags.update_commission === 'updating' ? (
                 'updating'
               ) : (
                 <CommissionTooltip
@@ -78,7 +79,7 @@ const UpdateFlags = ({ flags, setFlag }: UpdateFlagsProps) => {
       </ButtonGroup>
     </Box>
   );
-};
+}
 type CommissionTooltipProps = {
   smarketsCommission: {
     commission_perc: number;
@@ -87,10 +88,10 @@ type CommissionTooltipProps = {
   }[];
   verbose: boolean;
 };
-const CommissionTooltip = ({
+function CommissionTooltip({
   smarketsCommission,
   verbose,
-}: CommissionTooltipProps) => {
+}: CommissionTooltipProps) {
   if (!smarketsCommission) {
     return (
       <Box>
@@ -100,7 +101,7 @@ const CommissionTooltip = ({
   }
   const commissionPerc = smarketsCommission[0].commission_perc;
   const expirationDate = smarketsCommission[0].expiration_date;
-  const updated = smarketsCommission[0].updated;
+  const { updated } = smarketsCommission[0];
   const updatedDate = new Date(updated * 1000).toLocaleDateString();
   const currentDate = new Date().toLocaleDateString();
 
@@ -108,7 +109,7 @@ const CommissionTooltip = ({
     <Box>
       {verbose ? (
         <>
-          <Box display={'flex'}>
+          <Box display="flex">
             <Typography>
               Smarkets Commission:
               <span
@@ -147,5 +148,5 @@ const CommissionTooltip = ({
       )}
     </Box>
   );
-};
+}
 export default UpdateFlags;

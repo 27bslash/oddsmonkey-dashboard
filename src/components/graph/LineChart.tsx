@@ -3,20 +3,21 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import ReactDOM from 'react-dom/client';
 import { green, red } from '@mui/material/colors';
-import CustomTooltip from './graphTooltip';
 import { Padding } from '@mui/icons-material';
+import CustomTooltip from './graphTooltip';
+
 type LineChartProps = {
   labels: string[];
   dataPoints: { [key: string]: number[] };
   overrides: Record<string, number>;
   setOverrides: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 };
-const LineChart = ({
+function LineChart({
   labels,
   dataPoints,
   overrides,
   setOverrides,
-}: LineChartProps) => {
+}: LineChartProps) {
   const chartRef = useRef<any>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const tooltipRootRef = useRef<ReturnType<typeof ReactDOM.createRoot> | null>(
@@ -57,10 +58,8 @@ const LineChart = ({
     // idx === clickedPoint?.index ? 'red' : 'rgb(83, 192, 75)',
     if (idx === clickedPoint?.index) {
       return red['700'];
-    } else if (
-      Object.keys(overrides).includes(label) &&
-      overrides[label] !== 0
-    ) {
+    }
+    if (Object.keys(overrides).includes(label) && overrides[label] !== 0) {
       return 'cyan';
     }
     return 'rgb(83, 192, 75)';
@@ -259,18 +258,18 @@ const LineChart = ({
         <CustomTooltip
           x={clickedPoint.x}
           y={clickedPoint.y}
-          visible={true}
+          visible
           content={
             <div>
               <BalanceLabel
-                label={'Total Balance:'}
+                label="Total Balance:"
                 amount={
                   data.datasets[clickedPoint.datasetIndex].data[
                     clickedPoint.index
                   ]
                 }
               />
-              <Typography display={'flex'}>
+              <Typography display="flex">
                 <span>Date: </span>
                 <span style={{ marginLeft: 'auto', marginRight: 5 }}>
                   {labels[clickedPoint.index]}
@@ -297,16 +296,16 @@ const LineChart = ({
       />
     </>
   );
-};
-const BalanceLabel = ({
+}
+function BalanceLabel({
   label,
   amount,
 }: {
   label: string;
   amount: string | number;
-}) => {
+}) {
   return (
-    <Typography display={'flex'}>
+    <Typography display="flex">
       <span>{label}</span>
       <span style={{ marginLeft: 'auto', marginRight: 5, color: green['400'] }}>
         £
@@ -316,7 +315,7 @@ const BalanceLabel = ({
       </span>
     </Typography>
   );
-};
+}
 const createExternalTooltip = (
   tooltipRef: React.MutableRefObject<HTMLDivElement | null>,
   tooltipRootRef: React.MutableRefObject<ReactDOM.Root | null>,
@@ -357,7 +356,7 @@ const createExternalTooltip = (
   );
 
   tooltipRootRef.current?.render(
-    <CustomTooltip x={x} y={y} content={content} visible={true} />,
+    <CustomTooltip x={x} y={y} content={content} visible />,
   );
 };
 export default LineChart;
