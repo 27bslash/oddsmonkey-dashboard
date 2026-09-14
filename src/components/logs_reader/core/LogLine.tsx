@@ -10,14 +10,14 @@ type LogLineProps = {
   highlighted?: boolean;
 };
 
-const LogLine = ({
+function LogLine({
   line,
   setFilter,
   sectionId,
   logBasePath,
   lineIdx,
   highlighted = false,
-}: LogLineProps) => {
+}: LogLineProps) {
   return (
     <pre
       className={sectionId}
@@ -41,7 +41,7 @@ const LogLine = ({
       {renderLine(line, setFilter, logBasePath)}
     </pre>
   );
-};
+}
 
 function renderLine(
   line: string,
@@ -214,7 +214,7 @@ function renderLine(
       if (IMAGE_REGEX.test(part)) {
         return (
           <React.Fragment key={i}>
-            <br></br>
+            <br />
             <IndividualImage
               path={`${basePath}/${part.trim().replace(/screenshot_file_path=\s*/, '')}`}
               thumbSize={180}

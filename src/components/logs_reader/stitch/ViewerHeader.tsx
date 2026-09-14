@@ -2,16 +2,17 @@ import {
   Box,
   Typography,
   Button,
-  TextField,
   IconButton,
   alpha,
   FormControl,
   Select,
   MenuItem,
 } from '@mui/material';
-import { Terminal as TerminalIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Terminal as TerminalIcon } from '@mui/icons-material';
 import { TerminalHeader } from './styled';
 import { LOG_PATHS } from './types';
+import LogSearch from '../log_search/search';
+import { BetSection } from '../core/types';
 
 type ViewerHeaderProps = {
   logBasePath: string;
@@ -19,6 +20,7 @@ type ViewerHeaderProps = {
   logFilePath: string;
   setLogFilePath: (path: string) => void;
   compatibleLogFiles: { name: string; path: string }[];
+  data: BetSection[][];
   searchStr: string;
   setSearchStr: (s: string) => void;
   hideIncomplete: boolean;
@@ -31,6 +33,7 @@ export default function ViewerHeader({
   logFilePath,
   setLogFilePath,
   compatibleLogFiles,
+  data,
   searchStr,
   setSearchStr,
   hideIncomplete,
@@ -41,7 +44,10 @@ export default function ViewerHeader({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <TerminalIcon sx={{ color: '#3bbffa' }} />
-          <Typography variant="h6" sx={{ fontWeight: 900, letterSpacing: '-0.05em', fontSize: '16px' }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 900, letterSpacing: '-0.05em', fontSize: '16px' }}
+          >
             LOG VIEWER
           </Typography>
         </Box>
@@ -67,7 +73,8 @@ export default function ViewerHeader({
                 color: logBasePath === path ? 'white' : alpha('#dee5ff', 0.3),
                 bgcolor: logBasePath === path ? '#3bbffa' : 'transparent',
                 '&:hover': {
-                  bgcolor: logBasePath === path ? '#3bbffa' : alpha('#3bbffa', 0.1),
+                  bgcolor:
+                    logBasePath === path ? '#3bbffa' : alpha('#3bbffa', 0.1),
                 },
               }}
             >
@@ -112,31 +119,20 @@ export default function ViewerHeader({
         </FormControl>
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, maxWidth: '600px', mx: 4 }}>
-        <TextField
-          fullWidth
-          placeholder="FILTER LOGS..."
-          variant="outlined"
-          size="small"
-          value={searchStr}
-          onChange={(e) => setSearchStr(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <SearchIcon sx={{ color: alpha('#dee5ff', 0.3), mr: 1, fontSize: 18 }} />
-              ),
-              sx: {
-                height: '36px',
-                bgcolor: alpha('#0a1529', 0.5),
-                fontSize: '11px',
-                fontFamily: 'monospace',
-                color: '#dee5ff',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: alpha('#1e293b', 0.8) },
-                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#3bbffa' },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3bbffa' },
-              },
-            },
-          }}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          flex: 1,
+          maxWidth: '600px',
+          mx: 4,
+        }}
+      >
+        <LogSearch
+          data={data}
+          searchStr={searchStr}
+          setSearchStr={setSearchStr}
         />
         <IconButton
           size="small"

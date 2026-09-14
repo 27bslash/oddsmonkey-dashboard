@@ -23,6 +23,7 @@ type StitchProps = {
   setSearchStr: (str: string) => void;
   searchStr: string;
   rawLogString: BetSection[][];
+  rawSections: BetSection[][];
 
   logBasePath: string;
   setLogBasePath: React.Dispatch<React.SetStateAction<string>>;
@@ -37,6 +38,7 @@ export default function StitchLogViewer({
   setSearchStr,
   searchStr,
   rawLogString,
+  rawSections,
   logBasePath,
   setLogBasePath,
   logFilePath,
@@ -196,6 +198,7 @@ export default function StitchLogViewer({
         logFilePath={logFilePath}
         setLogFilePath={setLogFilePath}
         compatibleLogFiles={compatibleLogFiles}
+        data={rawSections}
         searchStr={searchStr}
         setSearchStr={setSearchStr}
         hideIncomplete={hideIncomplete}
@@ -205,21 +208,25 @@ export default function StitchLogViewer({
       <Box
         sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
       >
-        <NewErrorsPanel
-          newErrors={newErrors}
-          expanded={newErrorsExpanded}
-          setExpanded={setNewErrorsExpanded}
-          onNavigate={handleNavigate}
-        />
+        {newErrors.length > 0 && (
+          <NewErrorsPanel
+            newErrors={newErrors}
+            expanded={newErrorsExpanded}
+            setExpanded={setNewErrorsExpanded}
+            onNavigate={handleNavigate}
+          />
+        )}
 
-        <RecurringErrorsPanel
-          repeatedErrors={repeatedErrors}
-          totalErrors={sectionStats.reduce((sum, s) => sum + s.errors, 0)}
-          totalWarnings={sectionStats.reduce((sum, s) => sum + s.warnings, 0)}
-          expanded={errorsExpanded}
-          setExpanded={setErrorsExpanded}
-          onNavigate={handleNavigate}
-        />
+        {repeatedErrors.length > 0 && (
+          <RecurringErrorsPanel
+            repeatedErrors={repeatedErrors}
+            totalErrors={sectionStats.reduce((sum, s) => sum + s.errors, 0)}
+            totalWarnings={sectionStats.reduce((sum, s) => sum + s.warnings, 0)}
+            expanded={errorsExpanded}
+            setExpanded={setErrorsExpanded}
+            onNavigate={handleNavigate}
+          />
+        )}
 
         <LevelFilter activeLevel={activeLevel} setFilter={setFilter} />
 
@@ -231,6 +238,7 @@ export default function StitchLogViewer({
           showSection={showSection}
           setShowSection={setShowSection}
           setFilter={setFilter}
+          setSearchStr={setSearchStr}
           logBasePath={logBasePath}
           highlightedTarget={highlightedTarget}
           onUserInteract={() => setHighlightedTarget(undefined)}

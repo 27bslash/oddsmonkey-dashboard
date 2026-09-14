@@ -4,7 +4,7 @@ import { BetSection } from '../../core/useLogs';
 import { SectionRow } from '../styled';
 import Chips from './chips';
 
-const SectionHeader = ({
+function SectionHeader({
   largeSection,
   errors,
   warnings,
@@ -16,7 +16,7 @@ const SectionHeader = ({
   warnings: number;
   isExpanded: boolean;
   onToggle: () => void;
-}) => {
+}) {
   const first = largeSection[0];
   const lineCount = largeSection.reduce((sum, s) => sum + s.data.length, 0);
 
@@ -138,6 +138,6 @@ const SectionHeader = ({
       </Box>
     </SectionRow>
   );
-};
+}
 
 export default SectionHeader;

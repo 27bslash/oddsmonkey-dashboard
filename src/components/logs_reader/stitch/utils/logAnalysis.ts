@@ -1,6 +1,5 @@
 import type React from 'react';
-import { BetSection } from '../../core/useLogs';
-import { parseJsonLine } from '../../core/useJsonLogs';
+import { BetSection, parseJsonLine } from '../../core/types';
 import { ERROR_SOURCE_REGEX, RecurringError } from '../types';
 
 type ErrorPattern = {
@@ -57,7 +56,9 @@ function processErrorLine(
   }
 }
 
-export function getRepeatedErrors(rawLogString: BetSection[][]): RecurringError[] {
+export function getRepeatedErrors(
+  rawLogString: BetSection[][],
+): RecurringError[] {
   const patternMap: ErrorPatternMap = new Map();
 
   for (const largeSection of rawLogString) {
@@ -76,6 +77,7 @@ export function getRepeatedErrors(rawLogString: BetSection[][]): RecurringError[
       count: v.count,
       sectionIds: Array.from(v.sectionIds),
     }))
+    .filter((e) => e.count > 1)
     .sort((a, b) => b.count - a.count);
 }
 
@@ -117,7 +119,9 @@ export function calculateSectionErrorStats(rawLogString: BetSection[][]) {
     let warnings = 0;
     largeSection.forEach((section) => {
       errors += section.errors.filter((x) => x.errorType === 'error').length;
-      warnings += section.errors.filter((x) => x.errorType === 'warning').length;
+      warnings += section.errors.filter(
+        (x) => x.errorType === 'warning',
+      ).length;
     });
     return { errors, warnings };
   });
@@ -160,8 +164,12 @@ export function findErrorTarget(
   const target = matches[navStateRef.current.errorIdx];
   if (!target) return undefined;
 
-  const targetSection = rawLogString.find((ls) => ls[0]?._id === target.sectionId);
-  const idsToOpen = targetSection ? targetSection.map((s) => s._id) : [target.sectionId];
+  const targetSection = rawLogString.find(
+    (ls) => ls[0]?._id === target.sectionId,
+  );
+  const idsToOpen = targetSection
+    ? targetSection.map((s) => s._id)
+    : [target.sectionId];
   setShowSection([target.sectionId, ...idsToOpen]);
 
   return target;

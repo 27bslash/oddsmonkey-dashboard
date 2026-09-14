@@ -1,8 +1,13 @@
 /* eslint-disable */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BData } from '../../../../types';
-import { BetSection, LogError } from './useLogs';
-
+import {
+  BetSection,
+  ErrorContextWindow,
+  JsonLogEntry,
+  parseJsonLine,
+} from './types';
+import { lineMatches } from './jsonSearch';
 
 const EVENT = {
   NEW_BET_FOUND: 'bet_discovery.new_bet_found',
@@ -14,35 +19,9 @@ const EVENT = {
   TRADEOUT_COMPLETED: 'tradeout_execution_completed',
 } as const;
 
-type LogLevel = 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
-
-export type JsonLogEntry = {
-  timestamp: string;
-  levelname: LogLevel;
-  filename: string;
-  funcName: string;
-  lineno: number;
-  /** Always snakecased  e.g. `bet.logged_event`. */
-  event: string;
-  /** snakecase e.g. `taking_screenshot`. */
-  result: string;
-  event_name?: string;
-  bet?: string;
-  market_type?: string;
-  [key: string]: unknown;
-};
-
-export function parseJsonLine(line: string): JsonLogEntry | undefined {
-  const trimmed = line?.trim();
-  if (!trimmed || !trimmed.startsWith('{') || !trimmed.endsWith('}')) {
-    return undefined;
-  }
-  try {
-    return JSON.parse(trimmed) as JsonLogEntry;
-  } catch {
-    return undefined;
-  }
-}
+/** Lines of context kept around ERROR/WARNING/CRITICAL lines when lower
+ *  levels are filtered out. */
+const CONTEXT_LINES = 5;
 
 const isErrorLevel = (entry: JsonLogEntry) =>
   entry.levelname === 'ERROR' || entry.levelname === 'CRITICAL';
@@ -54,10 +33,10 @@ const isRestartSection = (entry: JsonLogEntry) =>
   Boolean(entry.result?.includes(EVENT.RESTART_PLACING_BET));
 
 const isTradeoutStart = (entry: JsonLogEntry) =>
-  entry.event.includes(EVENT.TRADEOUT_STARTED);
+  entry.result.includes(EVENT.TRADEOUT_STARTED);
 
 const isTradeoutComplete = (entry: JsonLogEntry) =>
-  entry.event.includes(EVENT.TRADEOUT_COMPLETED);
+  entry.result.includes(EVENT.TRADEOUT_COMPLETED);
 
 const startsNewSection = (entry: JsonLogEntry | undefined): boolean =>
   Boolean(
@@ -334,6 +313,7 @@ export const useJsonLogs = ({
   subscribe = true,
 }: LogsProps) => {
   const [rawLogString, setRawLogStr] = useState<BetSection[][]>([]);
+  const [logSections, setLogSections] = useState<BetSection[][]>([]);
   const [tail, setTail] = useState(false);
   const [filter, setFilter] = useState<{ [key: string]: number }>({ INFO: 0 });
   const [errored, setErrored] = useState(false);
@@ -355,18 +335,26 @@ export const useJsonLogs = ({
           logFilePath,
         );
         if (data) {
-          data = findAllJsonSections(data, bet);
-          setRawLogStr(data);
+          setRawLogStr(findAllJsonSections(data, bet));
+        }
+        let fullLog = await window.electron.ipcRenderer.tailLog(
+          undefined,
+          logBasePath,
+          logFilePath,
+        );
+        if (fullLog) {
+          setLogSections(findAllJsonSections(fullLog));
         }
         return;
       }
       let tailstr = await window.electron.ipcRenderer.tailLog(
-        bet,
+        undefined,
         logBasePath,
         logFilePath,
       );
-      tailstr = findAllJsonSections(tailstr, bet);
-      setRawLogStr(tailstr);
+      const sections = findAllJsonSections(tailstr);
+      setLogSections(sections);
+      setRawLogStr(sections);
     };
 
     getData();
@@ -376,15 +364,16 @@ export const useJsonLogs = ({
       pending = true;
       try {
         let tailUpdate = await window.electron.ipcRenderer.tailLog(
-          bet,
+          undefined,
           logBasePath,
           logFilePath,
         );
-        tailUpdate = findAllJsonSections(tailUpdate, bet);
-        const dataStr = JSON.stringify(tailUpdate);
+        const sections = findAllJsonSections(tailUpdate);
+        const dataStr = JSON.stringify(sections);
         if (dataStr !== previousDataRef.current) {
           previousDataRef.current = dataStr;
-          setRawLogStr(tailUpdate);
+          setLogSections(sections);
+          setRawLogStr(sections);
         }
       } finally {
         pending = false;
@@ -405,23 +394,80 @@ export const useJsonLogs = ({
     return rawLogString
       .map((largeSection) =>
         largeSection.map((section) => {
-          const filteredData: string[] = [];
+          const lines = section.data;
+          const passesLevel: boolean[] = [];
+          const errorAnchors: number[] = [];
           let lastLineLevel: string | null = null;
 
-          for (const line of section.data) {
+          for (const [i, line] of lines.entries()) {
             const parsed = parseJsonLine(line);
             const level: string | null | undefined =
               parsed?.levelname || lastLineLevel;
-            const passesLevel = !level || allowedLevels.includes(level);
-            const passesSearch =
-              !searchStr ||
-              line.toLowerCase().includes(searchStr.toLowerCase());
-
-            if (passesLevel && passesSearch) filteredData.push(line);
+            passesLevel.push(!level || allowedLevels.includes(level));
+            if (
+              parsed &&
+              (parsed.levelname === 'ERROR' ||
+                parsed.levelname === 'WARNING' ||
+                parsed.levelname === 'CRITICAL')
+            ) {
+              errorAnchors.push(i);
+            }
             if (level) lastLineLevel = level;
           }
 
-          return { ...section, data: filteredData };
+          // When filtering at WARNING level or above, drop sections that don't
+          // contain any error/warning entry entirely.
+          if (
+            levelIdx >= LOG_LEVELS.indexOf('WARNING') &&
+            errorAnchors.length === 0
+          ) {
+            return { ...section, data: [], errorContext: [] };
+          }
+
+          // Context window around every error-level entry.
+          const inContext = new Set<number>();
+          for (const anchor of errorAnchors) {
+            const from = Math.max(0, anchor - CONTEXT_LINES);
+            const to = Math.min(lines.length - 1, anchor + CONTEXT_LINES);
+            for (let i = from; i <= to; i++) inContext.add(i);
+          }
+
+          const hasSearch = searchStr.trim().length > 0;
+
+          const filteredData: string[] = [];
+          const oldToNew = new Map<number, number>();
+          for (let i = 0; i < lines.length; i++) {
+            const included = passesLevel[i] || inContext.has(i);
+            if (!included) continue;
+            const line = lines[i];
+            if (hasSearch && !lineMatches(line, searchStr)) {
+              continue;
+            }
+            oldToNew.set(i, filteredData.length);
+            filteredData.push(line);
+          }
+
+          // Record, for each error-level entry, its hidden context lines so an
+          // inline toggle on the line can reveal them.
+          const errorContext: ErrorContextWindow[] = [];
+          for (const anchor of errorAnchors) {
+            const anchorIdx = oldToNew.get(anchor);
+            if (anchorIdx === undefined) continue;
+            const contextIdxs: number[] = [];
+            const from = Math.max(0, anchor - CONTEXT_LINES);
+            const to = Math.min(lines.length - 1, anchor + CONTEXT_LINES);
+            for (let i = from; i <= to; i++) {
+              if (passesLevel[i]) continue;
+              const mapped = oldToNew.get(i);
+              if (mapped === undefined || mapped === anchorIdx) continue;
+              contextIdxs.push(mapped);
+            }
+            if (contextIdxs.length > 0) {
+              errorContext.push({ anchorIdx, contextIdxs });
+            }
+          }
+
+          return { ...section, data: filteredData, errorContext };
         }),
       )
       .filter((largeSection) =>
@@ -439,9 +485,7 @@ export const useJsonLogs = ({
               inner +
               section.errors.filter(
                 (err) =>
-                  err.errorType === 'error' ||
-                  err.errorType === 'critical' ||
-                  err.errorType === 'warning',
+                  err.errorType === 'error' || err.errorType === 'critical',
               ).length,
             0,
           ),
@@ -464,7 +508,6 @@ export const useJsonLogs = ({
     acknowledgedErrorCountRef.current = totalErrorCount;
     setErrored(false);
   }, [totalErrorCount]);
-
   return {
     tail,
     filter,
@@ -475,5 +518,6 @@ export const useJsonLogs = ({
     errored,
     acknowledgeErrors,
     rawLogString: filteredLogString,
+    rawSections: logSections,
   };
 };

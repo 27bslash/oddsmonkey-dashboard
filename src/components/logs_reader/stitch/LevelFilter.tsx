@@ -14,7 +14,10 @@ type LevelFilterProps = {
   setFilter: React.Dispatch<React.SetStateAction<{ [key: string]: number }>>;
 };
 
-export default function LevelFilter({ activeLevel, setFilter }: Readonly<LevelFilterProps>) {
+export default function LevelFilter({
+  activeLevel,
+  setFilter,
+}: Readonly<LevelFilterProps>) {
   const activeLevelIdx = LOG_LEVELS.indexOf(activeLevel);
 
   return (

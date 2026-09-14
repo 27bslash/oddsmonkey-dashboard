@@ -15,6 +15,7 @@ type LogSectionListProps = {
   showSection: string[];
   setShowSection: React.Dispatch<React.SetStateAction<string[]>>;
   setFilter: React.Dispatch<React.SetStateAction<{ [key: string]: number }>>;
+  setSearchStr: (s: string) => void;
   logBasePath: string;
   highlightedTarget?: { sectionId: string; lineIdx: string };
   onUserInteract?: () => void;
@@ -28,6 +29,7 @@ export default function LogSectionList({
   showSection,
   setShowSection,
   setFilter,
+  setSearchStr,
   logBasePath,
   highlightedTarget,
   onUserInteract,
@@ -55,7 +57,9 @@ export default function LogSectionList({
             errors: 0,
             warnings: 0,
           };
-          const isExpanded = showSection.includes(largeSection[0]._id);
+          const isExpanded =
+            filteredSections.length === 1 ||
+            showSection.includes(largeSection[0]._id);
 
           return (
             <Box
@@ -91,6 +95,7 @@ export default function LogSectionList({
                   logBasePath={logBasePath}
                   largeSection={largeSection}
                   setFilter={setFilter}
+                  setSearchStr={setSearchStr}
                 />
               )}
             </Box>

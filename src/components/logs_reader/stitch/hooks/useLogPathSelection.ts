@@ -31,21 +31,23 @@ export function useLogPathSelection({
 
   useEffect(() => {
     let mounted = true;
-    window.electron.ipcRenderer.listCompatibleLogFiles(logBasePath).then((files) => {
-      if (!mounted) return;
+    window.electron.ipcRenderer
+      .listCompatibleLogFiles(logBasePath)
+      .then((files) => {
+        if (!mounted) return;
 
-      setCompatibleLogFiles(files);
-      if (!files.length) {
-        setLogFilePath('');
-        return;
-      }
+        setCompatibleLogFiles(files);
+        if (!files.length) {
+          setLogFilePath('');
+          return;
+        }
 
-      setLogFilePath((prev) => {
-        if (prev && files.some((f) => f.path === prev)) return prev;
-        const defaultFile = files.find((f) => f.name === 'custom_logs.log');
-        return defaultFile?.path ?? files[0].path;
+        setLogFilePath((prev) => {
+          if (prev && files.some((f) => f.path === prev)) return prev;
+          const defaultFile = files.find((f) => f.name === 'custom_logs.log');
+          return defaultFile?.path ?? files[0].path;
+        });
       });
-    });
 
     return () => {
       mounted = false;

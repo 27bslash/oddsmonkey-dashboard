@@ -1,26 +1,13 @@
 /* eslint-disable */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BData } from '../../../../types';
+import { BetSection } from './types';
 
 type LogsProps = {
   bet?: BData;
   logBasePath?: string;
   logFilePath?: string;
   subscribe?: boolean;
-};
-
-export type BetSection = {
-  data: string[];
-  _id: string;
-  eventName?: string;
-  betName?: string;
-  marketType?: string;
-  errors: LogError[];
-  miniSection?: boolean;
-};
-type LogError = {
-  lineNum: number;
-  errorType: 'critical' | 'error' | 'warning';
 };
 export const useLogs = ({
   bet,
@@ -50,7 +37,6 @@ export const useLogs = ({
           logBasePath,
           logFilePath,
         );
-        console.log('data', data.length);
         if (data) {
           data = findAllBetSections(data, bet);
           setRawLogStr(data);
@@ -399,7 +385,15 @@ function mergeAdjacentSameId(sections: BetSection[]): BetSection[][] {
 
   for (const section of sections) {
     if (section._id === 'setup') {
-      current.push(section);
+      if (current.length === 0 || current[0]._id !== 'setup') {
+        if (current.length > 0) {
+          m.push(current);
+        }
+        section.miniSection = true;
+        current = [section];
+      } else {
+        current.push(section);
+      }
       continue;
     }
     if (current.length > 0 && current[0]._id === section._id) {

@@ -9,13 +9,13 @@ const LEVEL_COLORS: Record<RecurringError['level'], string> = {
   critical: '#f92672',
 };
 
-const RecurringErrorCard = ({
+function RecurringErrorCard({
   error,
   onNavigate,
 }: {
   error: RecurringError;
   onNavigate?: (error: RecurringError) => void;
-}) => {
+}) {
   const color = LEVEL_COLORS[error.level];
 
   return (
@@ -64,6 +64,6 @@ const RecurringErrorCard = ({
       </Box>
     </ErrorCard>
   );
-};
+}
 
 export default RecurringErrorCard;

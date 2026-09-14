@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { red } from '@mui/material/colors';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
-import { BData } from '../../../types';
 import { Button } from '@mui/material';
+import { createPortal } from 'react-dom';
+import { BData } from '../../../types';
 import { useJsonLogs } from './core/useJsonLogs';
 import SimplifiedLogViewer from './stitch';
 import { LOG_PATHS } from './stitch/types';
-import { createPortal } from 'react-dom';
 
 type LogsProps = {
   bet?: BData;
 };
-const Logs = ({ bet }: LogsProps) => {
+function Logs({ bet }: LogsProps) {
   const [logOverlay, setLogOverlay] = useState(false);
   const [logBasePath, setLogBasePath] = useState(LOG_PATHS.DIST);
   const [logFilePath, setLogFilePath] = useState('');
@@ -24,6 +24,7 @@ const Logs = ({ bet }: LogsProps) => {
     setSearchStr,
     searchStr,
     rawLogString,
+    rawSections,
   } = useJsonLogs({
     bet,
     logBasePath,
@@ -44,6 +45,7 @@ const Logs = ({ bet }: LogsProps) => {
       setSearchStr={setSearchStr}
       searchStr={searchStr}
       rawLogString={rawLogString}
+      rawSections={rawSections}
       logBasePath={logBasePath}
       setLogBasePath={setLogBasePath}
       logFilePath={logFilePath}
@@ -130,5 +132,5 @@ const Logs = ({ bet }: LogsProps) => {
         )}
     </>
   );
-};
+}
 export default Logs;
