@@ -22,9 +22,6 @@ release/app/dist
 release/build
 .erb/dll
 
-*.tsx
-*.ts
-
 .idea
 npm-debug.log.*
 *.css.d.ts

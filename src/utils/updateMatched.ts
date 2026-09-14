@@ -1,4 +1,4 @@
-import { Matched } from "../../types";
+import { Matched } from '../../types';
 
 const updateMatched = (backMatched: Matched[], layMatched: Matched[]) => {
   const longestMatched =
@@ -20,11 +20,10 @@ const updateMatched = (backMatched: Matched[], layMatched: Matched[]) => {
         staked: [0],
         matched: [0],
         bet_matched_time: layMatched[i].bet_matched_time,
-        type: layMatched[i].type || 'standard'
+        type: layMatched[i].type || 'standard',
       });
     }
   }
 };
-
 
 export default updateMatched;

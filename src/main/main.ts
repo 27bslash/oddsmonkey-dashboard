@@ -1,4 +1,3 @@
-import { BData } from './../../types';
 import path from 'path';
 import fs from 'fs';
 import {
@@ -12,12 +11,13 @@ import {
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import MenuBuilder from './menu';
-import { findBetInLogs, resolveHtmlPath } from './util';
 import { MongoClient, ObjectId } from 'mongodb';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
 import Store from 'electron-store';
+import { findBetInLogs, resolveHtmlPath } from './util';
+import MenuBuilder from './menu';
+import { BData } from '../../types';
 
 // Load .env from the packaged resources directory or the project root.
 dotenv.config({
@@ -126,7 +126,6 @@ const getImagesFromDirectoryRecursive = (
     return fs.readdirSync(directoryPath);
   } catch (error) {
     console.error('Error reading directory:', error);
-    return;
   }
 };
 
@@ -233,15 +232,27 @@ async function fetchItems(
 }
 
 async function isExeRunning(exeName: string): Promise<boolean> {
+  //  Check if the exeName is in the list of running processes, ignoring case and excluding this program
   try {
     const { stdout } = await new Promise<{ stdout: string }>((resolve) => {
       exec('tasklist', (err, stdout) => {
         if (err) return resolve({ stdout: '' });
+
         resolve({ stdout });
       });
     });
-    return stdout.toLowerCase().includes(exeName.toLowerCase());
+    for (const line of stdout.split('\n')) {
+      if (
+        line.toLowerCase().includes(exeName.toLowerCase()) &&
+        !line.toLowerCase().includes('dashboard')
+      ) {
+        console.log(`Found running process: ${line.trim()} for ${exeName}`);
+        return true;
+      }
+    }
+    return false;
   } catch {
+    console.error(`Error checking if ${exeName} is running`);
     return false;
   }
 }
@@ -279,7 +290,7 @@ ipcMain.handle(
       { $push: { profit_tracker: replace } },
       { upsert: true },
     );
-    const objectId = new ObjectId(Buffer.from(_id['buffer']));
+    const objectId = new ObjectId(Buffer.from(_id.buffer));
     await pendingbets.findOneAndDelete({ _id: objectId });
   },
 );
@@ -353,8 +364,8 @@ ipcMain.handle(
       )
       .concat(bet.bet_info.bet_unix_time);
     if (!matchedTimes || matchedTimes.some((x) => !x)) return;
-    let startTime = Math.min(...matchedTimes);
-    let endTime = Math.max(...matchedTimes);
+    const startTime = Math.min(...matchedTimes);
+    const endTime = Math.max(...matchedTimes);
     if (startTime === Infinity || endTime === -Infinity) {
       console.error(
         'Invalid matched times for bet:',
@@ -603,10 +614,24 @@ ipcMain.handle('is-exe-running', async (_event, exeName: string) => {
   return await isExeRunning(exeName);
 });
 
-ipcMain.handle('start-exe', async (exeName) => {
-  const exePath =
-    process.env.APPDATA +
-    `\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\${exeName}.lnk`;
+const findVersionedExePath = (exeName: string): string | null => {
+  const startupDir = `${process.env.APPDATA}\\Microsoft\\Windows\\Start Menu\\Programs\\Startup`;
+  let exePath: string;
+  try {
+    const entries = fs.readdirSync(startupDir);
+    const match = entries.find((entry) =>
+      entry.toLowerCase().includes(exeName.toLowerCase()),
+    );
+    if (!match) throw new Error(`No shortcut found for '${exeName}'`);
+    exePath = path.join(startupDir, match);
+  } catch (error) {
+    console.error(String(error));
+    return null;
+  }
+  return exePath;
+};
+ipcMain.handle('start-exe', async (_event, exeName: string) => {
+  const exePath = findVersionedExePath(exeName);
   exec(`cmd.exe /c start "" "${exePath}"`, (error, stdout, stderr) => {
     if (error) {
       console.error(`Error opening Startup folder: ${error.message}`);
@@ -620,7 +645,7 @@ ipcMain.handle('start-exe', async (exeName) => {
   });
   return true;
 });
-
+// --- Initial data fetch ---
 fetchItems('config');
 fetchItems('pending_bets', 'init');
 fetchItems('heartbeat');

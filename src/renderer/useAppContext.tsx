@@ -5,8 +5,8 @@ import {
   Dispatch,
   SetStateAction,
 } from 'react';
-import { BData, BetType } from '../../types';
 import { Theme } from '@mui/material';
+import { BData, BetType } from '../../types';
 
 type AppContextType = {
   devMachine: boolean;
@@ -26,9 +26,9 @@ type AppContextProviderProps = {
   children: ReactNode;
   value: AppContextType;
 };
-const AppContextProvider = ({ children, value }: AppContextProviderProps) => {
+function AppContextProvider({ children, value }: AppContextProviderProps) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
-};
+}
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (!context) {

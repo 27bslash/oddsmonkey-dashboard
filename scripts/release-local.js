@@ -41,7 +41,7 @@ function requireCleanWorkingTree() {
 
   if (status) {
     console.error(
-      '\nWorking tree is not clean. Commit or stash your changes before running a local release.'
+      '\nWorking tree is not clean. Commit or stash your changes before running a local release.',
     );
     console.error(status);
     process.exit(1);
@@ -49,14 +49,18 @@ function requireCleanWorkingTree() {
 }
 
 if (!process.env.GH_TOKEN) {
-  console.error('GH_TOKEN is not set. Add it to .env.publish before running a local release.');
+  console.error(
+    'GH_TOKEN is not set. Add it to .env.publish before running a local release.',
+  );
   process.exit(1);
 }
 
 const branch = run('git', ['branch', '--show-current'], { capture: true });
 
 if (branch !== 'main') {
-  console.error(`Local releases must run from main. Current branch: ${branch || '(detached)'}`);
+  console.error(
+    `Local releases must run from main. Current branch: ${branch || '(detached)'}`,
+  );
   process.exit(1);
 }
 

@@ -1,4 +1,4 @@
-import { ElectronHandler } from '../../../../python/oddsmonkey-d/src/main/preload';
+import { ElectronHandler } from '../main/preload';
 
 declare global {
   // eslint-disable-next-line no-unused-vars
@@ -6,6 +6,5 @@ declare global {
     electron: ElectronHandler;
   }
 }
-
 
 export {};

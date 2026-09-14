@@ -1,15 +1,15 @@
 import './App.css';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
+import isEqual from 'lodash.isequal';
+import { createTheme, ThemeProvider } from '@mui/material';
+import { blue, red } from '@mui/material/colors';
 import AppContextProvider from './useAppContext';
 import { BData, BetType, Matched } from '../../types';
 import Bets from '../components/bets/bets';
 import TableSearch from '../components/search/tableSearch';
-import isEqual from 'lodash.isequal';
 
 import Graph from '../components/graph/graph';
-import { createTheme, ThemeProvider } from '@mui/material';
-import { blue, red } from '@mui/material/colors';
 import { theme } from './theme';
 
 type Balance = {
@@ -184,7 +184,7 @@ export default function App() {
                   {/* <Config /> */}
                   {/* <CustomZoom /> */}
                   <ThemeProvider theme={muiTheme}>
-                    <Bets flags={flags} setFlags={setFlags}></Bets>
+                    <Bets flags={flags} setFlags={setFlags} />
                   </ThemeProvider>
                   {/* <Logs></Logs> */}
                 </>
