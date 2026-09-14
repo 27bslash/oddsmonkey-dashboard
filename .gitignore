@@ -29,3 +29,4 @@ npm-debug.log.*
 .env.publish
 out/*
 release/*
+*.md
