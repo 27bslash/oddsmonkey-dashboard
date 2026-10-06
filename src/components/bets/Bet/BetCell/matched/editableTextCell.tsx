@@ -1,7 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import { useState, useEffect, KeyboardEvent, SetStateAction } from 'react';
 import { BData, Matched } from '../../../../../../types';
-import { useBet } from '../../../betContext';
 import { useAppContext } from '../../../../../renderer/useAppContext';
 
 type EditableCellProps = {

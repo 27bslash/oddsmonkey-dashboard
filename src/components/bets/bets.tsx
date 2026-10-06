@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
 import { ObjectId } from 'mongodb';
 import fuzzysort from 'fuzzysort';
-import { BData, BetInfo, BetOdds, BetProfit, Matched } from '../../../types';
+import { BData, BetInfo, BetOdds, BetProfit } from '../../../types';
 import { useAppContext } from '../../renderer/useAppContext';
 import StatTable from '../StatTable/statTable';
 import Bet from './Bet/betTable/Bet';
@@ -54,12 +54,24 @@ export function filterTimestampsByYear() {
   const startOfYear = new Date(now.getFullYear(), 0, 1);
   return startOfYear.getTime() / 1000;
 }
+
+function reducer(bet: BData) {
+  const ExchangeSum = bet.bet_profit.exchange_matched.reduce((acc, curr) => {
+    acc += curr.matched[0] * (curr.odds[0] - 1);
+    return acc;
+  }, 0);
+  const BookieSum = bet.bet_profit.back_matched.reduce((acc, curr) => {
+    acc += curr.matched[0];
+    return acc;
+  }, 0);
+  return { ExchangeSum, BookieSum };
+}
+
 type BetProps = {
   flags: { [key: string]: string };
   setFlags: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
 };
 function Bets({ flags, setFlags }: BetProps) {
-  const [filteredBets, setFilteredBets] = useState<BData[]>();
   const [sortedData, setSortedData] = useState<BData[]>();
   const [timeFilter, setTimeFilter] = useState<
     'active' | 'day' | 'week' | 'month' | 'year' | 'all time'
@@ -80,7 +92,7 @@ function Bets({ flags, setFlags }: BetProps) {
   ) => {
     setPage(newPage);
   };
-  const [loading, setLoading] = useState(true); // Track loading state
+  const setLoading = useState(true)[1]; // Track loading state
   const {
     allBets,
     setAllBets,
@@ -112,54 +124,6 @@ function Bets({ flags, setFlags }: BetProps) {
     setLoading(false); // Stop loading after sorting and any updates
   }, [orderBy, sortDirection, allBets, page]);
 
-  const sortBets = (
-    arr: BData[],
-    keyOverride?: Exclude<keyof BData, 'anomaly'>,
-  ) => {
-    const key = keyOverride || k;
-    if (!key) return;
-    const sorted = [...arr].sort((a, b) => {
-      let aVal: number;
-      let bVal: number;
-      if (orderBy === 'lay_liability') {
-        try {
-          const aSum = reducer(a);
-          const bSum = reducer(b);
-          aVal = aSum.BookieSum + aSum.ExchangeSum;
-          bVal = bSum.BookieSum + bSum.ExchangeSum;
-        } catch (error) {
-          console.error(error);
-          aVal = +a[key][orderBy as keyof (typeof a)[typeof key]];
-          bVal = +b[key][orderBy as keyof (typeof b)[typeof key]];
-        }
-      }
-      if (orderBy === 'back_win_profit') {
-        aVal = a.bet_profit.back_win_profit + a.bet_profit.lay_win_profit;
-        bVal = b.bet_profit.back_win_profit + b.bet_profit.lay_win_profit;
-      } else {
-        aVal = +a[key][orderBy as keyof (typeof a)[typeof key]];
-        bVal = +b[key][orderBy as keyof (typeof b)[typeof key]];
-      }
-
-      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-
-      function reducer(bet: BData) {
-        const ExchangeSum = bet.bet_profit.exchange_matched.reduce(
-          (acc, curr) => {
-            return (acc += curr.matched[0] * (curr.odds[0] - 1));
-          },
-          0,
-        );
-        const BookieSum = bet.bet_profit.back_matched.reduce((acc, curr) => {
-          return (acc += curr.matched[0]);
-        }, 0);
-        return { ExchangeSum, BookieSum };
-      }
-    });
-
-    console.log('visible bets', sorted);
-    return anomalyCheck(sorted);
-  };
   const anomalyCheck = (bets: BData[]) => {
     const indexs: number[] = [];
     const lowProfit = [];
@@ -209,39 +173,6 @@ function Bets({ flags, setFlags }: BetProps) {
       .concat(Profitable);
   };
 
-  const handleRequestSort = (
-    property: SortKeys,
-    sortDirection: string,
-    betKey: Exclude<keyof BData, 'anomaly'>,
-  ) => {
-    const isAsc = sortDirection === 'asc';
-    const ern = isAsc ? 'desc' : 'asc';
-    console.log('hadnle sort', ern, property, betKey);
-    setSortDirection(ern);
-    setOrderBy(property);
-    setK(betKey);
-  };
-
-  useEffect(() => {
-    if (!allBets) return;
-    const timeFiltered = filterBetsByTime();
-    // fixProfits()
-    if (searchFilter) {
-      setTimeFilter('all time');
-      const sorted = fuzzysort
-        .go(searchFilter, allBets, {
-          key: 'bet_info.event_name',
-        })
-        .filter((result) => result.score >= 0.6);
-      const newBets = sorted.map((result) => result.obj);
-      const sortedBets = sortBets(newBets, 'bet_info');
-      setSortedData(sortedBets);
-      setCount(sorted.length);
-    } else {
-      setSortedData(sortBets(timeFiltered, k));
-    }
-  }, [timeFilter, searchFilter, allBets, sortDirection, orderBy]);
-
   const filterBetsByTime = () => {
     // console.log('filter bets', showAll, allBets);
 
@@ -252,7 +183,6 @@ function Bets({ flags, setFlags }: BetProps) {
       if (!x.bet_info) {
         console.log(x);
       }
-      const betDate = new Date(x.bet_info.bet_unix_time);
       if (timeFilter === 'active') {
         let threshold = 6700;
         if (x.bet_info.market_type === 'Half Time') {
@@ -282,6 +212,75 @@ function Bets({ flags, setFlags }: BetProps) {
     return f;
   };
 
+  const sortBets = (
+    arr: BData[],
+    keyOverride?: Exclude<keyof BData, 'anomaly'>,
+  ) => {
+    const key = keyOverride || k;
+    if (!key) return [];
+    const sorted = [...arr].sort((a, b) => {
+      let aVal: number;
+      let bVal: number;
+      if (orderBy === 'lay_liability') {
+        try {
+          const aSum = reducer(a);
+          const bSum = reducer(b);
+          aVal = aSum.BookieSum + aSum.ExchangeSum;
+          bVal = bSum.BookieSum + bSum.ExchangeSum;
+        } catch (error) {
+          console.error(error);
+          aVal = +a[key][orderBy as keyof (typeof a)[typeof key]];
+          bVal = +b[key][orderBy as keyof (typeof b)[typeof key]];
+        }
+      }
+      if (orderBy === 'back_win_profit') {
+        aVal = a.bet_profit.back_win_profit + a.bet_profit.lay_win_profit;
+        bVal = b.bet_profit.back_win_profit + b.bet_profit.lay_win_profit;
+      } else {
+        aVal = +a[key][orderBy as keyof (typeof a)[typeof key]];
+        bVal = +b[key][orderBy as keyof (typeof b)[typeof key]];
+      }
+
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+
+    console.log('visible bets', sorted);
+    return anomalyCheck(sorted);
+  };
+
+  const handleRequestSort = (
+    property: SortKeys,
+    sortDir: string,
+    betKey: Exclude<keyof BData, 'anomaly'>,
+  ) => {
+    const isAsc = sortDir === 'asc';
+    const ern = isAsc ? 'desc' : 'asc';
+    console.log('hadnle sort', ern, property, betKey);
+    setSortDirection(ern);
+    setOrderBy(property);
+    setK(betKey);
+  };
+
+  useEffect(() => {
+    if (!allBets) return;
+    const timeFiltered = filterBetsByTime();
+    // fixProfits()
+    if (searchFilter) {
+      setTimeFilter('all time');
+      const sorted = fuzzysort
+        .go(searchFilter, allBets, {
+          key: 'bet_info.event_name',
+        })
+        .filter((result) => result.score >= 0.6);
+      const newBets = sorted.map((result) => result.obj);
+      const sortedBets = sortBets(newBets, 'bet_info');
+      setSortedData(sortedBets);
+      setCount(sorted.length);
+    } else {
+      setSortedData(sortBets(timeFiltered, k));
+    }
+  }, [timeFilter, searchFilter, allBets, sortDirection, orderBy]);
+
   const deleteBet = (_id: ObjectId) => {
     setAllBets(allBets!.filter((x) => x._id !== _id));
   };
@@ -294,8 +293,7 @@ function Bets({ flags, setFlags }: BetProps) {
       update: { $set: { [flag]: newStr } },
     };
     setFlags({ ...flags, [flag]: 'updating' });
-    const modifiedCount =
-      await window.electron.ipcRenderer.updateItem(updateObj);
+    await window.electron.ipcRenderer.updateItem(updateObj);
   };
   //   console.log(sortedData);
 
@@ -323,9 +321,7 @@ function Bets({ flags, setFlags }: BetProps) {
               flags={flags}
               setFlag={setFlag}
               filter={timeFilter}
-              setFilter={setTimeFilter}
               filteredBets={sortedData}
-              totalBets={allBets!}
             />
           </Box>
           <div

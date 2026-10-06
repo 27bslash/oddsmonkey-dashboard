@@ -11,10 +11,64 @@ type configObj = {
   MIN_BALANCE: number;
   MAX_LIABILITY: number;
 };
+export function NumberInput({
+  value,
+  label,
+  setUpdate,
+  currency,
+}: {
+  value: number;
+  label: string;
+  setUpdate: React.Dispatch<React.SetStateAction<any>>;
+  currency: boolean;
+}) {
+  const placeholder = value;
+  const [inputValue, setinputValue] = useState(String(placeholder));
+  const inputId = `config-${label.toUpperCase().replace(/\s/g, '_')}`;
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setinputValue(e.target.value);
+    const labelText = e.target.nextSibling?.textContent
+      ?.toUpperCase()
+      .replace(/\s/g, '_');
+    if (!labelText) {
+      return;
+    }
+    setUpdate((prev: any) => ({ ...prev, [labelText]: +e.target.value }));
+  };
+  return (
+    <div
+      style={{
+        display: 'flex',
+        position: 'relative',
+        marginLeft: '10px',
+        // fontSize: '20px',
+      }}
+    >
+      {currency && <span className="config-currency-sign">£</span>}
+      <input
+        id={inputId}
+        className="config-number-input"
+        type="number"
+        placeholder={String(placeholder)}
+        value={inputValue}
+        onChange={handleChange}
+        min="1"
+        max="1000"
+        style={{ fontSize: '20px', padding: '5px' }}
+        step={1}
+      />
+      <label htmlFor={inputId}>
+        <Typography padding={0.3} textTransform="capitalize">
+          {label}
+        </Typography>
+      </label>
+    </div>
+  );
+}
 export function Config() {
   const [config, setConfig] = useState<configObj>();
   const [running, setRunning] = useState(false);
-  const [query, setQuery] = useState({});
+  const [query] = useState({});
   const [update, setUpdate] = useState({});
   const [status, setStatus] = useState('');
   const [flashed, setFlashed] = useState(false);
@@ -87,7 +141,7 @@ export function Config() {
           .isExeRunning('discord_bot.exe')
           .then((isRunning) => {
             console.log('isExeRunning', isRunning);
-            setDiscordExeRunning(isRunning);
+            return setDiscordExeRunning(isRunning);
           });
       };
       t();
@@ -106,131 +160,75 @@ export function Config() {
   } else if (oddsmonkeyExeRunning) {
     runButtonText = 'Start (EXE running)';
   }
-  return (
-    <>
-      {config && (
-        <Box
-          padding={2}
-          //   border={'solid 1px black'}
-          //   borderRadius={'3px'}
-          bgcolor="inherit"
-        >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {Object.entries(config).map(([key, value]) => {
-              let currency = true;
-              if (typeof value === 'number') {
-                if (key === 'TIMES_PLACED_THRESHOLD') {
-                  currency = false;
-                }
-                return (
-                  <NumberInput
-                    value={value}
-                    label={key.replace(/_/g, ' ').toLocaleLowerCase()}
-                    setUpdate={setUpdate}
-                    currency={currency}
-                  />
-                );
-              }
-            })}
-          </div>
-
-          <div style={{ display: 'flex' }}>
-            <Button
-              onClick={() => handleUpdate('updateConfig')}
-              variant="contained"
-              style={{
-                marginRight: '10px',
-                marginBottom: '10px',
-                textWrap: 'nowrap',
-              }}
-            >
-              Update Config
-            </Button>
-            <Button
-              onClick={() => handleUpdate('updateRunningState')}
-              variant="contained"
-              style={{
-                marginRight: '10px',
-                marginBottom: '10px',
-                color: 'white',
-              }}
-              color={!running ? 'success' : 'error'}
-            >
-              {runButtonText}
-            </Button>
-          </div>
-          <Box display="flex">
-            {!discordExeRunning && devMachine && (
-              <Button
-                variant="contained"
-                onClick={() => {
-                  return window.electron.ipcRenderer.startExe('discord-bot');
-                }}
-                sx={{
-                  marginRight: '10px',
-                }}
-              >
-                <img src={discord} height="25px" />
-              </Button>
-            )}
-            <ShutDown />
-            <Sleep />
-          </Box>
-        </Box>
-      )}
-    </>
-  );
-}
-
-export function NumberInput({
-  value,
-  label,
-  setUpdate,
-  currency,
-}: {
-  value: number;
-  label: string;
-  setUpdate: React.Dispatch<React.SetStateAction<any>>;
-  currency: boolean;
-}) {
-  const placeholder = value;
-  const [inputValue, setinputValue] = useState(String(placeholder));
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setinputValue(e.target.value);
-    const labelText = e.target.nextSibling?.textContent
-      ?.toUpperCase()
-      .replace(/\s/g, '_');
-    if (!labelText) {
-      return;
-    }
-    setUpdate((prev: any) => ({ ...prev, [labelText]: +e.target.value }));
-  };
-  return (
-    <div
-      style={{
-        display: 'flex',
-        position: 'relative',
-        marginLeft: '10px',
-        // fontSize: '20px',
-      }}
+  return config ? (
+    <Box
+      padding={2}
+      //   border={'solid 1px black'}
+      //   borderRadius={'3px'}
+      bgcolor="inherit"
     >
-      {currency && <span className="config-currency-sign">£</span>}
-      <input
-        className="config-number-input"
-        type="number"
-        placeholder={String(placeholder)}
-        value={inputValue}
-        onChange={handleChange}
-        min="1"
-        max="1000"
-        style={{ fontSize: '20px', padding: '5px' }}
-        step={1}
-      />
-      <label>
-        <Typography padding={0.3} textTransform="capitalize">
-          {label}
-        </Typography>
-      </label>
-    </div>
-  );
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {Object.entries(config).map(([key, value]) => {
+          let currency = true;
+          if (typeof value === 'number') {
+            if (key === 'TIMES_PLACED_THRESHOLD') {
+              currency = false;
+            }
+            return (
+              <NumberInput
+                value={value}
+                label={key.replace(/_/g, ' ').toLocaleLowerCase()}
+                setUpdate={setUpdate}
+                currency={currency}
+              />
+            );
+          }
+          return null;
+        })}
+      </div>
+
+      <div style={{ display: 'flex' }}>
+        <Button
+          onClick={() => handleUpdate('updateConfig')}
+          variant="contained"
+          style={{
+            marginRight: '10px',
+            marginBottom: '10px',
+            textWrap: 'nowrap',
+          }}
+        >
+          Update Config
+        </Button>
+        <Button
+          onClick={() => handleUpdate('updateRunningState')}
+          variant="contained"
+          style={{
+            marginRight: '10px',
+            marginBottom: '10px',
+            color: 'white',
+          }}
+          color={!running ? 'success' : 'error'}
+        >
+          {runButtonText}
+        </Button>
+      </div>
+      <Box display="flex">
+        {!discordExeRunning && devMachine && (
+          <Button
+            variant="contained"
+            onClick={() => {
+              return window.electron.ipcRenderer.startExe('discord-bot');
+            }}
+            sx={{
+              marginRight: '10px',
+            }}
+          >
+            <img src={discord} height="25px" alt="" />
+          </Button>
+        )}
+        <ShutDown />
+        <Sleep />
+      </Box>
+    </Box>
+  ) : null;
 }

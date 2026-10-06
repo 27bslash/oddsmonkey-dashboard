@@ -8,7 +8,7 @@ import {
   Box,
 } from '@mui/material';
 import { blue, green, red } from '@mui/material/colors';
-import React, { SetStateAction, useState } from 'react';
+import React, { SetStateAction } from 'react';
 import { TotalProps } from '../statTable';
 import GraphWrapper from '../../graph/graphWrapper';
 
@@ -24,7 +24,6 @@ function StatTableBody({ totals, balance, filter }: StatTableBodyProps) {
   const smarketsExposure = (
     totals.accurateBalance.smarkets.smarkets_balance - balance.smarkets
   ).toFixed(2);
-  const [open, setOpen] = useState(false);
   return (
     <TableBody>
       <TableRow>

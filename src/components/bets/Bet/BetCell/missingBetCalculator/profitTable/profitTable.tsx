@@ -6,7 +6,6 @@ import {
   Typography,
   TableBody,
 } from '@mui/material';
-import { blue, green, red } from '@mui/material/colors';
 import { BData } from '../../../../../../../types';
 import ProfitTableRow from './profitTableRow';
 

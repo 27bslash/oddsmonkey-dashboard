@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import { blue, green } from '@mui/material/colors';
 import ImageGroup from './debugImage';
@@ -6,7 +6,6 @@ import { BData } from '../../../../../../types';
 
 type DebugImagesProps = {
   data: BData;
-  setOverlay: React.Dispatch<React.SetStateAction<boolean>>;
   overlay: boolean;
 };
 

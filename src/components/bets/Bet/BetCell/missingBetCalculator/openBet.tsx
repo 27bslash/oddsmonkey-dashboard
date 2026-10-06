@@ -9,56 +9,6 @@ type NestedTextProps = {
   color: string;
   clickHandle?: any;
 };
-export function OpenedBetReadyForUpdate({
-  baseColor,
-  liability,
-  total,
-  updateDb,
-  type,
-}: any) {
-  /* 
-    component opens a section that shows the total staked, liability, and winnings for a bet. It also includes a button to update the database with the current values. The NestedText component is used to display each piece of information in a styled manner.
-  */
-  return (
-    <Box display="flex" paddingRight={2} alignItems="center">
-      <Box>
-        <NestedText
-          bgColor={baseColor['900']}
-          color={green['300']}
-          firstStr="Total Staked"
-          secondStr={`£${type === 'lay' ? +total.toFixed(2) : liability.toFixed(2)}`}
-        />
-        <NestedText
-          bgColor={baseColor['900']}
-          color={red['700']}
-          firstStr="Liability:"
-          secondStr={`-£${liability.toFixed(2)}`}
-        />
-        <NestedText
-          bgColor={baseColor['900']}
-          color={green['300']}
-          firstStr={`${type} Winnings`}
-          secondStr={`+£${total.toFixed(2)}`}
-        />
-      </Box>
-      <Button
-        onClick={() => updateDb()}
-        color="success"
-        startIcon={<img height="25px" src={mongodbIcon} />}
-        variant="contained"
-        sx={{
-          width: '35%',
-          height: '40px',
-          marginLeft: 'auto',
-          marginRight: '5px',
-          color: 'white',
-        }}
-      >
-        update DB
-      </Button>
-    </Box>
-  );
-}
 function NestedText({
   firstStr,
   secondStr,
@@ -99,5 +49,55 @@ function NestedText({
         </span>
       </Typography>
     </div>
+  );
+}
+export function OpenedBetReadyForUpdate({
+  baseColor,
+  liability,
+  total,
+  updateDb,
+  type,
+}: any) {
+  /* 
+    component opens a section that shows the total staked, liability, and winnings for a bet. It also includes a button to update the database with the current values. The NestedText component is used to display each piece of information in a styled manner.
+  */
+  return (
+    <Box display="flex" paddingRight={2} alignItems="center">
+      <Box>
+        <NestedText
+          bgColor={baseColor['900']}
+          color={green['300']}
+          firstStr="Total Staked"
+          secondStr={`£${type === 'lay' ? +total.toFixed(2) : liability.toFixed(2)}`}
+        />
+        <NestedText
+          bgColor={baseColor['900']}
+          color={red['700']}
+          firstStr="Liability:"
+          secondStr={`-£${liability.toFixed(2)}`}
+        />
+        <NestedText
+          bgColor={baseColor['900']}
+          color={green['300']}
+          firstStr={`${type} Winnings`}
+          secondStr={`+£${total.toFixed(2)}`}
+        />
+      </Box>
+      <Button
+        onClick={() => updateDb()}
+        color="success"
+        startIcon={<img height="25px" src={mongodbIcon} alt="" />}
+        variant="contained"
+        sx={{
+          width: '35%',
+          height: '40px',
+          marginLeft: 'auto',
+          marginRight: '5px',
+          color: 'white',
+        }}
+      >
+        update DB
+      </Button>
+    </Box>
   );
 }

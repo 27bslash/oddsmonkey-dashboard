@@ -18,6 +18,63 @@ const getThumbnailSize = (count: number) => {
   return 95;
 };
 
+export function IndividualImage({
+  path,
+  thumbSize,
+}: {
+  path: string;
+  thumbSize: number;
+}) {
+  const [showImage, setShowImage] = useState(true);
+  const [imgPath, setImgPath] = useState(path);
+  const [triedAlt, setTriedAlt] = useState(false);
+
+  const handleError = () => {
+    if (triedAlt) {
+      setShowImage(false);
+      return;
+    }
+    setTriedAlt(true);
+    const normalized = imgPath.replace(/\\/g, '/');
+    const distBase = 'D:/projects/python/odds_monkey_bot/dist';
+    const devBase = 'D:/projects/python/odds_monkey_bot';
+    if (normalized.includes(distBase)) {
+      setImgPath(normalized.replace(distBase, devBase));
+    } else if (!normalized.includes('/dist/') && normalized.includes(devBase)) {
+      setImgPath(normalized.replace(devBase, distBase));
+    } else {
+      setShowImage(false);
+    }
+  };
+
+  if (!showImage) {
+    return null;
+  }
+
+  return (
+    <Box
+      sx={{
+        width: `${thumbSize}px`,
+        borderRadius: '6px',
+        overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.08)',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          border: '1px solid rgba(255,255,255,0.2)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+          transform: 'translateY(-1px)',
+        },
+      }}
+    >
+      <CustomZoom
+        imageSrc={imgPath}
+        onError={handleError}
+        thumbHeight={thumbSize}
+      />
+    </Box>
+  );
+}
+
 function ImageGroup({
   betName,
   site,
@@ -172,63 +229,6 @@ function ImageGroup({
           </Box>
         );
       })}
-    </Box>
-  );
-}
-
-export function IndividualImage({
-  path,
-  thumbSize,
-}: {
-  path: string;
-  thumbSize: number;
-}) {
-  const [showImage, setShowImage] = useState(true);
-  const [imgPath, setImgPath] = useState(path);
-  const [triedAlt, setTriedAlt] = useState(false);
-
-  const handleError = () => {
-    if (triedAlt) {
-      setShowImage(false);
-      return;
-    }
-    setTriedAlt(true);
-    const normalized = imgPath.replace(/\\/g, '/');
-    const distBase = 'D:/projects/python/odds_monkey_bot/dist';
-    const devBase = 'D:/projects/python/odds_monkey_bot';
-    if (normalized.includes(distBase)) {
-      setImgPath(normalized.replace(distBase, devBase));
-    } else if (!normalized.includes('/dist/') && normalized.includes(devBase)) {
-      setImgPath(normalized.replace(devBase, distBase));
-    } else {
-      setShowImage(false);
-    }
-  };
-
-  if (!showImage) {
-    return null;
-  }
-
-  return (
-    <Box
-      sx={{
-        width: `${thumbSize}px`,
-        borderRadius: '6px',
-        overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.08)',
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          border: '1px solid rgba(255,255,255,0.2)',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-          transform: 'translateY(-1px)',
-        },
-      }}
-    >
-      <CustomZoom
-        imageSrc={imgPath}
-        onError={handleError}
-        thumbHeight={thumbSize}
-      />
     </Box>
   );
 }

@@ -49,7 +49,7 @@ function isNewBetLine(line: string): boolean {
 export function findBetInLogs(
   startUnix: number,
   endUnix: number,
-  logFile?: string,
+  logFilePath?: string,
   basePath?: string,
 ) {
   if (startUnix === endUnix) {
@@ -61,17 +61,14 @@ export function findBetInLogs(
     endUnix,
     basePath,
   );
-  if (logFile) endFileName = logFile;
-  if (startUnix === 0 && logFile) startFileName = logFile;
+  if (logFilePath) endFileName = logFilePath;
+  if (startUnix === 0 && logFilePath) startFileName = logFilePath;
   let lineStart = 0;
   let lineEnd = 0;
-  let endBetLine = 0;
-  let errored = false;
   const readLines = (fileName: string): string[] => {
     try {
       return fs.readFileSync(fileName, 'utf8').split('\n');
     } catch {
-      errored = true;
       return fs
         .readFileSync(
           'D:/projects/python/odds_monkey_bot/dist/logs/custom_logs.log',
@@ -82,7 +79,7 @@ export function findBetInLogs(
   };
   //   console.log('startFileName', startFileName);
   const linesStart = readLines(startFileName);
-  for (let i = 0; i < linesStart.length; i++) {
+  for (let i = 0; i < linesStart.length; i += 1) {
     const line = linesStart[i];
     const match = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
     if (match) {
@@ -99,16 +96,13 @@ export function findBetInLogs(
   }
 
   const linesEnd = readLines(endFileName);
-  for (let i = 0; i < linesEnd.length; i++) {
+  for (let i = 0; i < linesEnd.length; i += 1) {
     const line = linesEnd[i];
     const match = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
     if (match) {
       const timestamp = new Date(match[0]).getTime() / 1000;
       if (timestamp >= startUnix - 30 && timestamp <= endUnix + 300) {
         lineEnd = i;
-        if (line.includes('to pending_bets.json times placed')) {
-          endBetLine = i;
-        }
       }
     }
   }
@@ -117,7 +111,7 @@ export function findBetInLogs(
   let sliceEnd = (lineEnd > 0 ? lineEnd : linesEnd.length - 1) + 1;
   // Keep the time-window end as source of truth so follow-on incomplete
   // sections are retained even after a successful bet marker appears.
-  if (logFile) {
+  if (logFilePath) {
     sliceEnd = linesEnd.length;
   }
   if (startFileName !== endFileName) {

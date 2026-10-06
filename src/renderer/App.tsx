@@ -2,14 +2,10 @@ import './App.css';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import isEqual from 'lodash.isequal';
-import { createTheme, ThemeProvider } from '@mui/material';
-import { blue, red } from '@mui/material/colors';
+import { ThemeProvider } from '@mui/material';
 import AppContextProvider from './useAppContext';
 import { BData, BetType, Matched } from '../../types';
 import Bets from '../components/bets/bets';
-import TableSearch from '../components/search/tableSearch';
-
-import Graph from '../components/graph/graph';
 import { theme } from './theme';
 
 type Balance = {
@@ -44,11 +40,11 @@ const fixProfits = (newData: BData[]) => {
         const backLay: {
           [key: string]: { [key: number]: number };
         } = { lay: layObj.lay, back: backObj.back };
-        Object.entries(backLay.back).map((x) => {
+        Object.entries(backLay.back).forEach((x) => {
           backWins += (+x[0] - 1) * x[1];
           backLiability += x[1];
         });
-        Object.entries(backLay.lay).map((x) => {
+        Object.entries(backLay.lay).forEach((x) => {
           layWins += +x[1] * (1 - bet.bet_odds.commission);
           layLiability += (+x[0] - 1) * x[1];
         });
@@ -69,7 +65,9 @@ const fetchAllPendingBets = async () => {
   const allBets: BData[] = [];
   let skip = 0;
 
+  // eslint-disable-next-line no-constant-condition -- checkpoint-style loop iterates until the server returns an empty/last page
   while (true) {
+    // eslint-disable-next-line no-await-in-loop -- batches must be fetched sequentially to build the offset (skip)
     const batch = (await window.electron.ipcRenderer.fetchItems(
       'pending_bets',
       undefined,
@@ -101,15 +99,13 @@ export default function App() {
   const [balance, setBalance] = useState({ smarkets: 0, betfair: 0 });
   const [flags, setFlags] = useState<{ [key: string]: string }>({});
   const [devMachine, setDevMachine] = useState(false);
-  const [themeName, setThemeName] = useState<'default' | 'darkgreen'>(
-    'default',
-  );
+  const [themeName] = useState<'default' | 'darkgreen'>('default');
   const muiTheme = themeName === 'default' ? theme : theme;
   useEffect(() => {
-    fetchAllPendingBets().then(setAllBets);
+    fetchAllPendingBets().then(setAllBets).catch(console.error);
 
     const interval = setInterval(() => {
-      fetchAllPendingBets().then(setAllBets);
+      fetchAllPendingBets().then(setAllBets).catch(console.error);
     }, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -132,16 +128,20 @@ export default function App() {
   }, []);
   useEffect(() => {
     setInterval(() => {
-      window.electron.ipcRenderer.fetchItems('flags').then((flags) => {
-        for (const key in flags[0]) {
-          if (flags[0][key] === '_id') {
-            delete flags[0][key];
+      window.electron.ipcRenderer
+        .fetchItems('flags')
+        .then((fetchedFlags) => {
+          for (const key in fetchedFlags[0]) {
+            if (fetchedFlags[0][key] === '_id') {
+              delete fetchedFlags[0][key];
+            }
           }
-        }
-        if (!isEqual(flags[0], flags)) {
-          setFlags(flags[0]);
-        }
-      });
+          if (!isEqual(fetchedFlags[0], flags)) {
+            setFlags(fetchedFlags[0]);
+          }
+          return undefined;
+        })
+        .catch(console.error);
       //   window.electron.ipcRenderer.tailLog()
     }, 10000);
   }, []);

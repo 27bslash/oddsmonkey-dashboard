@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BData, Matched } from '../../../../../../types';
+import { BData } from '../../../../../../types';
 import { weightedAverage } from '../matched/matchedCell';
 import {
   bookmakerNetProfit,
@@ -134,7 +134,7 @@ export const useBetCalculator = (data: BData): UseBetCalculatorReturn => {
 
   const betCalculatorMaths = (): MissingBet | undefined => {
     if (!back_matched[0].matched || !exchange_matched[0].matched) {
-      return;
+      return undefined;
     }
     try {
       const sumBackStake = betCalculationParams.backStake;
@@ -143,7 +143,7 @@ export const useBetCalculator = (data: BData): UseBetCalculatorReturn => {
         let bestLayBet = betCalculationParams.layStake;
         let bestLayDiff = 9999;
 
-        for (let i = 0; i < 100000; i++) {
+        for (let i = 0; i < 100000; i += 1) {
           const testBet = betCalculationParams.layStake + i / 100;
           const newAvgOdds = weightedAverage(
             [betCalculationParams.layStake, i / 100],
@@ -195,7 +195,7 @@ export const useBetCalculator = (data: BData): UseBetCalculatorReturn => {
           data.bet_odds.back_commission,
         );
 
-        for (let i = 0; i < 100000; i++) {
+        for (let i = 0; i < 100000; i += 1) {
           const testBet = betCalculationParams.backStake + i / 100;
           const missingBetWin = rawBackWin(
             i / 100,

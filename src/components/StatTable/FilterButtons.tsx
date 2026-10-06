@@ -1,8 +1,19 @@
-import { Update } from '@mui/icons-material';
 import { Box, Button, ButtonGroup, Typography } from '@mui/material';
-import { blue, green } from '@mui/material/colors';
 import { SetStateAction, Dispatch } from 'react';
-import UpdateFlags from '../updateFlags';
+
+export function FilterButton({ currentFilter, setFilter, children }: any) {
+  return (
+    <Button
+      sx={{
+        backgroundColor:
+          currentFilter === children ? 'primary.dark' : 'primary',
+      }}
+      onClick={() => setFilter(children)}
+    >
+      <Typography>{children}</Typography>
+    </Button>
+  );
+}
 
 type FilterButtonProps = {
   filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time';
@@ -57,17 +68,5 @@ function FilterButtons({ filter, setFilter }: FilterButtonProps) {
     </Box>
   );
 }
-export function FilterButton({ currentFilter, setFilter, children }: any) {
-  return (
-    <Button
-      sx={{
-        backgroundColor:
-          currentFilter === children ? 'primary.dark' : 'primary',
-      }}
-      onClick={() => setFilter(children)}
-    >
-      <Typography>{children}</Typography>
-    </Button>
-  );
-}
+
 export default FilterButtons;

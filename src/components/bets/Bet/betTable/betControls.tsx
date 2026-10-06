@@ -13,6 +13,58 @@ import { useAppContext } from '../../../../renderer/useAppContext';
 import { useLogs } from '../../../logs_reader/core/useLogs';
 import Logs from '../../../logs_reader/logs';
 
+type IconWrapperProps = {
+  icon: React.ReactNode;
+  overlayBool: boolean;
+  setOverlayBool: React.Dispatch<React.SetStateAction<boolean>>;
+  overlayComponent: React.ReactNode;
+  justify: string;
+};
+
+export function IconWrapper({
+  icon,
+  overlayBool,
+  setOverlayBool,
+  overlayComponent,
+  justify,
+}: IconWrapperProps) {
+  return (
+    <>
+      <div
+        onClick={() => {
+          document.body.setAttribute('class', 'modal-open');
+          setOverlayBool((prev) => !prev);
+        }}
+        style={{
+          width: 'fit-content',
+          height: 'fit-content',
+          cursor: 'pointer',
+        }}
+      >
+        {icon}
+      </div>
+      {overlayBool &&
+        createPortal(
+          <div
+            style={{ justifyContent: justify }}
+            className="wrapper"
+            onMouseDown={(e) => {
+              document.body.removeAttribute('class');
+              if (e.target === e.currentTarget) setOverlayBool(false);
+            }}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setOverlayBool(false);
+            }}
+          >
+            {overlayComponent}
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
+
 type BetControlsProps = {
   bet: BData;
   deleteBet: (_id: ObjectId) => void;
@@ -21,9 +73,8 @@ type BetControlsProps = {
 function BetControls({ bet, deleteBet }: BetControlsProps) {
   const [showBetCalc, setShowBetCalc] = useState(false);
   const [deleteOverlay, setDeleteOverlay] = useState(false);
-  const [logOverlay, setLogOverlay] = useState(false);
   const [imageOverlay, setImageOverlay] = useState(false);
-  const { errored } = useLogs({
+  useLogs({
     bet,
     subscribe: false,
   });
@@ -62,9 +113,7 @@ function BetControls({ bet, deleteBet }: BetControlsProps) {
           }
           overlayBool={showBetCalc}
           setOverlayBool={setShowBetCalc}
-          overlayComponent={
-            <BetCalculator setShowBetCalc={setShowBetCalc} data={bet} />
-          }
+          overlayComponent={<BetCalculator data={bet} />}
           justify="center"
         />
         <IconWrapper
@@ -99,69 +148,13 @@ function BetControls({ bet, deleteBet }: BetControlsProps) {
               overlayBool={imageOverlay}
               setOverlayBool={setImageOverlay}
               overlayComponent={
-                <DebugImages
-                  data={bet}
-                  setOverlay={setImageOverlay}
-                  overlay={imageOverlay}
-                />
+                <DebugImages data={bet} overlay={imageOverlay} />
               }
               justify="center"
             />
           </>
         )}
       </Box>
-    </>
-  );
-}
-
-type IconWrapperProps = {
-  icon: React.ReactNode;
-  overlayBool: boolean;
-  setOverlayBool: React.Dispatch<React.SetStateAction<boolean>>;
-  overlayComponent: React.ReactNode;
-  justify: string;
-};
-
-export function IconWrapper({
-  icon,
-  overlayBool,
-  setOverlayBool,
-  overlayComponent,
-  justify,
-}: IconWrapperProps) {
-  return (
-    <>
-      <div
-        onClick={() => {
-          document.body.setAttribute('class', 'modal-open');
-          setOverlayBool((prev) => !prev);
-        }}
-        style={{
-          width: 'fit-content',
-          height: 'fit-content',
-          cursor: 'pointer',
-        }}
-      >
-        {icon}
-      </div>
-      {overlayBool &&
-        createPortal(
-          <div
-            style={{ justifyContent: justify }}
-            className="wrapper"
-            onMouseDown={(e) => {
-              document.body.removeAttribute('class');
-              e.target === e.currentTarget && setOverlayBool(false);
-            }}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') setOverlayBool(false);
-            }}
-          >
-            {overlayComponent}
-          </div>,
-          document.body,
-        )}
     </>
   );
 }

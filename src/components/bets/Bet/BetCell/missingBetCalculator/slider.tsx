@@ -24,7 +24,6 @@ function MissingBetSlider({
   const [val, setVal] = useState(initialStake);
   const handleChange = (event: Event, newValue: number | number[]) => {
     if (typeof newValue === 'number') {
-      const updatedStake = newValue + obj.stake;
       setVal(newValue);
       //   updateValues(newValue, obj.odds, 'back');
     }

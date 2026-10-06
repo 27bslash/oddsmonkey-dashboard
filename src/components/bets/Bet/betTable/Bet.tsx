@@ -101,6 +101,7 @@ function Bet({
                     </>
                   );
                 }
+                return null;
               })}
               {show && (
                 <TableRow>

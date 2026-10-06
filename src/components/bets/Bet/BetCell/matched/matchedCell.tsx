@@ -3,7 +3,6 @@ import { green, red } from '@mui/material/colors';
 import { useState, useEffect, SetStateAction } from 'react';
 import EditableCell from './editableTextCell';
 import { BData, Matched } from '../../../../../../types';
-import { useBet } from '../../../betContext';
 import BetTableCell from '../betCell';
 
 type MatchedCellProps = {
@@ -43,8 +42,8 @@ function MatchedCell({
   // }
 
   const updateObj = (matchData: Matched[], key: string) => {
-    if (!matchData.length) return;
-    const backLay: any = { back: {}, lay: {} };
+    if (!matchData.length) return { back: {}, lay: {} };
+    const backLayObj: any = { back: {}, lay: {} };
     let matched: number[] = [];
     let staked: number[] = [];
     let odds: number[] = [];
@@ -58,30 +57,30 @@ function MatchedCell({
     if (matched.length && staked.length) {
       const weightedAvgOdds = weightedAverage(matched, odds) || 1;
 
-      backLay[key][weightedAvgOdds] = matched.reduce(
-        (acc, curr) => (acc += curr),
+      backLayObj[key][weightedAvgOdds] = matched.reduce(
+        (acc, curr) => acc + curr,
         0,
       );
     }
     if (
-      !Object.keys(backLay[key]).length &&
+      !Object.keys(backLayObj[key]).length &&
       Object.keys(matchData[index]).length
     ) {
       //   console.log(bet.bet_info.bet, matched, staked);
       //   console.log(index, lay, matchData);
       matchData[index].odds.forEach((odd, i) => {
-        backLay[key][odd] =
-          (backLay[key][odd] || 0) + matchData[index].matched[i];
+        backLayObj[key][odd] =
+          (backLayObj[key][odd] || 0) + matchData[index].matched[i];
       });
-      if (!Object.keys(backLay[key]).length) {
-        backLay[key] = { 0: 0 };
+      if (!Object.keys(backLayObj[key]).length) {
+        backLayObj[key] = { 0: 0 };
       }
     }
     //   ret.push(backLay);
 
     // console.log(ret);
 
-    return backLay;
+    return backLayObj;
   };
   useEffect(() => {
     if (!Object.keys(bet).length) return;

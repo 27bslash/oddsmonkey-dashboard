@@ -37,12 +37,13 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
     if (lay) matchArr = data.bet_profit.exchange_matched;
     try {
       return matchArr.reduce((acc, curr, i) => {
-        return (acc += curr.staked.reduce((a, c, j) => {
+        acc += curr.staked.reduce((a, c, j) => {
           if (liability) {
             return a + c * (matchArr[i].odds[j] - 1);
           }
           return a + c;
-        }, 0));
+        }, 0);
+        return acc;
       }, 0);
     } catch (error) {
       return data.bet_profit[!lay ? 'back_stake' : 'lay_stake'];
@@ -103,7 +104,7 @@ function BetTableRow({ data, lay, index, show, setBet }: BetTableBodyProps) {
           to={data.bet_info[!lay ? 'bookie_link' : 'exchange_link']}
           target="_blank"
         >
-          <img src={!lay ? stake_img : lay_img} height={30} />
+          <img src={!lay ? stake_img : lay_img} height={30} alt="" />
         </Link>
       </TableCell>
 

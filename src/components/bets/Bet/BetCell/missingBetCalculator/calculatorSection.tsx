@@ -41,6 +41,10 @@ type CalculatorSectionProps = {
   >;
 };
 
+export const capitalize = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
 function CalculatorSection({
   data,
   total,
@@ -58,20 +62,19 @@ function CalculatorSection({
 
   const [missingBetByType, setMissingBetByType] = useState<number>();
   useEffect(() => {
-    const n = missingBet
-      ? type === 'lay'
-        ? missingBet.missingLayBet
-        : missingBet.missingBackBet
-      : undefined;
+    let n: number | undefined;
+    if (missingBet) {
+      n = type === 'lay' ? missingBet.missingLayBet : missingBet.missingBackBet;
+    }
     setMissingBetByType(n);
   }, [missingBet]);
+  const copyText = () => {
+    navigator.clipboard.writeText(missingBetByType!.toFixed(2));
+    setUpdate((prev) => !prev);
+  };
   const openLink = () => {
     window.open(link, '_blank');
     copyText();
-    setUpdate((prev) => !prev);
-  };
-  const copyText = () => {
-    navigator.clipboard.writeText(missingBetByType!.toFixed(2));
     setUpdate((prev) => !prev);
   };
   const updateDb = () => {
@@ -131,7 +134,7 @@ function CalculatorSection({
         'totalStakedForAverage',
         totalStakedForAverage,
       );
-      for (let i = 0; i < len; i++) {
+      for (let i = 0; i < len; i += 1) {
         const d = {
           matched: [totalStakedForAverage / len],
           odds: [parseFloat(avg.toFixed(3))],
@@ -185,9 +188,8 @@ function CalculatorSection({
     );
   };
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const missingBetByType =
-      type === 'lay' ? 'missingLayBet' : 'missingBackBet';
-    missingBet![missingBetByType] = +e.target.value;
+    const missingBetKey = type === 'lay' ? 'missingLayBet' : 'missingBackBet';
+    missingBet![missingBetKey] = +e.target.value;
     setUpdate(true);
     setMissingBetByType(+e.target.value);
     setMissingBet({ ...missingBet! });
@@ -293,7 +295,7 @@ function CalculatorSection({
               marginLeft="auto"
               paddingRight="16px"
             >
-              {calcInputs.avgBackOdds == 1 || calcInputs.avgLayOdds == 1 ? (
+              {calcInputs.avgBackOdds === 1 || calcInputs.avgLayOdds === 1 ? (
                 <Typography
                   style={{
                     fontSize: '14.5px',
@@ -320,6 +322,7 @@ function CalculatorSection({
               <img
                 className="icon"
                 height="30px"
+                alt=""
                 src={
                   link.toLowerCase().includes('smarkets') ? smarkets : betfair
                 }
@@ -349,27 +352,4 @@ function CalculatorSection({
   );
 }
 
-export const capitalize = (str: string) => {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-};
-const combineBets = (bets: Matched[]): Matched[] => {
-  const totalMatched = bets.reduce(
-    (sum, b) => sum + b.matched.reduce((a, c) => a + c, 0),
-    0,
-  );
-  const betLength = bets.length - 1;
-  const weightedOddsSum = bets.reduce((sum, b) => {
-    const staked = b.matched.reduce((a, c) => a + c, 0);
-    const odd = b.odds[0] || 0;
-    return sum + odd * staked;
-  }, 0);
-
-  const weightedAvgOdds = totalMatched > 0 ? weightedOddsSum / totalMatched : 0;
-  const ret = Array.from({ length: betLength }, () => ({
-    matched: [totalMatched / betLength],
-    staked: [totalMatched / betLength],
-    odds: [parseFloat(weightedAvgOdds.toFixed(3))],
-  }));
-  return ret;
-};
 export default CalculatorSection;

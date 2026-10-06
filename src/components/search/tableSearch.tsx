@@ -6,7 +6,6 @@ type TableSearchProps = {
 };
 function TableSearch({ setSearchFilter }: TableSearchProps) {
   const [value, setValue] = useState('');
-  const [error, setError] = useState(false);
 
   return (
     <Box width="300px" marginRight="20px">

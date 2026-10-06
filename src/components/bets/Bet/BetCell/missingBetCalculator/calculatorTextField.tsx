@@ -18,9 +18,6 @@ function CalculatorTextField({
   return (
     <TextField
       onChange={(e) => {
-        const inputValue = +e.target.value.replace(/^0(?!\.)/, '');
-        const rounded = inputValue.toFixed(2);
-        // console.log(inputValue, rounded, +rounded, k);
         setValue((prevValues) => ({
           ...prevValues!,
           [k]: +e.target.value,

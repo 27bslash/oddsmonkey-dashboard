@@ -4,13 +4,7 @@ import CalculatorSection from './calculatorSection';
 import ProfitTable from './profitTable/profitTable';
 import { useBetCalculator } from './useBetCalculator';
 
-function BetCalculator({
-  data,
-  setShowBetCalc,
-}: {
-  data: BData;
-  setShowBetCalc: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
+function BetCalculator({ data }: { data: BData }) {
   const {
     obj,
     betCalculationParams,

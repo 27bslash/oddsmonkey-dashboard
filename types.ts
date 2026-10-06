@@ -1,19 +1,14 @@
 import { ObjectId } from 'mongodb';
 
-interface ElectronHandler {
-  ipcRenderer: {
-    sendMessage(channel: string, ...args: unknown[]): void;
-    on(channel: string, func: (...args: unknown[]) => void): () => void;
-    once(channel: string, func: (...args: unknown[]) => void): void;
-    fetchItems(collection_name: string): Promise<any>;
-    addItem(item: any, collection_name: string): Promise<any>;
-    onDataFetched(callback: (data: any) => void): void;
-  };
+export interface Matched {
+  odds: number[];
+  staked: number[];
+  bet_matched_time?: number;
+  matched: number[];
+  bet_commission?: number;
+  type?: 'standard' | 'tradeout';
 }
 
-interface Window {
-  electron: ElectronHandler;
-}
 export interface bInfo {
   bet: string;
   event_name: string;
@@ -57,14 +52,7 @@ export interface BProfit {
   back_matched: Matched[];
   exchange_matched: Matched[];
 }
-export interface Matched {
-  odds: number[];
-  staked: number[];
-  bet_matched_time?: number;
-  matched: number[];
-  bet_commission?: number;
-  type?: 'standard' | 'tradeout';
-}
+
 export interface BData {
   _id: ObjectId;
   anomaly?: boolean;

@@ -23,7 +23,7 @@ function ShutDown() {
 
     await window.electron.ipcRenderer.updateItem(updateObj);
     setInterval(() => {
-      const heartBeat = window.electron.ipcRenderer
+      window.electron.ipcRenderer
         .fetchItems('heartbeat')
         .then((data) => {
           const { stopped } = data[0];
@@ -31,15 +31,17 @@ function ShutDown() {
           const { last_active } = data[0];
           if (stopped || last_active < Date.now() - 10000) {
             console.log('shutdown');
-            const updateObj = {
+            const resetUpdateObj = {
               collectionName: 'config',
               query: {},
               update: { $set: { FORCE_STOP: false } },
             };
-            window.electron.ipcRenderer.updateItem(updateObj);
+            window.electron.ipcRenderer.updateItem(resetUpdateObj);
             window.electron.ipcRenderer.ShutDown();
           }
-        });
+          return null;
+        })
+        .catch(() => {});
     }, 1000);
   };
 

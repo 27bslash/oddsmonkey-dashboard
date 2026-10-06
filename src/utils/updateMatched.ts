@@ -3,7 +3,7 @@ import { Matched } from '../../types';
 const updateMatched = (backMatched: Matched[], layMatched: Matched[]) => {
   const longestMatched =
     backMatched.length > layMatched.length ? backMatched : layMatched;
-  for (let i = 0; i < longestMatched.length; i++) {
+  for (let i = 0; i < longestMatched.length; i += 1) {
     if (backMatched[i] && !layMatched[i]) {
       // Back matched exists but lay matched does not, create a new lay matched object
       layMatched.push({

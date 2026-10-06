@@ -38,29 +38,40 @@ function Sleep() {
   };
   useEffect(() => {
     const interval = setInterval(() => {
-      window.electron.ipcRenderer.fetchItems('sleep-time').then((promise) => {
-        const currentSleep: number = +promise[0].sleep;
-        console.log('Current Sleep Time:', currentSleep);
-        const currentTime = Date.now() / 1000;
+      window.electron.ipcRenderer
+        .fetchItems('sleep-time')
+        .then((promise) => {
+          const currentSleep: number = +promise[0].sleep;
+          console.log('Current Sleep Time:', currentSleep);
+          const currentTime = Date.now() / 1000;
 
-        if (currentTime >= currentSleep) {
-          setSleeping(false);
-          setTimeRemaining('00:00');
-        } else {
-          setSleeping(true);
-          const remainingSeconds = Math.max(0, currentSleep - currentTime);
-          const hours = Math.floor(remainingSeconds / 3600);
-          const minutes = Math.floor((remainingSeconds % 3600) / 60);
-          const seconds = Math.floor(remainingSeconds % 60);
-          setTimeRemaining(
-            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`,
-          );
-        }
-      });
+          if (currentTime >= currentSleep) {
+            setSleeping(false);
+            setTimeRemaining('00:00');
+          } else {
+            setSleeping(true);
+            const remainingSeconds = Math.max(0, currentSleep - currentTime);
+            const hours = Math.floor(remainingSeconds / 3600);
+            const minutes = Math.floor((remainingSeconds % 3600) / 60);
+            const seconds = Math.floor(remainingSeconds % 60);
+            setTimeRemaining(
+              `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`,
+            );
+          }
+          return null;
+        })
+        .catch(() => {});
     }, 1000);
 
     return () => clearInterval(interval);
   }, [manualSleeping]);
+
+  let sleepButtonLabel = 'Sleep';
+  if (isButtonDisabled) {
+    sleepButtonLabel = 'Wait...';
+  } else if (sleeping) {
+    sleepButtonLabel = `Sleeping For ${timeRemaining}`;
+  }
 
   return (
     <Box display="flex" alignItems="center">
@@ -79,11 +90,7 @@ function Sleep() {
         onClick={handleClick}
         variant="contained"
       >
-        {isButtonDisabled
-          ? 'Wait...'
-          : sleeping
-            ? `Sleeping For ${timeRemaining}`
-            : 'Sleep'}
+        {sleepButtonLabel}
         {!isButtonDisabled && (
           <input
             className="config-number-input"

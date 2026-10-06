@@ -75,7 +75,9 @@ class AppUpdater {
           store.set('lastNotifiedVersion', info.version);
           console.log(info.version, 'downloaded');
           if (result.response === 0) autoUpdater.quitAndInstall();
-        });
+          return undefined;
+        })
+        .catch(console.log);
     });
     autoUpdater.on('error', (err) => {
       log.error('Update error:', err);
@@ -126,6 +128,7 @@ const getImagesFromDirectoryRecursive = (
     return fs.readdirSync(directoryPath);
   } catch (error) {
     console.error('Error reading directory:', error);
+    return undefined;
   }
 };
 
@@ -178,30 +181,13 @@ const createWindow = async () => {
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
 
+  // eslint-disable-next-line no-new -- AppUpdater wires up autoUpdater listeners as a side effect
   new AppUpdater();
 };
 
 async function addItem(item: any, collection_name: string) {
   const collection = client.db('oddsmonkey').collection(collection_name);
   return await collection.insertOne(item);
-}
-
-async function updateItem({
-  collectionName,
-  query,
-  update,
-}: {
-  collectionName: string;
-  query: any;
-  update: any;
-}) {
-  if (query._id?.buffer) {
-    query._id = new ObjectId(Buffer.from(query._id.buffer));
-  }
-  const collection = client.db('oddsmonkey').collection(collectionName);
-  const result = await collection.updateOne(query, update, { upsert: true });
-  await fetchItems('pending_bets', 'update items');
-  return result.modifiedCount;
 }
 
 async function fetchItems(
@@ -231,14 +217,32 @@ async function fetchItems(
   return data;
 }
 
+async function updateItem({
+  collectionName,
+  query,
+  update,
+}: {
+  collectionName: string;
+  query: any;
+  update: any;
+}) {
+  if (query._id?.buffer) {
+    query._id = new ObjectId(Buffer.from(query._id.buffer));
+  }
+  const collection = client.db('oddsmonkey').collection(collectionName);
+  const result = await collection.updateOne(query, update, { upsert: true });
+  await fetchItems('pending_bets', 'update items');
+  return result.modifiedCount;
+}
+
 async function isExeRunning(exeName: string): Promise<boolean> {
   //  Check if the exeName is in the list of running processes, ignoring case and excluding this program
   try {
     const { stdout } = await new Promise<{ stdout: string }>((resolve) => {
-      exec('tasklist', (err, stdout) => {
+      exec('tasklist', (err, execOutput) => {
         if (err) return resolve({ stdout: '' });
 
-        resolve({ stdout });
+        return resolve({ stdout: execOutput });
       });
     });
     for (const line of stdout.split('\n')) {
@@ -246,7 +250,6 @@ async function isExeRunning(exeName: string): Promise<boolean> {
         line.toLowerCase().includes(exeName.toLowerCase()) &&
         !line.toLowerCase().includes('dashboard')
       ) {
-        console.log(`Found running process: ${line.trim()} for ${exeName}`);
         return true;
       }
     }
@@ -335,7 +338,7 @@ ipcMain.handle(
           ),
         )
         .concat(bet.bet_info.bet_unix_time);
-      if (!matchedTimes || matchedTimes.some((x) => !x)) return;
+      if (!matchedTimes || matchedTimes.some((x) => !x)) return undefined;
       startTime = Math.min(...matchedTimes);
       endTime = Math.max(...matchedTimes);
       if (startTime === Infinity || endTime === -Infinity) {
@@ -343,7 +346,7 @@ ipcMain.handle(
           'Invalid matched times for bet:',
           bet.bet_info.event_name,
         );
-        return;
+        return undefined;
       }
     }
     const basePath =
@@ -363,7 +366,7 @@ ipcMain.handle(
         ),
       )
       .concat(bet.bet_info.bet_unix_time);
-    if (!matchedTimes || matchedTimes.some((x) => !x)) return;
+    if (!matchedTimes || matchedTimes.some((x) => !x)) return undefined;
     const startTime = Math.min(...matchedTimes);
     const endTime = Math.max(...matchedTimes);
     if (startTime === Infinity || endTime === -Infinity) {
@@ -372,7 +375,7 @@ ipcMain.handle(
         bet.bet_info.event_name,
         bet.bet_info.bet_unix_time,
       );
-      return;
+      return undefined;
     }
 
     return findBetInLogs(startTime, endTime, logFilePath, logBasePath);
@@ -652,7 +655,7 @@ fetchItems('heartbeat');
 fetchItems('balance');
 
 setInterval(() => {
-  isExeRunning('discord_bot.exe').then((isRunning) => {});
+  isExeRunning('discord_bot.exe').catch(console.error);
   fetchItems('balance', 'timed');
   fetchItems('config', 'timed');
   fetchItems('heartbeat', 'timed');
@@ -675,5 +678,6 @@ app
     app.on('activate', () => {
       if (mainWindow === null) createWindow();
     });
+    return undefined;
   })
   .catch(console.log);
