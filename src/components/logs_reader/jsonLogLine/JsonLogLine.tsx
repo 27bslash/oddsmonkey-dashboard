@@ -24,7 +24,51 @@ type JsonLogLineProps = {
   hasContext?: boolean;
   contextExpanded?: boolean;
   onToggleContext?: () => void;
+  expandAll?: boolean;
 };
+
+function renderPayload(
+  entry: JsonLogEntry,
+  expanded: boolean,
+  setSearchStr: (s: string) => void,
+): React.ReactNode[] {
+  const keys = Object.keys(entry).filter(
+    (k) => !KNOWN_KEYS.has(k) && !SCREENSHOT_PATH_KEYS.has(k),
+  );
+  if (keys.length === 0) return [];
+
+  const visibleKeys = expanded
+    ? keys
+    : keys.filter((k) => k === 'event' || k === 'result');
+
+  if (visibleKeys.length === 0) return [];
+
+  visibleKeys.sort((a, b) => {
+    const rank = (k: string) => {
+      if (k === 'event') return 0;
+      if (k === 'result') return 1;
+      return 2;
+    };
+    return rank(a) - rank(b);
+  });
+
+  return visibleKeys.flatMap((key, i) => {
+    const value = entry[key];
+    return [
+      i > 0 ? ' ' : null,
+      <span key={`k-${i}`} className="code-key" style={{ color: KEY_COLOR }}>
+        {key}=
+      </span>,
+      <ValueSpan
+        key={`v-${i}`}
+        value={value}
+        isGold={key === 'message' || key === 'reason'}
+        setSearchStr={setSearchStr}
+        splitDots={key === 'event'}
+      />,
+    ];
+  });
+}
 
 function JsonLogLine({
   entry,
@@ -39,8 +83,12 @@ function JsonLogLine({
   hasContext = false,
   contextExpanded = false,
   onToggleContext,
+  expandAll = false,
 }: JsonLogLineProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expandedOverride, setExpandedOverride] = useState<boolean | undefined>(
+    undefined,
+  );
+  const expanded = expandedOverride ?? expandAll;
   const {
     timestamp,
     levelname: level,
@@ -103,7 +151,7 @@ function JsonLogLine({
         </span>
       )}
       <span
-        onClick={() => setExpanded((prev) => !prev)}
+        onClick={() => setExpandedOverride((prev) => !(prev ?? expandAll))}
         style={{
           float: 'right',
           color: '#888',
@@ -156,45 +204,6 @@ function JsonLogLine({
       )}
     </pre>
   );
-}
-
-function renderPayload(
-  entry: JsonLogEntry,
-  expanded: boolean,
-  setSearchStr: (s: string) => void,
-): React.ReactNode[] {
-  const keys = Object.keys(entry).filter(
-    (k) => !KNOWN_KEYS.has(k) && !SCREENSHOT_PATH_KEYS.has(k),
-  );
-  if (keys.length === 0) return [];
-
-  const visibleKeys = expanded
-    ? keys
-    : keys.filter((k) => k === 'event' || k === 'result');
-
-  if (visibleKeys.length === 0) return [];
-
-  visibleKeys.sort((a, b) => {
-    const rank = (k: string) => (k === 'event' ? 0 : k === 'result' ? 1 : 2);
-    return rank(a) - rank(b);
-  });
-
-  return visibleKeys.flatMap((key, i) => {
-    const value = entry[key];
-    return [
-      i > 0 ? ' ' : null,
-      <span key={`k-${i}`} className="code-key" style={{ color: KEY_COLOR }}>
-        {key}=
-      </span>,
-      <ValueSpan
-        key={`v-${i}`}
-        value={value}
-        isGold={key === 'message' || key === 'reason'}
-        setSearchStr={setSearchStr}
-        splitDots={key === 'event'}
-      />,
-    ];
-  });
 }
 
 export default JsonLogLine;

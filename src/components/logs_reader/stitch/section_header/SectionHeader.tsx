@@ -1,8 +1,8 @@
 import { Box, Typography, Chip, alpha } from '@mui/material';
 import { ChevronRight as ChevronRightIcon } from '@mui/icons-material';
-import { BetSection } from '../../core/useLogs';
 import { SectionRow } from '../styled';
 import Chips from './chips';
+import { BetSection } from '../../core/types';
 
 function SectionHeader({
   largeSection,
@@ -92,7 +92,7 @@ function SectionHeader({
               textTransform: 'capitalize',
             }}
           >
-            {first._id.replaceAll(/__\d+/g, '').replaceAll('_', ' ')}
+            {first.stage}
           </Typography>
         )}
       </Box>

@@ -10,10 +10,12 @@ import {
 import { lineMatches } from './jsonSearch';
 
 const EVENT = {
+  BOT_STARTED: 'bot_initialisation_starting',
+  BOT_INITIALISED: 'bot_initialisation_complete',
   NEW_BET_FOUND: 'bet_discovery.new_bet_found',
   RESTART_PLACING_BET: 'restarting_bet_placement',
   LOGGED_EVENT: 'bet_logged_to_database',
-  NO_BET_PREPARATION_RESULTS: 'no_bet_preperation_results',
+  NO_BET_PREPARATION_RESULTS: 'no_bet_preparation_results',
   CONNECTED_TO_DB: 'database_connection_successful',
   TRADEOUT_STARTED: 'tradeout_execution_initiated',
   TRADEOUT_COMPLETED: 'tradeout_execution_completed',
@@ -25,35 +27,39 @@ const CONTEXT_LINES = 5;
 
 const isErrorLevel = (entry: JsonLogEntry) =>
   entry.levelname === 'ERROR' || entry.levelname === 'CRITICAL';
+type Stages = 'unclassified' | 'setup' | 'prep' | 'place' | 'tradeout';
 
-const isNewBetSection = (entry: JsonLogEntry) =>
-  entry.event === EVENT.NEW_BET_FOUND;
+type SectionClose = {
+  stage: Stages;
+  includeEndMarker?: boolean;
+};
 
-const isRestartSection = (entry: JsonLogEntry) =>
-  Boolean(entry.result?.includes(EVENT.RESTART_PLACING_BET));
+/** Restart/tradeout lines continue the identity of the section that just
+ *  closed instead of fabricating one from their (absent) bet metadata. */
+const continuesLastIdentity = (entry: JsonLogEntry) =>
+  entry.result === EVENT.RESTART_PLACING_BET ||
+  entry.result === EVENT.TRADEOUT_STARTED;
 
-const isTradeoutStart = (entry: JsonLogEntry) =>
-  entry.result.includes(EVENT.TRADEOUT_STARTED);
+const startSection = (entry: JsonLogEntry): boolean =>
+  entry.result === EVENT.BOT_STARTED ||
+  entry.event === EVENT.NEW_BET_FOUND ||
+  continuesLastIdentity(entry);
 
-const isTradeoutComplete = (entry: JsonLogEntry) =>
-  entry.result.includes(EVENT.TRADEOUT_COMPLETED);
-
-const startsNewSection = (entry: JsonLogEntry | undefined): boolean =>
-  Boolean(
-    entry &&
-      (isNewBetSection(entry) ||
-        isRestartSection(entry) ||
-        isTradeoutStart(entry)),
-  );
-
-const isLoggedEventEnd = (entry: JsonLogEntry) =>
-  entry.result.includes(EVENT.LOGGED_EVENT);
-
-const isNoBetPreparationResult = (entry: JsonLogEntry) =>
-  Boolean(entry.result?.includes(EVENT.NO_BET_PREPARATION_RESULTS));
-
-const isConnectedToDb = (entry: JsonLogEntry | undefined) =>
-  Boolean(entry?.result.includes(EVENT.CONNECTED_TO_DB));
+const endSection = (entry: JsonLogEntry): SectionClose | undefined => {
+  if (entry.result === EVENT.LOGGED_EVENT) {
+    return { stage: 'place', includeEndMarker: true };
+  }
+  if (entry.result === EVENT.NO_BET_PREPARATION_RESULTS) {
+    return { stage: 'prep' };
+  }
+  if (entry.result === EVENT.BOT_INITIALISED) {
+    return { stage: 'setup' };
+  }
+  if (entry.result === EVENT.TRADEOUT_COMPLETED) {
+    return { stage: 'tradeout', includeEndMarker: true };
+  }
+  return undefined;
+};
 
 const makeSectionId = (eventName: string, betName?: string): string => {
   const base = eventName.replace(/\s+/g, '_').toLowerCase();
@@ -63,22 +69,23 @@ const makeSectionId = (eventName: string, betName?: string): string => {
 };
 
 type SectionIdentity = {
-  id: string;
   eventName: string;
   betName: string;
   marketType: string;
 };
 
 const EMPTY_IDENTITY: SectionIdentity = {
-  id: '',
   eventName: '',
   betName: '',
   marketType: '',
 };
 
+const identityId = (identity: SectionIdentity): string =>
+  makeSectionId(identity.eventName, identity.betName) || 'unclassified';
+
 function createSectionAccumulator() {
   const sections: BetSection[] = [];
-  let current: BetSection = { data: [], _id: '', errors: [] };
+  let current: BetSection = { data: [], _id: '', errors: [], stage: 'setup' };
   let recording = false;
   let sectionCount = 1;
 
@@ -107,8 +114,9 @@ function createSectionAccumulator() {
     if (entry.market_type) {
       identity.marketType = entry.market_type;
     }
-    if (isTradeoutStart(entry)) tradeoutStarted = true;
-    if (tradeoutStarted && isTradeoutComplete(entry)) tradeoutCompleted = true;
+    if (entry.result === EVENT.TRADEOUT_STARTED) tradeoutStarted = true;
+    if (tradeoutStarted && entry.result === EVENT.TRADEOUT_COMPLETED)
+      tradeoutCompleted = true;
 
     current.data.push(line);
     recordError(entry);
@@ -124,6 +132,7 @@ function createSectionAccumulator() {
       sections.push({
         data: [line],
         _id: 'setup',
+        stage: 'unclassified',
         errors: isErrorLevel(entry) ? [{ lineNum: 0, errorType: 'error' }] : [],
       });
     },
@@ -134,28 +143,15 @@ function createSectionAccumulator() {
       tradeoutStarted = false;
       tradeoutCompleted = false;
 
-      if (isTradeoutStart(entry) || isRestartSection(entry)) {
-        // A tradeout/restart continues the identity of whatever section just
-        // closed instead of fabricating one from the (absent) bet metadata.
-        const strippedId =
-          lastClosed.id
-            .replace(/__\d+$/, '')
-            .replace(/_incomplete$/, '')
-            .replace(/_tradeout$/, '') ||
-          (isTradeoutStart(entry) ? 'tradeout' : 'restart');
-        identity = { ...lastClosed, id: strippedId };
-      } else {
-        const eventName = entry.event_name ?? '';
-        const betName = entry.bet ?? '';
-        identity = {
-          id: makeSectionId(eventName, betName),
-          eventName,
-          betName,
-          marketType: '',
-        };
-      }
+      identity = continuesLastIdentity(entry)
+        ? { ...lastClosed }
+        : {
+            eventName: entry.event_name ?? '',
+            betName: entry.bet ?? '',
+            marketType: '',
+          };
 
-      current.data.push(`--- BET SECTION ${identity.id} ---`);
+      current.data.push(`--- BET SECTION ${identityId(identity)} ---`);
       appendLine(line, entry);
     },
 
@@ -163,32 +159,27 @@ function createSectionAccumulator() {
 
     /** Close the section currently being recorded. */
     close({
-      incomplete = false,
       includeEndMarker = false,
+      stage,
     }: {
-      incomplete?: boolean;
       includeEndMarker?: boolean;
+      stage: Stages;
     }) {
       if (includeEndMarker) {
         current.data.push(
-          `--- END BET SECTION ${identity.id} --- ${sectionCount}`,
+          `--- END BET SECTION ${identityId(identity)} --- ${sectionCount}`,
         );
       }
-
-      current._id = tradeoutCompleted
-        ? `${identity.id}_tradeout`
-        : incomplete
-          ? `${identity.id}_incomplete`
-          : identity.id;
+      current.stage = tradeoutCompleted ? 'tradeout' : stage;
+      current._id = identityId(identity);
       current.eventName = identity.eventName;
       current.betName = identity.betName;
       current.marketType = identity.marketType || undefined;
-
       lastClosed = { ...identity };
       sectionCount += 1;
       sections.push(current);
 
-      current = { data: [], _id: '', errors: [] };
+      current = { data: [], _id: '', errors: [], stage: 'unclassified' };
       recording = false;
       tradeoutStarted = false;
       tradeoutCompleted = false;
@@ -197,11 +188,7 @@ function createSectionAccumulator() {
     /** Flush whatever's left in progress at EOF and return every section seen. */
     finish(): BetSection[] {
       if (current.data.length > 0) {
-        current._id = tradeoutCompleted
-          ? `${identity.id}_tradeout`
-          : recording
-            ? `${identity.id}_incomplete`
-            : current._id || 'unclassified';
+        current._id = identityId(identity);
         current.eventName = identity.eventName;
         current.betName = identity.betName;
         current.marketType = identity.marketType || undefined;
@@ -216,27 +203,53 @@ function mergeAdjacentSameId(sections: BetSection[]): BetSection[][] {
   const groups: BetSection[][] = [];
   let current: BetSection[] = [];
 
-  for (const section of sections) {
-    if (section._id === 'setup') {
-      if (current.length === 0 || current[0]._id !== 'setup') {
-        if (current.length > 0) groups.push(current);
+  const flush = () => {
+    if (current.length > 0) groups.push(current);
+    current = [];
+  };
+
+  // Same identity *and* lifecycle stage. Stage stays out of the id, so it has
+  // to be part of the grouping key.
+  const continuesCurrent = (section: BetSection) =>
+    current.length > 0 &&
+    current[0]._id !== 'setup' &&
+    current[0]._id === section._id &&
+    current[0].stage === section.stage;
+
+  for (let i = 0; i < sections.length; i += 1) {
+    const section = sections[i];
+
+    if (section._id !== 'setup') {
+      if (continuesCurrent(section)) {
+        section.miniSection = true;
+        current.push(section);
+      } else {
+        flush();
         section.miniSection = true;
         current = [section];
-      } else {
-        current.push(section);
       }
       continue;
     }
-    if (current.length > 0 && current[0]._id === section._id) {
-      section.miniSection = true;
-      current.push(section);
+
+    // Gather the whole run of unclassified lines so it can either bridge two
+    // attempts of the same bet or stand on its own.
+    let end = i;
+    while (end < sections.length && sections[end]._id === 'setup') end += 1;
+    const run = sections.slice(i, end);
+    const next = sections[end];
+
+    if (next && continuesCurrent(next)) {
+      // Unclassified noise between two attempts of the same bet — drop it so
+      // the attempts merge without it inflating the group's mini-sections.
     } else {
-      if (current.length > 0) groups.push(current);
-      section.miniSection = true;
-      current = [section];
+      flush();
+      for (const setup of run) setup.miniSection = true;
+      current = run;
     }
+    i = end - 1;
   }
-  if (current.length > 0) groups.push(current);
+
+  flush();
   return groups;
 }
 
@@ -263,8 +276,10 @@ export function findAllJsonSections(logs: string, activeBet?: BData) {
     const entry = parseJsonLine(line);
     if (!entry) continue;
 
+    const nextEntry = parseJsonLine(lines[i + 1]);
+
     if (!acc.isRecording) {
-      if (startsNewSection(entry)) {
+      if (startSection(entry)) {
         acc.open(entry, line);
       } else {
         acc.pushUnclassified(line, entry);
@@ -272,21 +287,13 @@ export function findAllJsonSections(logs: string, activeBet?: BData) {
       continue;
     }
 
-    const nextEntry = parseJsonLine(lines[i + 1]);
-
-    if (isLoggedEventEnd(entry)) {
-      acc.appendLine(line, entry);
-      acc.close({ includeEndMarker: true });
-    } else if (isNoBetPreparationResult(entry)) {
-      acc.appendLine(line, entry);
-      acc.close({ incomplete: true });
-    } else if (startsNewSection(nextEntry) || isConnectedToDb(nextEntry)) {
-      // The *next* line starts a new section or the bot has restarted, so this section is done. Mark it incomplete because
-      // recording never reached a proper end marker.
-      acc.appendLine(line, entry);
-      acc.close({ incomplete: true });
-    } else {
-      acc.appendLine(line, entry);
+    acc.appendLine(line, entry);
+    const close = endSection(entry);
+    if (close) {
+      acc.close({
+        includeEndMarker: close.includeEndMarker,
+        stage: close.stage,
+      });
     }
   }
 
@@ -313,7 +320,6 @@ export const useJsonLogs = ({
   subscribe = true,
 }: LogsProps) => {
   const [rawLogString, setRawLogStr] = useState<BetSection[][]>([]);
-  const [logSections, setLogSections] = useState<BetSection[][]>([]);
   const [tail, setTail] = useState(false);
   const [filter, setFilter] = useState<{ [key: string]: number }>({ INFO: 0 });
   const [errored, setErrored] = useState(false);
@@ -329,7 +335,7 @@ export const useJsonLogs = ({
 
     const getData = async () => {
       if (bet) {
-        let data = await window.electron.ipcRenderer.readLog(
+        const data = await window.electron.ipcRenderer.readLog(
           bet,
           logBasePath,
           logFilePath,
@@ -337,30 +343,20 @@ export const useJsonLogs = ({
         if (data) {
           setRawLogStr(findAllJsonSections(data, bet));
         }
-        let fullLog = await window.electron.ipcRenderer.tailLog(
-          undefined,
-          logBasePath,
-          logFilePath,
-        );
-        if (fullLog) {
-          setLogSections(findAllJsonSections(fullLog));
-        }
         return;
       }
-      let tailstr = await window.electron.ipcRenderer.tailLog(
+      const tailstr = await window.electron.ipcRenderer.tailLog(
         undefined,
         logBasePath,
         logFilePath,
       );
-      const sections = findAllJsonSections(tailstr);
-      setLogSections(sections);
-      setRawLogStr(sections);
+      setRawLogStr(findAllJsonSections(tailstr));
     };
 
     getData();
 
     const interval = setInterval(async () => {
-      if (pending || bet) return; // see note below re: per-bet polling
+      if (pending || bet) return;
       pending = true;
       try {
         let tailUpdate = await window.electron.ipcRenderer.tailLog(
@@ -372,7 +368,6 @@ export const useJsonLogs = ({
         const dataStr = JSON.stringify(sections);
         if (dataStr !== previousDataRef.current) {
           previousDataRef.current = dataStr;
-          setLogSections(sections);
           setRawLogStr(sections);
         }
       } finally {
@@ -518,6 +513,6 @@ export const useJsonLogs = ({
     errored,
     acknowledgeErrors,
     rawLogString: filteredLogString,
-    rawSections: logSections,
+    rawSections: rawLogString,
   };
 };

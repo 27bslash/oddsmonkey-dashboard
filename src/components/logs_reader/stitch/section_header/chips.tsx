@@ -1,5 +1,5 @@
 import { Chip, alpha } from '@mui/material';
-import { BetSection } from '../../core/useLogs';
+import { BetSection } from '../../core/types';
 
 const TIMESTAMP_REGEXES = [
   /\b(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:[.,]\d{3,6})?)\b/,
@@ -53,11 +53,17 @@ const getSectionTimeRange = (largeSection: BetSection[]) => {
     end: end ? formatTimestampForTag(end) : null,
   };
 };
+export const STAGE_COLORS: Record<string, { bg: string; fg: string }> = {
+  setup: { bg: '#64748b', fg: '#94a3b8' },
+  prep: { bg: '#f59e0b', fg: '#fdba74' },
+  place: { bg: '#3bbffa', fg: '#7dd3fc' },
+  tradeout: { bg: '#22c55e', fg: '#86efac' },
+};
+
 function Chips({ largeSection }: { largeSection: BetSection[] }) {
   const first = largeSection[0];
-  const isIncomplete = first._id.replace(/__\d+$/, '').endsWith('_incomplete');
-  const isTradeout = first._id.replace(/__\d+$/, '').endsWith('_tradeout');
   const { start, end } = getSectionTimeRange(largeSection);
+  const stageColor = STAGE_COLORS[first.stage] ?? STAGE_COLORS.setup;
 
   return (
     <>
@@ -76,35 +82,18 @@ function Chips({ largeSection }: { largeSection: BetSection[] }) {
         />
       )}
 
-      {isIncomplete && (
-        <Chip
-          label="INCOMPLETE"
-          size="small"
-          sx={{
-            height: 16,
-            fontSize: '11px',
-            fontWeight: 700,
-            backgroundColor: alpha('#f59e0b', 0.15),
-            color: alpha('#f59e0b', 0.7),
-            borderRadius: '3px',
-          }}
-        />
-      )}
-
-      {isTradeout && (
-        <Chip
-          label="TRADEOUT"
-          size="small"
-          sx={{
-            height: 16,
-            fontSize: '11px',
-            fontWeight: 700,
-            backgroundColor: alpha('#22c55e', 0.15),
-            color: alpha('#22c55e', 0.75),
-            borderRadius: '3px',
-          }}
-        />
-      )}
+      <Chip
+        label={first.stage.toUpperCase()}
+        size="small"
+        sx={{
+          height: 16,
+          fontSize: '11px',
+          fontWeight: 700,
+          backgroundColor: alpha(stageColor.bg, 0.15),
+          color: alpha(stageColor.fg, 0.75),
+          borderRadius: '3px',
+        }}
+      />
 
       {start && end && (
         <Chip

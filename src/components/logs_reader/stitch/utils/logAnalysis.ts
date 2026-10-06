@@ -45,7 +45,7 @@ function processErrorLine(
 
   const existing = patternMap.get(result.pattern);
   if (existing) {
-    existing.count++;
+    existing.count += 1;
     existing.sectionIds.add(sectionId);
   } else {
     patternMap.set(result.pattern, {

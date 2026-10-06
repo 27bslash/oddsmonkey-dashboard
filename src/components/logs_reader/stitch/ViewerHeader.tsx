@@ -25,7 +25,45 @@ type ViewerHeaderProps = {
   setSearchStr: (s: string) => void;
   hideIncomplete: boolean;
   setHideIncomplete: (fn: (prev: boolean) => boolean) => void;
+  hideNoise: boolean;
+  setHideNoise: (fn: (prev: boolean) => boolean) => void;
+  expandAllLines: boolean;
+  setExpandAllLines: (fn: (prev: boolean) => boolean) => void;
 };
+
+type ToggleChipProps = {
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+};
+
+function ToggleChip({
+  label,
+  active = false,
+  onClick,
+}: Readonly<ToggleChipProps>) {
+  return (
+    <IconButton
+      size="small"
+      onClick={onClick}
+      sx={{
+        color: active ? '#3bbffa' : alpha('#dee5ff', 0.3),
+        border: `1px solid ${active ? alpha('#3bbffa', 0.4) : alpha('#1e293b', 0.8)}`,
+        borderRadius: '6px',
+        fontSize: '10px',
+        padding: '4px 8px',
+        whiteSpace: 'nowrap',
+        '&:hover': {
+          bgcolor: alpha('#3bbffa', 0.1),
+        },
+      }}
+    >
+      <Typography sx={{ fontSize: '10px', fontWeight: 700 }}>
+        {label}
+      </Typography>
+    </IconButton>
+  );
+}
 
 export default function ViewerHeader({
   logBasePath,
@@ -38,6 +76,10 @@ export default function ViewerHeader({
   setSearchStr,
   hideIncomplete,
   setHideIncomplete,
+  hideNoise,
+  setHideNoise,
+  expandAllLines,
+  setExpandAllLines,
 }: Readonly<ViewerHeaderProps>) {
   return (
     <TerminalHeader>
@@ -123,9 +165,9 @@ export default function ViewerHeader({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 2,
+          gap: 1.5,
           flex: 1,
-          maxWidth: '600px',
+          minWidth: 0,
           mx: 4,
         }}
       >
@@ -134,21 +176,21 @@ export default function ViewerHeader({
           searchStr={searchStr}
           setSearchStr={setSearchStr}
         />
-        <IconButton
-          size="small"
+        <ToggleChip
+          label={expandAllLines ? 'COLLAPSE ALL' : 'EXPAND ALL'}
+          active={expandAllLines}
+          onClick={() => setExpandAllLines((prev) => !prev)}
+        />
+        <ToggleChip
+          label={hideNoise ? 'HIDE PREP/UNCL' : 'SHOW PREP/UNCL'}
+          active={hideNoise}
+          onClick={() => setHideNoise((prev) => !prev)}
+        />
+        <ToggleChip
+          label={hideIncomplete ? 'HIDE INC' : 'SHOW ALL'}
+          active={hideIncomplete}
           onClick={() => setHideIncomplete((prev) => !prev)}
-          sx={{
-            color: hideIncomplete ? '#3bbffa' : alpha('#dee5ff', 0.3),
-            border: `1px solid ${hideIncomplete ? alpha('#3bbffa', 0.4) : alpha('#1e293b', 0.8)}`,
-            borderRadius: '6px',
-            fontSize: '10px',
-            padding: '4px 8px',
-          }}
-        >
-          <Typography sx={{ fontSize: '10px', fontWeight: 700 }}>
-            {hideIncomplete ? 'HIDE INC' : 'SHOW ALL'}
-          </Typography>
-        </IconButton>
+        />
       </Box>
     </TerminalHeader>
   );

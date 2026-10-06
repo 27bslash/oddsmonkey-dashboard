@@ -8,65 +8,6 @@ type StringWithLinksProps = {
   splitDots?: boolean;
 };
 
-function StringWithLinks({
-  value,
-  isGold = false,
-  setSearchStr,
-  splitDots = false,
-}: StringWithLinksProps): React.ReactNode {
-  const base = isGold ? '#FFD700' : '#ddd';
-  const tokenRegex = new RegExp(
-    `(${URL_REGEX.source}|${HTML_FILE_REGEX.source})`,
-  );
-  const parts = value.split(tokenRegex).filter(Boolean);
-  if (parts.length === 1) {
-    return (
-      <SearchSpan
-        text={value}
-        base={base}
-        setSearchStr={setSearchStr}
-        splitDots={splitDots}
-      />
-    );
-  }
-  return (
-    <span style={{ color: base }}>
-      {parts.map((part, i) => {
-        if (HTML_FILE_REGEX.test(part)) {
-          return renderHTML(part, i);
-        }
-        if (URL_REGEX.test(part)) {
-          return (
-            <a
-              key={i}
-              href={part}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: '#58a6ff',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
-            >
-              {part}
-            </a>
-          );
-        }
-        return (
-          <SearchSpan
-            key={i}
-            text={part}
-            base={base}
-            setSearchStr={setSearchStr}
-          />
-        );
-      })}
-    </span>
-  );
-}
-
-export default StringWithLinks;
-
 const searchableStyle: React.CSSProperties = {
   cursor: 'pointer',
   textDecoration: 'underline dotted',
@@ -147,3 +88,62 @@ function renderHTML(part: string, i: number) {
     </a>
   );
 }
+
+function StringWithLinks({
+  value,
+  isGold = false,
+  setSearchStr,
+  splitDots = false,
+}: StringWithLinksProps): React.ReactNode {
+  const base = isGold ? '#FFD700' : '#ddd';
+  const tokenRegex = new RegExp(
+    `(${URL_REGEX.source}|${HTML_FILE_REGEX.source})`,
+  );
+  const parts = value.split(tokenRegex).filter(Boolean);
+  if (parts.length === 1) {
+    return (
+      <SearchSpan
+        text={value}
+        base={base}
+        setSearchStr={setSearchStr}
+        splitDots={splitDots}
+      />
+    );
+  }
+  return (
+    <span style={{ color: base }}>
+      {parts.map((part, i) => {
+        if (HTML_FILE_REGEX.test(part)) {
+          return renderHTML(part, i);
+        }
+        if (URL_REGEX.test(part)) {
+          return (
+            <a
+              key={i}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: '#58a6ff',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              {part}
+            </a>
+          );
+        }
+        return (
+          <SearchSpan
+            key={i}
+            text={part}
+            base={base}
+            setSearchStr={setSearchStr}
+          />
+        );
+      })}
+    </span>
+  );
+}
+
+export default StringWithLinks;

@@ -39,6 +39,9 @@ export default function LevelFilter({
           const thisLevelIdx = LOG_LEVELS.indexOf(level);
           const isIncluded = thisLevelIdx >= activeLevelIdx;
           const color = LEVEL_COLORS[level];
+          let bgcolor = 'transparent';
+          if (isSelected) bgcolor = alpha(color, 0.15);
+          else if (isIncluded) bgcolor = alpha(color, 0.05);
 
           return (
             <Button
@@ -52,11 +55,7 @@ export default function LevelFilter({
                 fontWeight: 700,
                 borderRadius: '4px',
                 color: isIncluded ? color : alpha('#dee5ff', 0.2),
-                bgcolor: isSelected
-                  ? alpha(color, 0.15)
-                  : isIncluded
-                    ? alpha(color, 0.05)
-                    : 'transparent',
+                bgcolor,
                 border: `1px solid ${isSelected ? alpha(color, 0.4) : 'transparent'}`,
                 '&:hover': { bgcolor: alpha(color, 0.12), color },
               }}

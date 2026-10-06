@@ -33,6 +33,16 @@ export type LogError = {
   errorType: 'critical' | 'error' | 'warning';
 };
 
+export type BetPhase = 'unclassified' | 'setup' | 'prep' | 'place' | 'tradeout';
+
+/** A contiguous run of `data` (from `lineFrom`, inclusive) belonging to one
+ *  lifecycle phase. Boundaries live at content-line indices, never marker
+ *  lines. */
+export type SectionPhase = {
+  stage: BetPhase;
+  lineFrom: number;
+};
+
 export type ErrorContextWindow = {
   /** Index into the section's (filtered) data of the error-level line. */
   anchorIdx: number;
@@ -49,5 +59,7 @@ export type BetSection = {
   marketType?: string;
   errors: LogError[];
   miniSection?: boolean;
+  stage: BetPhase;
   errorContext?: ErrorContextWindow[];
+  phases?: SectionPhase[];
 };

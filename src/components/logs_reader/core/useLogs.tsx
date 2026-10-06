@@ -181,7 +181,7 @@ export const useLogs = ({
   };
 };
 export function findAllBetSections(logs: string, activeBet?: BData) {
-  let cs: BetSection = { data: [], _id: '', errors: [] };
+  let cs: BetSection = { data: [], _id: '', errors: [], stage: 'setup' };
   const bs: BetSection[] = [];
   let recording = false;
   let sectionCount = 1;
@@ -248,7 +248,7 @@ export function findAllBetSections(logs: string, activeBet?: BData) {
     lastClosedMarketType = _marketType || '';
     sectionCount += 1;
     bs.push(cs);
-    cs = { data: [], _id: '', errors: [] };
+    cs = { data: [], _id: '', errors: [], stage: 'setup' };
     recording = false;
     hasTradeoutStarted = false;
     hasTradeoutCompleted = false;
@@ -292,6 +292,7 @@ export function findAllBetSections(logs: string, activeBet?: BData) {
         const unclassified: BetSection = {
           data: [line],
           _id: 'setup',
+          stage: 'setup',
           errors:
             line.includes('ERROR') || line.includes('CRITICAL')
               ? [{ lineNum: 0, errorType: 'error' }]

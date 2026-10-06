@@ -34,7 +34,7 @@ export function getAllKeys(data: BetSection[][]): string[] {
       for (const jsonString of section.data) {
         const parsedEntry = parseJsonLine(jsonString);
         if (!parsedEntry) continue;
-        for (const key in parsedEntry) {
+        for (const key of Object.keys(parsedEntry)) {
           keysSet.add(key);
         }
       }

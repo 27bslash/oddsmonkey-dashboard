@@ -1,4 +1,4 @@
-import React, { SetStateAction } from 'react';
+import React from 'react';
 import { IndividualImage } from '../../bets/Bet/BetCell/betImages/debugImage';
 
 type LogLineProps = {
@@ -9,39 +9,6 @@ type LogLineProps = {
   lineIdx?: string;
   highlighted?: boolean;
 };
-
-function LogLine({
-  line,
-  setFilter,
-  sectionId,
-  logBasePath,
-  lineIdx,
-  highlighted = false,
-}: LogLineProps) {
-  return (
-    <pre
-      className={sectionId}
-      data-line-idx={lineIdx}
-      style={{
-        color: '#ddd',
-        fontSize: '16px',
-        whiteSpace: 'pre-wrap',
-        fontFamily: 'monospace',
-        textDecoration: 'none',
-        borderLeft: highlighted
-          ? '2px solid rgba(249, 38, 114, 0.55)'
-          : '2px solid transparent',
-        paddingLeft: '8px',
-        backgroundColor: 'transparent',
-        boxShadow: 'none',
-        borderRadius: undefined,
-        transition: 'all 0.2s ease',
-      }}
-    >
-      {renderLine(line, setFilter, logBasePath)}
-    </pre>
-  );
-}
 
 function renderLine(
   line: string,
@@ -93,14 +60,14 @@ function renderLine(
       if (/[a-zA-Z_]+\.py->\w+\(\):?\d+/.test(part)) {
         const match = part.match(/([a-zA-Z_]+\.py)->(\w+)\(\):?(\d+)/);
         if (match) {
-          const [, fileName, functionName, lineNumber] = match;
+          const [, fileName, , lineNumber] = match;
           return (
             <span
               key={i}
               onClick={() => {
                 window.electron.ipcRenderer.openInVscode(
                   fileName,
-                  parseInt(lineNumber),
+                  parseInt(lineNumber, 10),
                 );
               }}
               style={{
@@ -224,6 +191,39 @@ function renderLine(
       }
       return part;
     });
+}
+
+function LogLine({
+  line,
+  setFilter,
+  sectionId,
+  logBasePath,
+  lineIdx,
+  highlighted = false,
+}: LogLineProps) {
+  return (
+    <pre
+      className={sectionId}
+      data-line-idx={lineIdx}
+      style={{
+        color: '#ddd',
+        fontSize: '16px',
+        whiteSpace: 'pre-wrap',
+        fontFamily: 'monospace',
+        textDecoration: 'none',
+        borderLeft: highlighted
+          ? '2px solid rgba(249, 38, 114, 0.55)'
+          : '2px solid transparent',
+        paddingLeft: '8px',
+        backgroundColor: 'transparent',
+        boxShadow: 'none',
+        borderRadius: undefined,
+        transition: 'all 0.2s ease',
+      }}
+    >
+      {renderLine(line, setFilter, logBasePath)}
+    </pre>
+  );
 }
 
 export default LogLine;

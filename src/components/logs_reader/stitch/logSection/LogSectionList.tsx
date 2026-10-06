@@ -1,7 +1,6 @@
 import { RefObject } from 'react';
-import { Box, Divider, alpha } from '@mui/material';
-import { BetSection } from '../../core/useLogs';
-import LogLine from '../../core/LogLine';
+import { Box, alpha } from '@mui/material';
+import { BetSection } from '../../core/types';
 import SectionHeader from '../section_header/SectionHeader';
 import ExpandedLogSection from './expandedSection';
 
@@ -18,6 +17,7 @@ type LogSectionListProps = {
   setSearchStr: (s: string) => void;
   logBasePath: string;
   highlightedTarget?: { sectionId: string; lineIdx: string };
+  expandAllLines: boolean;
   onUserInteract?: () => void;
 };
 
@@ -32,6 +32,7 @@ export default function LogSectionList({
   setSearchStr,
   logBasePath,
   highlightedTarget,
+  expandAllLines,
   onUserInteract,
 }: Readonly<LogSectionListProps>) {
   return (
@@ -96,6 +97,7 @@ export default function LogSectionList({
                   largeSection={largeSection}
                   setFilter={setFilter}
                   setSearchStr={setSearchStr}
+                  expandAllLines={expandAllLines}
                 />
               )}
             </Box>

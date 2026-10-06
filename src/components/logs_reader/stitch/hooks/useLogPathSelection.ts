@@ -19,14 +19,20 @@ export function useLogPathSelection({
 
   useEffect(() => {
     if (bet) {
-      window.electron.ipcRenderer.detectLogPathForBet(bet).then((path) => {
-        setLogBasePath(path);
-      });
+      window.electron.ipcRenderer
+        .detectLogPathForBet(bet)
+        .then((path) => {
+          return setLogBasePath(path);
+        })
+        .catch(() => {});
       return;
     }
-    window.electron.ipcRenderer.detectActiveLogPath().then((path) => {
-      setLogBasePath(path);
-    });
+    window.electron.ipcRenderer
+      .detectActiveLogPath()
+      .then((path) => {
+        return setLogBasePath(path);
+      })
+      .catch(() => {});
   }, [setLogBasePath, bet]);
 
   useEffect(() => {
@@ -34,20 +40,21 @@ export function useLogPathSelection({
     window.electron.ipcRenderer
       .listCompatibleLogFiles(logBasePath)
       .then((files) => {
-        if (!mounted) return;
+        if (!mounted) return null;
 
         setCompatibleLogFiles(files);
         if (!files.length) {
           setLogFilePath('');
-          return;
+          return null;
         }
 
-        setLogFilePath((prev) => {
+        return setLogFilePath((prev) => {
           if (prev && files.some((f) => f.path === prev)) return prev;
           const defaultFile = files.find((f) => f.name === 'custom_logs.log');
           return defaultFile?.path ?? files[0].path;
         });
-      });
+      })
+      .catch(() => {});
 
     return () => {
       mounted = false;

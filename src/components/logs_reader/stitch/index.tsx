@@ -7,7 +7,7 @@ import RecurringErrorsPanel from './error_panel/RecurringErrorsPanel';
 import NewErrorsPanel from './error_panel/NewErrorsPanel';
 import LevelFilter from './LevelFilter';
 import LogSectionList from './logSection/LogSectionList';
-import { BetSection } from '../core/useLogs';
+import { BetSection } from '../core/types';
 import { useLogPathSelection } from './hooks/useLogPathSelection';
 import {
   calculateSectionErrorStats,
@@ -15,6 +15,19 @@ import {
   getNewErrors,
   getRepeatedErrors,
 } from './utils/logAnalysis';
+
+/** A bet section is incomplete when it never reached placement/tradeout. The
+ *  lifecycle lives in `stage`, so no id-suffix parsing is required. */
+const isIncomplete = (section?: BetSection) =>
+  Boolean(
+    section?.eventName &&
+      (section.stage === 'setup' || section.stage === 'prep'),
+  );
+
+const isNoiseSection = (section?: BetSection) =>
+  Boolean(
+    section && (section.stage === 'prep' || section.stage === 'unclassified'),
+  );
 
 type StitchProps = {
   bet?: BData;
@@ -53,6 +66,8 @@ export default function StitchLogViewer({
   const [isFollowing] = useState(true);
   const [showSection, setShowSection] = useState<string[]>([]); // array of section ids that are expanded
   const [hideIncomplete, setHideIncomplete] = useState(false);
+  const [hideNoise, setHideNoise] = useState(false);
+  const [expandAllLines, setExpandAllLines] = useState(false);
   const [newErrorsExpanded, setNewErrorsExpanded] = useState(true);
   const [errorsExpanded, setErrorsExpanded] = useState(false);
   const [highlightedTarget, setHighlightedTarget] = useState<
@@ -144,39 +159,39 @@ export default function StitchLogViewer({
   }, [rawLogString, isFollowing]);
 
   const filteredSections = rawLogString.filter(
-    (largeSection) =>
-      !hideIncomplete ||
-      !largeSection[0]?._id.replace(/__\d+$/, '').endsWith('_incomplete'),
+    (largeSection) => !hideIncomplete || !isIncomplete(largeSection[0]),
   );
   const sectionsToRender = (() => {
     if (!bet) return filteredSections;
 
-    const byId = new Map(
-      rawLogString.map((section) => [section[0]?._id, section]),
+    // For a single bet, always surface its incomplete attempts even when the
+    // global "hide incomplete" filter is on. Match on the bet's identity so we
+    // don't pull in a different selection on the same event.
+    const identityOf = (section?: BetSection) =>
+      `${section?.eventName ?? ''}::${section?.betName ?? ''}`;
+    const visibleIdentities = new Set(
+      filteredSections.map((section) => identityOf(section[0])),
     );
+
     const withIncomplete = [...filteredSections];
     const seen = new Set(withIncomplete.map((s) => s[0]?._id));
 
-    for (const section of filteredSections) {
-      const sectionId = section[0]?._id ?? '';
-      const baseId = sectionId
-        .replace(/__\d+$/, '')
-        .replace(/_incomplete$/, '')
-        .replace(/_tradeout$/, '');
-      const incompletePrefix = `${baseId}_incomplete`;
-
-      for (const [id, candidate] of byId.entries()) {
-        if (!id || seen.has(id)) continue;
-        const normalizedId = id.replace(/__\d+$/, '');
-        if (normalizedId.startsWith(incompletePrefix)) {
-          withIncomplete.push(candidate);
-          seen.add(id);
-        }
-      }
+    for (const section of rawLogString) {
+      const first = section[0];
+      if (!first || seen.has(first._id) || !isIncomplete(first)) continue;
+      if (!visibleIdentities.has(identityOf(first))) continue;
+      withIncomplete.push(section);
+      seen.add(first._id);
     }
 
     return withIncomplete;
   })();
+
+  const visibleSections = hideNoise
+    ? sectionsToRender.filter(
+        (largeSection) => !isNoiseSection(largeSection[0]),
+      )
+    : sectionsToRender;
 
   return (
     <Box
@@ -203,6 +218,10 @@ export default function StitchLogViewer({
         setSearchStr={setSearchStr}
         hideIncomplete={hideIncomplete}
         setHideIncomplete={setHideIncomplete}
+        hideNoise={hideNoise}
+        setHideNoise={setHideNoise}
+        expandAllLines={expandAllLines}
+        setExpandAllLines={setExpandAllLines}
       />
 
       <Box
@@ -232,7 +251,7 @@ export default function StitchLogViewer({
 
         <LogSectionList
           scrollRef={scrollRef}
-          filteredSections={sectionsToRender}
+          filteredSections={visibleSections}
           sectionStats={sectionStats}
           rawLogString={rawLogString}
           showSection={showSection}
@@ -241,6 +260,7 @@ export default function StitchLogViewer({
           setSearchStr={setSearchStr}
           logBasePath={logBasePath}
           highlightedTarget={highlightedTarget}
+          expandAllLines={expandAllLines}
           onUserInteract={() => setHighlightedTarget(undefined)}
         />
       </Box>

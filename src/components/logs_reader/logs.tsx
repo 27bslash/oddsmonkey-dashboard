@@ -78,7 +78,9 @@ function Logs({ bet }: LogsProps) {
               className="wrapper"
               onMouseDown={(e) => {
                 document.body.removeAttribute('class');
-                e.target === e.currentTarget && setLogOverlay(false);
+                if (e.target === e.currentTarget) {
+                  setLogOverlay(false);
+                }
               }}
               tabIndex={0}
               onKeyDown={(e) => {
@@ -119,7 +121,9 @@ function Logs({ bet }: LogsProps) {
             className="wrapper"
             onMouseDown={(e) => {
               document.body.removeAttribute('class');
-              e.target === e.currentTarget && setLogOverlay(false);
+              if (e.target === e.currentTarget) {
+                setLogOverlay(false);
+              }
             }}
             tabIndex={0}
             onKeyDown={(e) => {

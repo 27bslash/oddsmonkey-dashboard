@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Box, Divider } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import JsonLogLine from '../../jsonLogLine/JsonLogLine';
-import { parseJsonLine } from '../../core/types';
-import { BetSection } from '../../core/useLogs';
+import { BetSection, parseJsonLine } from '../../core/types';
 
 type ExpandedLogSectionProps = {
   largeSection: BetSection[];
@@ -11,6 +10,7 @@ type ExpandedLogSectionProps = {
   setSearchStr: (s: string) => void;
   logBasePath: string;
   highlightedTarget?: { sectionId: string; lineIdx: string };
+  expandAllLines: boolean;
 };
 
 type SectionLinesProps = {
@@ -20,6 +20,7 @@ type SectionLinesProps = {
   setSearchStr: (s: string) => void;
   logBasePath: string;
   highlightedTarget?: { sectionId: string; lineIdx: string };
+  expandAllLines: boolean;
 };
 
 function SectionLines({
@@ -29,6 +30,7 @@ function SectionLines({
   setSearchStr,
   logBasePath,
   highlightedTarget,
+  expandAllLines,
 }: SectionLinesProps) {
   const { errorContext = [] } = section;
   const windows = errorContext.filter((w) => w.contextIdxs.length > 0);
@@ -43,18 +45,19 @@ function SectionLines({
     }
   }
 
-  const [expandedAnchors, setExpandedAnchors] = useState<Set<number>>(
-    new Set(),
+  const [anchorOverrides, setAnchorOverrides] = useState<Map<number, boolean>>(
+    new Map(),
   );
 
+  const isAnchorOpen = (anchorIdx: number) => {
+    const override = anchorOverrides.get(anchorIdx);
+    return override === undefined ? expandAllLines : override;
+  };
+
   const toggleContext = (anchorIdx: number) =>
-    setExpandedAnchors((prev) => {
-      const next = new Set(prev);
-      if (next.has(anchorIdx)) {
-        next.delete(anchorIdx);
-      } else {
-        next.add(anchorIdx);
-      }
+    setAnchorOverrides((prev) => {
+      const next = new Map(prev);
+      next.set(anchorIdx, !isAnchorOpen(anchorIdx));
       return next;
     });
 
@@ -67,8 +70,7 @@ function SectionLines({
           const isAnchor = anchorSet.has(lineIdx);
           const isContextLine = contextToAnchors.has(lineIdx);
           const contextOwners = contextToAnchors.get(lineIdx) ?? [];
-          const visible =
-            !isContextLine || contextOwners.some((a) => expandedAnchors.has(a));
+          const visible = !isContextLine || contextOwners.some(isAnchorOpen);
 
           return (
             <JsonLogLine
@@ -86,10 +88,11 @@ function SectionLines({
               isContextLine={isContextLine}
               visible={visible}
               hasContext={isAnchor}
-              contextExpanded={expandedAnchors.has(lineIdx)}
+              contextExpanded={isAnchorOpen(lineIdx)}
               onToggleContext={
                 isAnchor ? () => toggleContext(lineIdx) : undefined
               }
+              expandAll={expandAllLines}
             />
           );
         })}
@@ -103,6 +106,7 @@ function ExpandedLogSection({
   highlightedTarget,
   setFilter,
   setSearchStr,
+  expandAllLines,
 }: ExpandedLogSectionProps) {
   const hasContent = (section: BetSection) =>
     section.data.some((line) => parseJsonLine(line) !== undefined);
@@ -129,6 +133,7 @@ function ExpandedLogSection({
               setSearchStr={setSearchStr}
               logBasePath={logBasePath}
               highlightedTarget={highlightedTarget}
+              expandAllLines={expandAllLines}
             />
 
             {/* if the large section is made up of many small sections divide them unless it's the last section */}
