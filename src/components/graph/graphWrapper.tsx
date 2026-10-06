@@ -12,10 +12,10 @@ import {
   Legend,
 } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
+import { Box, Tooltip as MuiTooltip, Typography } from '@mui/material';
+import 'hammerjs';
 import useGetTrueBalance from './useGetTrueBalance';
 import GraphDialog from './graphDialog';
-import 'hammerjs';
-import { Box, Tooltip as MuiTooltip, Typography } from '@mui/material';
 
 export interface GraphDialogProps {
   open: boolean;

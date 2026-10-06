@@ -5,16 +5,6 @@ import { getBetsByDate } from './graphWrapper';
 const useGetTrueBalance = (
   filter: 'active' | 'day' | 'week' | 'month' | 'year' | 'all time',
 ) => {
-  const [labels, setLabels] = useState<string[]>([]);
-  const [dataPoints, setDataPoints] = useState<{
-    total: number[];
-    smarkets: number[];
-    betfair: number[];
-  }>({
-    total: [],
-    smarkets: [],
-    betfair: [],
-  });
   const [overrides, setOverrides] = useState<Record<string, number>>({});
   const [smarketsBalByDate, setSmarketsBalByDate] = useState<number[]>([]);
   const [betfairBalByDate, setBetfairBalByDate] = useState<number[]>([]);
@@ -43,18 +33,18 @@ const useGetTrueBalance = (
       } else {
         setOverrides({});
       }
-      const smarketsBalByDate = getBetsByDate(
+      const smarketsByDate = getBetsByDate(
         newDates,
         trueBalance,
         'smarkets_balance',
       );
-      const betfairBalByDate = getBetsByDate(
+      const betfairByDate = getBetsByDate(
         newDates,
         trueBalance,
         'betfair_balance',
       );
-      setSmarketsBalByDate(smarketsBalByDate);
-      setBetfairBalByDate(betfairBalByDate);
+      setSmarketsBalByDate(smarketsByDate);
+      setBetfairBalByDate(betfairByDate);
     };
     fetchBalance();
     const interval = setInterval(fetchBalance, 10000);

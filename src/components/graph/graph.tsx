@@ -11,13 +11,10 @@ import {
 } from 'chart.js';
 import { useEffect, useState } from 'react';
 
-import { Button, Switch, FormControlLabel } from '@mui/material';
+import { Switch, FormControlLabel } from '@mui/material';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import LineChart from './LineChart';
-import { useAppContext } from '../../renderer/useAppContext';
-import { BData } from '../../../types';
 import {
-  filterTimestampsByDay,
   filterTimestampsByWeek,
   filterTimestampsByMonth,
   filterTimestampsByYear,
@@ -72,6 +69,20 @@ export function filterBets(betDates: number[], timeFilter: string) {
     return new Date(x * 1000).toISOString().split('T')[0];
   });
 }
+function getBetsByDate(
+  dates: Set<unknown>,
+  trueBalance: TrueBalance[],
+  type: 'smarkets_balance' | 'betfair_balance',
+) {
+  const balance_by_date = [];
+  for (const date of dates) {
+    const balance = trueBalance[0].balance.find(
+      (doc) => doc[type] && doc.time === date,
+    );
+    if (balance) balance_by_date.push(balance[type]!);
+  }
+  return balance_by_date;
+}
 function Graph({ filter }: GraphProps) {
   const [labels, setLabels] = useState<string[]>([]);
   const [dataPoints, setDataPoints] = useState<{
@@ -112,18 +123,18 @@ function Graph({ filter }: GraphProps) {
       } else {
         setOverrides({});
       }
-      const smarketsBalByDate = getBetsByDate(
+      const smarketsByDate = getBetsByDate(
         newDates,
         trueBalance,
         'smarkets_balance',
       );
-      const betfairBalByDate = getBetsByDate(
+      const betfairByDate = getBetsByDate(
         newDates,
         trueBalance,
         'betfair_balance',
       );
-      setSmarketsBalByDate(smarketsBalByDate);
-      setBetfairBalByDate(betfairBalByDate);
+      setSmarketsBalByDate(smarketsByDate);
+      setBetfairBalByDate(betfairByDate);
     };
     fetchBalance();
     const interval = setInterval(fetchBalance, 10000);
@@ -151,7 +162,7 @@ function Graph({ filter }: GraphProps) {
       }
 
       const dateTime = new Date(date).getTime();
-      for (const [i, _] of smarketsBalByDate.entries()) {
+      for (const [i] of smarketsBalByDate.entries()) {
         if (dateTime >= new Date([...dates][i]).getTime()) {
           smarketsBalByDate[i] += overrides[date];
         }
@@ -202,17 +213,3 @@ function Graph({ filter }: GraphProps) {
   );
 }
 export default Graph;
-function getBetsByDate(
-  dates: Set<unknown>,
-  trueBalance: TrueBalance[],
-  type: 'smarkets_balance' | 'betfair_balance',
-) {
-  const balance_by_date = [];
-  for (const date of dates) {
-    const balance = trueBalance[0].balance.find(
-      (doc) => doc[type] && doc.time === date,
-    );
-    if (balance) balance_by_date.push(balance[type]!);
-  }
-  return balance_by_date;
-}

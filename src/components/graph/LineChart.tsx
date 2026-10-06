@@ -3,7 +3,6 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import ReactDOM from 'react-dom/client';
 import { green, red } from '@mui/material/colors';
-import { Padding } from '@mui/icons-material';
 import CustomTooltip from './graphTooltip';
 
 type LineChartProps = {
@@ -11,6 +10,68 @@ type LineChartProps = {
   dataPoints: { [key: string]: number[] };
   overrides: Record<string, number>;
   setOverrides: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+};
+function BalanceLabel({
+  label,
+  amount,
+}: {
+  label: string;
+  amount: string | number;
+}) {
+  return (
+    <Typography display="flex">
+      <span>{label}</span>
+      <span style={{ marginLeft: 'auto', marginRight: 5, color: green['400'] }}>
+        £
+        {typeof amount === 'number'
+          ? amount.toFixed(2)
+          : amount.replace(',', '')}
+      </span>
+    </Typography>
+  );
+}
+const createExternalTooltip = (
+  tooltipRef: React.MutableRefObject<HTMLDivElement | null>,
+  tooltipRootRef: React.MutableRefObject<ReactDOM.Root | null>,
+  showHoverTooltipRef: React.MutableRefObject<boolean>,
+  dataPointsRef: React.MutableRefObject<any>,
+  context: any,
+) => {
+  const { chart, tooltip } = context;
+  const tooltipModel = tooltip;
+
+  if (!tooltipRef.current) return;
+
+  if (!showHoverTooltipRef.current || tooltipModel.opacity === 0) {
+    tooltipRootRef.current?.render(
+      <CustomTooltip visible={false} x={0} y={0} content={null} />,
+    );
+    return;
+  }
+
+  const position = chart.canvas.getBoundingClientRect();
+  const dataPoint = tooltipModel.dataPoints?.[0];
+  const x = position.left + window.pageXOffset + tooltipModel.caretX;
+  const y = position.top + window.pageYOffset + tooltipModel.caretY + 100;
+  const smarkets_balance =
+    dataPointsRef.current.smarkets[tooltip.dataPoints[0].dataIndex];
+  const betfair_balance =
+    dataPointsRef.current.betfair[tooltip.dataPoints[0].dataIndex];
+
+  const content = (
+    <>
+      <BalanceLabel
+        label={dataPoint.dataset.label}
+        amount={dataPoint.formattedValue}
+      />
+      <BalanceLabel label="Smarkets" amount={smarkets_balance} />
+      <BalanceLabel label="Betfair" amount={betfair_balance} />
+    </>
+  );
+
+  tooltipRootRef.current?.render(
+    <CustomTooltip x={x} y={y} content={content} visible />,
+  );
 };
 function LineChart({
   labels,
@@ -30,6 +91,7 @@ function LineChart({
     datasetIndex: number;
   } | null>(null);
   const [showHoverTooltip, setShowHoverTooltip] = useState(true);
+  const isPanningRef = useRef(false);
 
   useEffect(() => {
     const tooltipEl = document.createElement('div');
@@ -122,8 +184,13 @@ function LineChart({
           target.style.cursor = 'grabbing'; // don't let hover override while panning
           return;
         }
-        target.style.cursor =
-          chartElement.length > 0 ? 'pointer' : isZoomed ? 'grab' : 'default';
+        let cursor = 'default';
+        if (chartElement.length > 0) {
+          cursor = 'pointer';
+        } else if (isZoomed) {
+          cursor = 'grab';
+        }
+        target.style.cursor = cursor;
       },
 
       onClick: (event: any, elements: any[]) => {
@@ -202,11 +269,10 @@ function LineChart({
     );
     setInputValue(overrides[labels[clickedPoint.index]] || '0');
   }, [clickedPoint]);
-  const isPanningRef = useRef(false);
 
   useEffect(() => {
     const canvas = chartRef.current?.canvas;
-    if (!canvas) return;
+    if (!canvas) return () => {};
 
     const onMouseDown = () => {
       if (chartRef.current?.getZoomLevel() <= 1) return;
@@ -297,66 +363,4 @@ function LineChart({
     </>
   );
 }
-function BalanceLabel({
-  label,
-  amount,
-}: {
-  label: string;
-  amount: string | number;
-}) {
-  return (
-    <Typography display="flex">
-      <span>{label}</span>
-      <span style={{ marginLeft: 'auto', marginRight: 5, color: green['400'] }}>
-        £
-        {typeof amount === 'number'
-          ? amount.toFixed(2)
-          : amount.replace(',', '')}
-      </span>
-    </Typography>
-  );
-}
-const createExternalTooltip = (
-  tooltipRef: React.MutableRefObject<HTMLDivElement | null>,
-  tooltipRootRef: React.MutableRefObject<ReactDOM.Root | null>,
-  showHoverTooltipRef: React.MutableRefObject<boolean>,
-  dataPointsRef: React.MutableRefObject<any>,
-  context: any,
-) => {
-  const { chart, tooltip } = context;
-  const tooltipModel = tooltip;
-
-  if (!tooltipRef.current) return;
-
-  if (!showHoverTooltipRef.current || tooltipModel.opacity === 0) {
-    tooltipRootRef.current?.render(
-      <CustomTooltip visible={false} x={0} y={0} content={null} />,
-    );
-    return;
-  }
-
-  const position = chart.canvas.getBoundingClientRect();
-  const dataPoint = tooltipModel.dataPoints?.[0];
-  const x = position.left + window.pageXOffset + tooltipModel.caretX;
-  const y = position.top + window.pageYOffset + tooltipModel.caretY + 100;
-  const smarkets_balance =
-    dataPointsRef.current.smarkets[tooltip.dataPoints[0].dataIndex];
-  const betfair_balance =
-    dataPointsRef.current.betfair[tooltip.dataPoints[0].dataIndex];
-
-  const content = (
-    <>
-      <BalanceLabel
-        label={dataPoint.dataset.label}
-        amount={dataPoint.formattedValue}
-      />
-      <BalanceLabel label="Smarkets" amount={smarkets_balance} />
-      <BalanceLabel label="Betfair" amount={betfair_balance} />
-    </>
-  );
-
-  tooltipRootRef.current?.render(
-    <CustomTooltip x={x} y={y} content={content} visible />,
-  );
-};
 export default LineChart;
