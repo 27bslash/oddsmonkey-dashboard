@@ -36,6 +36,11 @@ module.exports = {
     'jsx-a11y/no-noninteractive-element-interactions': 'off',
     'global-require': 'off',
     '@typescript-eslint/no-var-requires': 'off',
+    // Tier 3 — dev-tool / desktop-app rules
+    'react/no-array-index-key': 'off',
+    'import/no-cycle': 'warn',
+    'jsx-a11y/no-noninteractive-tabindex': 'off',
+    'jsx-a11y/no-autofocus': 'warn',
   },
   parserOptions: {
     ecmaVersion: 2022,
