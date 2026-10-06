@@ -1,3 +1,12 @@
+# [1.10.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.9.0...v1.10.0) (2026-10-06)
+
+
+### Features
+
+* added button to expand all logs lines ([390e16a](https://github.com/27bslash/oddsmonkey-dashboard/commit/390e16afbf1d71a91e2e5809904ea8c34aa676a8))
+* added panning to graph ([ade2212](https://github.com/27bslash/oddsmonkey-dashboard/commit/ade22124512fe5ae9fcb67e473c3d78c59e46ad2))
+* added search with json logs including key = value searching ([943e8ff](https://github.com/27bslash/oddsmonkey-dashboard/commit/943e8ffe4ec3044ec05963f422e687b147c63643))
+
 # [1.9.0](https://github.com/27bslash/oddsmonkey-dashboard/compare/v1.8.0...v1.9.0) (2026-09-06)
 
 
